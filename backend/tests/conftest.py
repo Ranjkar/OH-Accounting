@@ -10,8 +10,8 @@ import app.api.v1.documents as documents_api
 from app.core.config import settings
 from app.db.session import Base, get_db
 from app.main import app
-from app.services import ai_provider, ocr_provider
-from tests.fakes import FakeAIProvider, FakeOCRProvider
+from app.services import ai_assistant_provider, ai_provider, ocr_provider
+from tests.fakes import FakeAIProvider, FakeAssistantProvider, FakeOCRProvider
 
 TEST_DATABASE_URL = settings.database_url.rsplit("/", 1)[0] + "/onholland_accounting_test"
 
@@ -63,7 +63,16 @@ def fake_ocr_provider(monkeypatch):
 
 
 @pytest.fixture()
-def client(db_session, test_session_local, tmp_storage, fake_ai_provider, fake_ocr_provider, monkeypatch):
+def fake_assistant_provider(monkeypatch):
+    fake = FakeAssistantProvider()
+    monkeypatch.setattr(ai_assistant_provider, "get_assistant_provider", lambda: fake)
+    return fake
+
+
+@pytest.fixture()
+def client(
+    db_session, test_session_local, tmp_storage, fake_ai_provider, fake_ocr_provider, fake_assistant_provider, monkeypatch
+):
     def override_get_db():
         yield db_session
 

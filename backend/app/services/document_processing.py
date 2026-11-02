@@ -37,10 +37,16 @@ class DocumentApprovedError(Exception):
 
 
 def _parse_date(value: str | None) -> date | None:
+    """The extraction prompt asks for ISO 8601, but tolerate common Dutch/EU
+    DD-MM-YYYY output too rather than silently dropping a valid date."""
     if not value:
         return None
     try:
         return date.fromisoformat(value[:10])
+    except ValueError:
+        pass
+    try:
+        return datetime.strptime(value[:10], "%d-%m-%Y").date()
     except ValueError:
         return None
 
@@ -156,7 +162,9 @@ def _process_text_document(db: Session, document: Document, content: bytes, kind
         text = text_extraction.extract_image_text(content, ocr)
 
     provider = ai_provider.get_ai_provider()
-    extraction = provider.extract_invoice_fields(text)
+    extraction = provider.extract_invoice_fields(
+        text, client_company_name=document.company.name, client_vat_number=document.company.vat_number
+    )
 
     db.add(
         DocumentExtraction(

@@ -1,9 +1,15 @@
+import logging
+
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
+
+INSECURE_DEFAULT_JWT_SECRET = "dev-secret-change-in-production"
 
 
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://sam@localhost:5432/onholland_accounting"
-    jwt_secret: str = "dev-secret-change-in-production"
+    jwt_secret: str = INSECURE_DEFAULT_JWT_SECRET
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
 
@@ -18,3 +24,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if settings.jwt_secret == INSECURE_DEFAULT_JWT_SECRET:
+    logger.warning(
+        "JWT_SECRET is still the insecure placeholder value. Set a strong, randomly generated "
+        "JWT_SECRET in the environment before this is reachable from anywhere but localhost."
+    )

@@ -99,8 +99,24 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
+        <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
           <h2 className="text-sm font-medium text-navy">Declaration preview</h2>
+          <div className="flex gap-2">
+            {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() =>
+                  token &&
+                  api
+                    .downloadReport(token, api.vatReturnReportUrl(vatReturn.id, fmt), `vat-return-${vatReturn.id}.${fmt}`)
+                    .catch((e) => setError(e instanceof Error ? e.message : "Download failed"))
+                }
+                className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
+              >
+                {fmt}
+              </button>
+            ))}
+          </div>
         </div>
         <table className="w-full text-sm">
           <thead>

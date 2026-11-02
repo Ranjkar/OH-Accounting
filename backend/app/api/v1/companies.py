@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, require_company_access
+from app.core.deps import get_current_user, require_company_access, require_editor
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
 from app.models.company import Company
@@ -113,7 +113,7 @@ def create_financial_year(
     company_id: int,
     payload: FinancialYearCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_editor),
 ):
     require_company_access(company_id, user, db)
     company = db.get(Company, company_id)

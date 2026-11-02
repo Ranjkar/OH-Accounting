@@ -1,4 +1,5 @@
 from app.core.security import hash_password
+from app.models.company import Company
 from app.models.enums import UserRole
 from app.models.tenant import Tenant
 from app.models.user import User
@@ -102,5 +103,36 @@ def test_non_admin_cannot_create_company(client, db_session):
         "/api/v1/companies",
         json={"name": "Nope B.V."},
         headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_viewer_cannot_create_financial_year(client, db_session):
+    admin = _create_admin(db_session)
+    admin_token = _login(client)
+    company_id = client.post(
+        "/api/v1/companies",
+        json={"name": "Test B.V."},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    ).json()["id"]
+
+    viewer = User(
+        tenant_id=admin.tenant_id,
+        email="viewer@acme.nl",
+        hashed_password=hash_password("secret123"),
+        full_name="Viewer",
+        role=UserRole.viewer,
+    )
+    db_session.add(viewer)
+    db_session.flush()
+    company = db_session.get(Company, company_id)
+    viewer.companies.append(company)
+    db_session.commit()
+
+    viewer_token = _login(client, email="viewer@acme.nl")
+    response = client.post(
+        f"/api/v1/companies/{company_id}/financial-years",
+        json={"year": 2026},
+        headers={"Authorization": f"Bearer {viewer_token}"},
     )
     assert response.status_code == 403

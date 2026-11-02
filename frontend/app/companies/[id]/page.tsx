@@ -66,12 +66,20 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy">{company.name}</h1>
-        <p className="text-sm text-slate-500">
-          {company.kvk_number ? `KVK ${company.kvk_number}` : "No KVK number"} ·{" "}
-          {company.vat_number ?? "No VAT number"} · {company.vat_frequency} filing
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-navy">{company.name}</h1>
+          <p className="text-sm text-slate-500">
+            {company.kvk_number ? `KVK ${company.kvk_number}` : "No KVK number"} ·{" "}
+            {company.vat_number ?? "No VAT number"} · {company.vat_frequency} filing
+          </p>
+        </div>
+        <a
+          href={`/companies/${companyId}/workspace`}
+          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+        >
+          Open workspace
+        </a>
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}

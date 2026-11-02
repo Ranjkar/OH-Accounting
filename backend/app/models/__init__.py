@@ -11,10 +11,12 @@ from app.models.document import (
     ExtractedInvoiceFields,
 )
 from app.models.financial_year import FinancialYear, VatPeriod
+from app.models.note import AccountantNote
 from app.models.tenant import Tenant
 from app.models.user import User, user_companies
 
 __all__ = [
+    "AccountantNote",
     "AccountingTransaction",
     "AuditLog",
     "Company",

@@ -305,10 +305,97 @@ export interface DashboardSummary {
   upcoming_deadlines: {
     company_id: number;
     company_name: string;
+    vat_period_id: number;
     period_label: string;
     filing_deadline: string;
     payment_deadline: string;
+    is_overdue: boolean;
   }[];
+  companies_requiring_attention: { company_id: number; company_name: string; reasons: string[] }[];
+  vat_returns_awaiting_review: number;
+  vat_returns_approved: number;
+  overdue_vat_returns: number;
+  documents_awaiting_approval: number;
+  unmatched_payments: number;
+  outstanding_customer_info: number;
+  estimated_vat_payable: string;
+  estimated_vat_refundable: string;
+  generated_at: string;
+}
+
+export type NoteType = "INTERNAL" | "CUSTOMER_QUESTION" | "MISSING_DOCUMENT_REQUEST";
+export type NoteStatus = "OPEN" | "ANSWERED" | "RESOLVED";
+
+export interface Note {
+  id: number;
+  note_type: NoteType;
+  status: NoteStatus;
+  body: string;
+  related_entity_type: string | null;
+  related_entity_id: number | null;
+  author_user_id: number;
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export interface CompletenessRow {
+  requirement: string;
+  complete: boolean;
+  detail: string;
+}
+
+export interface PeriodCompleteness {
+  vat_period_id: number;
+  label: string;
+  start_date: string;
+  end_date: string;
+  filing_deadline: string;
+  vat_return_status: VatReturnStatus | null;
+  rows: CompletenessRow[];
+}
+
+export interface CompanyWorkspace {
+  company_id: number;
+  company_name: string;
+  vat_frequency: string;
+  vat_accounting_basis: string;
+  financial_year_count: number;
+  sales_invoice_count: number;
+  purchase_invoice_count: number;
+  transaction_count: number;
+  payment_count: number;
+  document_count: number;
+  documents_awaiting_approval: number;
+  open_notes: number;
+  open_customer_questions: number;
+  vat_returns: { id: number; vat_period_id: number; period_label: string; status: string; net_payable: string }[];
+  period_completeness: PeriodCompleteness[];
+  notes: Note[];
+}
+
+export type CalendarStatus = "completed" | "upcoming" | "overdue" | "pending";
+
+export interface TaxCalendarEntry {
+  company_id: number;
+  company_name: string;
+  vat_period_id: number;
+  financial_year: number;
+  period_label: string;
+  vat_frequency: string;
+  start_date: string;
+  end_date: string;
+  filing_deadline: string;
+  payment_deadline: string;
+  calendar_status: CalendarStatus;
+  vat_return_id: number | null;
+}
+
+export interface AssistantResponse {
+  facts: Record<string, unknown>;
+  answer: string;
+  model: string;
+  generated_at: string;
+  disclaimer: string;
 }
 
 export const api = {
@@ -337,7 +424,6 @@ export const api = {
       token,
       body: JSON.stringify({ year }),
     }),
-  dashboard: (token: string) => request<DashboardSummary>("/dashboard", { token }),
 
   uploadDocument: async (
     token: string,
@@ -486,4 +572,70 @@ export const api = {
     request<VatReturn>(`/vat-returns/${vatReturnId}/approve`, { method: "POST", token }),
   lockVatReturn: (token: string, vatReturnId: number) =>
     request<VatReturn>(`/vat-returns/${vatReturnId}/lock`, { method: "POST", token }),
+
+  dashboard: (token: string, filters: { company_id?: number; financial_year_id?: number } = {}) => {
+    const params = new URLSearchParams();
+    if (filters.company_id) params.set("company_id", String(filters.company_id));
+    if (filters.financial_year_id) params.set("financial_year_id", String(filters.financial_year_id));
+    const qs = params.toString();
+    return request<DashboardSummary>(`/dashboard${qs ? `?${qs}` : ""}`, { token });
+  },
+
+  getCompanyWorkspace: (token: string, companyId: number) =>
+    request<CompanyWorkspace>(`/companies/${companyId}/workspace`, { token }),
+  listNotes: (token: string, companyId: number) => request<Note[]>(`/companies/${companyId}/notes`, { token }),
+  createNote: (
+    token: string,
+    companyId: number,
+    payload: { note_type: NoteType; body: string; related_entity_type?: string; related_entity_id?: number }
+  ) => request<Note>(`/companies/${companyId}/notes`, { method: "POST", token, body: JSON.stringify(payload) }),
+  updateNoteStatus: (token: string, noteId: number, status: NoteStatus) =>
+    request<Note>(`/notes/${noteId}/status`, { method: "PATCH", token, body: JSON.stringify({ status }) }),
+
+  getTaxCalendar: (token: string, filters: { company_id?: number; year?: number } = {}) => {
+    const params = new URLSearchParams();
+    if (filters.company_id) params.set("company_id", String(filters.company_id));
+    if (filters.year) params.set("year", String(filters.year));
+    const qs = params.toString();
+    return request<TaxCalendarEntry[]>(`/tax-calendar${qs ? `?${qs}` : ""}`, { token });
+  },
+
+  askAssistant: (token: string, payload: { company_id: number; question: string; vat_period_id?: number }) =>
+    request<AssistantResponse>("/assistant/ask", { method: "POST", token, body: JSON.stringify(payload) }),
+  assistantCompanySummary: (token: string, companyId: number) =>
+    request<AssistantResponse>(`/assistant/company-summary?company_id=${companyId}`, { token }),
+  assistantVatReturnExplanation: (token: string, vatReturnId: number) =>
+    request<AssistantResponse>(`/assistant/vat-return-explanation/${vatReturnId}`, { token }),
+  assistantMissingDocuments: (token: string, companyId: number) =>
+    request<AssistantResponse>(`/assistant/missing-documents?company_id=${companyId}`, { token }),
+  assistantPeriodComparison: (token: string, companyId: number, periodIdA: number, periodIdB: number) =>
+    request<AssistantResponse>(
+      `/assistant/period-comparison?company_id=${companyId}&vat_period_id_a=${periodIdA}&vat_period_id_b=${periodIdB}`,
+      { token }
+    ),
+
+  vatReturnReportUrl: (vatReturnId: number, format: "pdf" | "xlsx" | "csv"): string =>
+    `${API_BASE}/reports/vat-return/${vatReturnId}?format=${format}`,
+  financialOverviewReportUrl: (companyId: number, financialYearId: number, format: "pdf" | "xlsx" | "csv"): string =>
+    `${API_BASE}/reports/financial-overview?company_id=${companyId}&financial_year_id=${financialYearId}&format=${format}`,
+  downloadReport: async (token: string, url: string, filename: string): Promise<void> => {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new ApiError(res.status, "Failed to generate report");
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(objectUrl);
+  },
+  getPeriodComparison: (token: string, companyId: number, financialYearId: number) =>
+    request<{
+      financial_year: number;
+      periods: { label: string; sales_net: string; purchases_net: string; income_minus_expense: string; transaction_count: number }[];
+      total_sales_net: string;
+      total_purchases_net: string;
+      net_income: string;
+      payment_status_counts: Record<string, number>;
+    }>(`/reports/period-comparison?company_id=${companyId}&financial_year_id=${financialYearId}`, { token }),
 };

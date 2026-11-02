@@ -1,8 +1,8 @@
 # OnHolland Accounting
 
 AI-powered accounting and Dutch VAT administration platform. Phase 1 (Foundation),
-Phase 2 (AI Document Intelligence) and Phase 3 (Accounting Ledger & Dutch VAT Engine)
-complete.
+Phase 2 (AI Document Intelligence), Phase 3 (Accounting Ledger & Dutch VAT Engine) and
+Phase 4 (Accountant Assistant) complete, with a verified real Claude API integration.
 
 ## Stack
 - Backend: FastAPI + SQLAlchemy + Alembic + PostgreSQL, JWT auth
@@ -147,3 +147,73 @@ createdb onholland_accounting_test   # once
   a DB-backed version if accountants need to adjust rates without a deploy
 - RECEIPT documents always post to the purchases side by default (the common case for an
   expense receipt); there's no UI yet to flag a receipt as a cash sale instead
+
+## What's implemented (Phase 4)
+- **Verified real Claude API integration.** `ANTHROPIC_API_KEY` is read from `backend/.env`
+  (gitignored; `.env.example` holds only an empty placeholder). Fixed two real integration
+  bugs found while testing against the live API:
+  - Claude sometimes returned dates as `DD-MM-YYYY`; the prompt now explicitly requires
+    ISO 8601, and `_parse_date` tolerates `DD-MM-YYYY` as a fallback rather than silently
+    dropping a valid date.
+  - Claude cannot tell SALES_INVOICE from PURCHASE_INVOICE from document text alone (both
+    look identical structurally) — it needs to know which party is "us". The extraction
+    call now receives the accounting client's company name/VAT number as context; document
+    classification accuracy was confirmed to flip correctly depending on which side the
+    client is on.
+- Accountant dashboard: company count, companies requiring attention (computed from real
+  overdue returns/pending documents/overdue payments, not a static flag), VAT returns
+  awaiting review/approved/overdue, documents awaiting approval, unmatched (overdue)
+  payments, outstanding customer info, estimated VAT payable/refundable across open
+  periods — every figure is a live DB query, filterable by company
+- Company workspace (`/companies/{id}/workspace`): financial years, transaction/document/
+  payment counts, a per-VAT-period completeness table (sales/purchases/bank statements/
+  payments reconciled/VAT return reviewed — absence of evidence is reported as incomplete,
+  never silently assumed complete), and accountant notes
+- Accountant notes: internal notes, customer-facing questions, and missing-document
+  requests in one table with a status workflow (open/answered/resolved), linkable to a
+  document/transaction/VAT return, fully audit-logged
+- Tax calendar: all VAT periods across financial years with a computed status (completed/
+  pending/upcoming/overdue) derived from the VAT return's real status and today's date —
+  list and calendar (by-month) views
+- AI accountant assistant (`app/accounting/assistant_facts.py` +
+  `app/services/ai_assistant_provider.py`): Claude is given a JSON bundle of facts already
+  computed by deterministic Python services and asked to explain/summarize them in prose.
+  It has no database access and no write path, so it cannot change, approve, or lock any
+  record by construction, not just by instruction. Every response carries the underlying
+  facts and an explicit disclaimer. Verified live: it correctly declined to comment on data
+  it wasn't given rather than inventing it, and recommended the normal review process
+  rather than suggesting anything be auto-approved.
+- Professional reports, generated purely from database records (never from AI output),
+  in PDF (via PyMuPDF — already a dependency, no new PDF library added), XLSX (openpyxl),
+  and CSV (stdlib): a VAT Return Report (box breakdown, sales/purchase overview, VAT-by-rate,
+  reverse-charge overview, input VAT summary, reconciliation findings) and a Financial
+  Overview Report (income/expense by period, payment status, outstanding invoices); period
+  comparison reuses the same computation as a JSON endpoint for the frontend
+- Next.js UI: revamped Dashboard, company Workspace tab, Tax Calendar (list + calendar
+  view), Accountant Assistant chat-style page, Reports page with PDF/XLSX/CSV downloads
+  (also available directly from the VAT return detail page), Settings page; nav extended
+  to all 9 required sections
+
+### Integration/security fixes made during Phase 4
+- `JWT_SECRET` in `.env` was still the literal `change-me-in-production` placeholder
+  (never rotated when `.env.example` was copied) — replaced with a securely generated
+  random secret; added a startup warning if the insecure default is ever still active
+- `POST /companies/{id}/financial-years` had no role check at all (any authenticated user
+  with company access, including viewers, could create financial years) — now requires
+  admin/accountant, with a regression test
+- `app/api/v1/assistant.py` imported `get_assistant_provider` by name instead of importing
+  the module, which silently broke the test-mocking pattern used everywhere else in the
+  codebase — every assistant test was quietly hitting the real Claude API instead of the
+  mock. Fixed to match the established `from app.services import x; x.get_y()` pattern;
+  caught because the fake provider's test assertions on response content failed once a
+  second test checked the actual `answer` field, not just the facts
+- Minor: PDF reports used em-dash/middle-dot characters that don't render in PyMuPDF's
+  base-14 Helvetica font (rendered as a stray glyph); replaced with plain ASCII
+
+## Explicitly deferred (Phase 4)
+- SBR/Belastingdienst submission integration — explicitly out of scope per the brief;
+  nothing in this phase submits a return anywhere, only prepares and locks it internally
+- A dedicated calendar-grid UI (the "calendar view" is a by-month list grouping, not a
+  rendered month grid) — list view covers the same information with less UI complexity
+- Customer-facing portal for answering questions/providing documents — notes/questions are
+  accountant-facing only; there is no separate client login

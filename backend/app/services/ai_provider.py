@@ -16,15 +16,24 @@ SYSTEM_PROMPT = (
     "Only report values that are explicitly present in the text. "
     "If a field is not present or you are not confident, set it to null — never guess or invent a value. "
     "document_type must be one of SALES_INVOICE, PURCHASE_INVOICE, CREDIT_NOTE, RECEIPT, BANK_STATEMENT, OTHER. "
+    "The document text may be preceded by a line naming the accounting client whose records this document "
+    "belongs to. A document is a SALES_INVOICE when that client is the supplier/seller on the invoice, and "
+    "a PURCHASE_INVOICE when that client is the customer/buyer. If no client name is given, or the "
+    "document text does not let you tell which side the client is on, classify conservatively (lower "
+    "classification_confidence) rather than guessing. "
     "classification_confidence is your confidence (0.0-1.0) in the document_type classification. "
     "Support both Dutch and international invoice formats. "
+    "Always report invoice_date and due_date as ISO 8601 (YYYY-MM-DD), converting from whatever format "
+    "the document uses (e.g. Dutch DD-MM-YYYY) -- never leave them in the source format. "
     "Where feasible, record in field_sources a short location hint per extracted field "
     "(e.g. {'invoice_number': 'page 1'})."
 )
 
 
 class AIExtractionProvider(Protocol):
-    def extract_invoice_fields(self, text: str) -> InvoiceExtraction: ...
+    def extract_invoice_fields(
+        self, text: str, client_company_name: str | None = None, client_vat_number: str | None = None
+    ) -> InvoiceExtraction: ...
 
 
 class ClaudeExtractionProvider:
@@ -35,8 +44,16 @@ class ClaudeExtractionProvider:
             raise RuntimeError("ANTHROPIC_API_KEY not configured")
         self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
-    def extract_invoice_fields(self, text: str) -> InvoiceExtraction:
+    def extract_invoice_fields(
+        self, text: str, client_company_name: str | None = None, client_vat_number: str | None = None
+    ) -> InvoiceExtraction:
         schema = InvoiceExtraction.model_json_schema()
+        preamble = ""
+        if client_company_name:
+            preamble = f"Accounting client: {client_company_name}"
+            if client_vat_number:
+                preamble += f" (VAT number {client_vat_number})"
+            preamble += "\n\n"
         response = self._client.messages.create(
             model=settings.anthropic_model,
             max_tokens=4096,
@@ -49,7 +66,7 @@ class ClaudeExtractionProvider:
                 }
             ],
             tool_choice={"type": "tool", "name": EXTRACTION_TOOL_NAME},
-            messages=[{"role": "user", "content": text[:50_000]}],
+            messages=[{"role": "user", "content": (preamble + text)[:50_000]}],
         )
         for block in response.content:
             if block.type == "tool_use" and block.name == EXTRACTION_TOOL_NAME:
@@ -61,7 +78,9 @@ class StubExtractionProvider:
     """Used when no AI provider is configured. Never invents data — everything
     comes back null so the document is routed to manual review."""
 
-    def extract_invoice_fields(self, text: str) -> InvoiceExtraction:
+    def extract_invoice_fields(
+        self, text: str, client_company_name: str | None = None, client_vat_number: str | None = None
+    ) -> InvoiceExtraction:
         return InvoiceExtraction(document_type="OTHER", classification_confidence=0.0)
 
 

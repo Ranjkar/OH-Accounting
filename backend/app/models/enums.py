@@ -110,3 +110,15 @@ class VatReturnStatus(str, enum.Enum):
     ready_for_approval = "ready_for_approval"
     approved = "approved"
     locked = "locked"
+
+
+class NoteType(str, enum.Enum):
+    internal = "INTERNAL"
+    customer_question = "CUSTOMER_QUESTION"
+    missing_document_request = "MISSING_DOCUMENT_REQUEST"
+
+
+class NoteStatus(str, enum.Enum):
+    open = "OPEN"
+    answered = "ANSWERED"
+    resolved = "RESOLVED"
