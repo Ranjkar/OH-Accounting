@@ -57,6 +57,7 @@ class TransactionOut(BaseModel):
     counterparty_name: str | None
     counterparty_vat_number: str | None
     counterparty_country_code: str | None
+    counterparty_iban: str | None
     invoice_date: date
     delivery_date: date | None
     due_date: date | None
@@ -72,6 +73,7 @@ class TransactionOut(BaseModel):
     payment_status: PaymentStatus
     approval_status: TransactionApprovalStatus
     accounting_classification: str | None
+    expense_category: str | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

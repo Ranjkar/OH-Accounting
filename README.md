@@ -308,3 +308,112 @@ so the two screens can never drift apart, while still being genuinely separate r
   dependency, deliberately not added without a concrete requirement
 - A full nav redesign — the top nav is now 12 items and visibly dense; a collapsible
   sidebar would be the right follow-up but is a design change beyond this phase's scope
+
+## What's implemented (Phase 6)
+
+**No live bank integration exists.** PSD2/Open Banking requires a licensed TPP registration
+and a real bank's sandbox/production API access, neither of which exist in this environment.
+What's built instead is a deterministic **file-import** pipeline (CAMT.053, CAMT.054, MT940,
+CSV) behind an adapter-shaped boundary (`app/accounting/bank_import.py` /
+`bank_parsers.py`) so a real PSD2 adapter could be added later without touching the
+reconciliation engine. Nothing ever stores a bank login credential or online-banking
+password — only import files and the transaction data parsed out of them.
+
+**Bank transaction ledger** — `app/models/banking.py` (`BankAccount`, `BankImportBatch`,
+`BankTransaction`, `PaymentMatch`). Import is idempotent via a SHA-256-based `dedupe_hash`
+per transaction (re-importing the same file produces zero new rows, verified by test).
+`BankTransaction` rows are never edited in place except `reconciliation_status`/match
+bookkeeping — the parsed source fields are immutable.
+
+**Matching engine** (`app/accounting/matching_engine.py`) — deterministic, named-signal
+scoring (exact amount, invoice number in reference, payment reference, IBAN, counterparty
+name, date proximity), confidence bands HIGH/MEDIUM/LOW/NONE from a plain numeric score
+(never an opaque ML score), bounded combinatorial search for combined (1 bank tx : many
+invoices) matches, explicit overpayment signal (surfaced as LOW for review, never silently
+dropped or silently treated as exact). `app/accounting/reconciliation_service.py` turns a
+SUGGESTED match into a real `Payment` on approval, and **reverses by voiding** the payment
+(`Payment.voided`/`voided_by_user_id`/`voided_at`/`void_reason`) — never deletes it, so the
+full audit history survives a correction.
+
+**Real bug found and fixed while building this**: `_refresh_bank_transaction_status`
+queried the database for a `PaymentMatch`'s own just-changed `status` immediately after
+changing it, relying on an implicit autoflush. The app's real session factory
+(`app/db/session.py`) is `autoflush=False`, so in the running dev server a bank
+transaction stayed stuck at `SUGGESTED_MATCH` forever after its match was approved — the
+pytest suite never caught this because the test fixture's session was `autoflush=True` by
+default, silently papering over the exact mismatch that broke the real server. Fixed by
+adding an explicit `db.flush()` inside `_refresh_bank_transaction_status`, and — more
+importantly — changed `tests/conftest.py`'s session fixture to `autoflush=False` to match
+production exactly, so this class of bug fails a test from now on. Verified against a
+live `uvicorn` instance (not just pytest) after the fix: import → suggest → approve → the
+transaction now correctly shows `MATCHED`.
+
+**AI bookkeeping assistant** — `app/services/ai_categorization_provider.py`, same
+forced-tool-use structured-output pattern as the existing extraction/assistant providers.
+Suggestions always carry confidence, evidence, and reasoning, and
+`requires_accountant_review` is explicitly set when confidence is low; the AI never writes
+`expense_category` directly — `app/api/v1/automation.py`'s `/categorize` endpoint does, and
+only on explicit accountant action.
+
+**Expense categorization rules** — `app/models/categorization.py`, scoped by `company_id`
+and never cross-company (verified by test — a rule created for one company produces zero
+matches when queried against another). Correcting a category can optionally create a rule
+from that correction for next time.
+
+**Recurring detection** (`app/accounting/recurring_detection.py`) — groups bank transactions
+by counterparty, classifies the interval (weekly/monthly/quarterly/annual) from the average
+gap, flags `MISSING` when overdue. Detection only — never creates, approves, or pays
+anything.
+
+**Anomaly detection** (`app/accounting/anomaly_detection.py`) — four transparent,
+evidence-carrying rules (duplicate payment, supplier bank-detail change, unexpected expense
+increase, aging unmatched bank transaction), each idempotent (re-running clears and
+regenerates only that rule's own open flags). No rule or code path ever sets a "fraud"
+label — flags are leads for a human, not a verdict.
+
+**Automation Centre** — `GET /companies/{id}/automation-centre` aggregates unmatched/
+suggested/high-confidence-suggested counts, categorization backlog, open anomalies,
+missing recurring patterns, and failed import batches into one dashboard query, plus
+action endpoints to re-run detection and a `bulk-approve-high-confidence` endpoint that
+only ever touches already-HIGH-confidence SUGGESTED matches (MEDIUM/LOW always need
+individual review).
+
+**Cash-flow forecasting** (`app/accounting/cash_flow.py`) — every figure is explicitly
+labeled actual (imported bank movement, with a disclaimer that it's not a live balance),
+confirmed (outstanding invoice totals from the ledger), or estimated (recurring-pattern
+projection, VAT-return-not-yet-locked projection); the monthly projection table is marked
+`is_estimate: true` on every row. Never presents a projection as a confirmed balance.
+
+**Frontend** (all new pages, build/lint/typecheck clean): `/banking` (accounts, statement
+import, import history), `/bank-transactions` (list + detail + exclude), `/reconciliation`
+(suggested-match queue with approve/reject, separate approved-match queue with reverse —
+reverse is only ever offered on an APPROVED match, matching the backend's own precondition),
+`/automation` (dashboard tiles linking into each workflow, re-run-detection buttons),
+`/categories` (rule CRUD, AI suggestion, manual categorize-and-remember), `/anomalies`
+(list, acknowledge/dismiss), `/cash-flow` (actual/confirmed/estimated broken out visually,
+disclaimers inline). `npx tsc --noEmit`, `npm run lint`, and `npm run build` all pass clean.
+
+**Verification**: 38 new backend tests (13 service-level, 25 API-level — matching engine,
+parsers, and banking API already had 32 from earlier in this session) plus the existing
+suite, 205 total, all passing against a real Postgres test database. Additionally smoke-
+tested against a live `uvicorn` dev server (separate port, existing dev server left
+untouched) end-to-end: login → create company → create bank account → import a synthetic
+CAMT.053 file → automatic match suggestion → manual categorization with AI suggestion →
+rule creation → approve match → payment created → bank transaction correctly shows
+`MATCHED` → recurring/anomaly detection endpoints run cleanly. All test/demo data is
+synthetic; no real bank credentials or real customer financial records were used anywhere.
+
+## Explicitly deferred (Phase 6)
+- **Any live PSD2/Open Banking connection** — no TPP license, no bank sandbox access exists
+  in this environment. The adapter boundary is shaped to accept one later; none is wired up,
+  and nothing here claims otherwise.
+- **SBR/Digipoort VAT filing** — unchanged from Phase 5's explicit non-claim; this phase
+  doesn't touch it.
+- **Automatic payments or automatic VAT submission** — explicitly out of scope per this
+  phase's own instructions; no code path anywhere sends money or files a return.
+- The 17-step synthetic E2E acceptance scenario from the phase spec was exercised in pieces
+  (via the smoke test above and the API test suite) rather than as one single scripted run;
+  a dedicated end-to-end test file was not written for the full sequence.
+- A customer-facing cut of the new screens (Banking/Reconciliation/etc. are accountant-
+  oriented; no customer-role view of any of this was built, consistent with Phase 5's
+  customer-portal gap).

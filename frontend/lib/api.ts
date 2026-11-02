@@ -124,6 +124,7 @@ export interface Transaction {
   payment_status: TransactionPaymentStatus;
   approval_status: TransactionApprovalStatus;
   accounting_classification: string | null;
+  expense_category: string | null;
   created_at: string;
 }
 
@@ -444,6 +445,164 @@ export interface AssistantResponse {
   disclaimer: string;
 }
 
+// ---- Phase 6: banking, reconciliation, automation ----
+
+export type BankSourceFormat = "CAMT053" | "CAMT054" | "MT940" | "CSV";
+export type BankConsentStatus = "NOT_CONNECTED" | "FILE_IMPORT_ONLY" | "CONNECTED";
+export type ReconciliationStatus =
+  | "IMPORTED"
+  | "UNMATCHED"
+  | "SUGGESTED_MATCH"
+  | "MATCHED"
+  | "PARTIALLY_MATCHED"
+  | "MANUALLY_RECONCILED"
+  | "EXCLUDED";
+export type MatchStatus = "SUGGESTED" | "APPROVED" | "REJECTED" | "REVERSED";
+export type RecurringFrequency = "WEEKLY" | "MONTHLY" | "QUARTERLY" | "ANNUAL";
+export type RecurringStatus = "ACTIVE" | "MISSING" | "STOPPED";
+export type AnomalySeverity = "info" | "warning" | "critical";
+export type AnomalyStatus = "OPEN" | "ACKNOWLEDGED" | "DISMISSED";
+export type CategorizationRuleType = "SUPPLIER_NAME" | "IBAN" | "DESCRIPTION_PATTERN";
+
+export interface BankAccount {
+  id: number;
+  company_id: number;
+  iban: string;
+  account_name: string;
+  currency: string;
+  consent_status: BankConsentStatus;
+  created_at: string;
+}
+
+export interface BankImportBatch {
+  id: number;
+  bank_account_id: number;
+  source_format: BankSourceFormat;
+  original_filename: string;
+  transaction_count: number;
+  duplicate_count: number;
+  error_count: number;
+  error_message: string | null;
+  imported_by_user_id: number;
+  imported_at: string;
+}
+
+export interface PaymentMatch {
+  id: number;
+  bank_transaction_id: number;
+  accounting_transaction_id: number;
+  allocated_amount: string;
+  confidence_score: string;
+  confidence_level: string;
+  match_signals: Record<string, unknown>;
+  status: string;
+  created_at: string;
+  approved_by_user_id: number | null;
+  approved_at: string | null;
+  payment_id: number | null;
+}
+
+export interface BankTransaction {
+  id: number;
+  bank_account_id: number;
+  import_batch_id: number;
+  external_transaction_id: string | null;
+  booking_date: string;
+  value_date: string | null;
+  amount: string;
+  currency: string;
+  counterparty_name: string | null;
+  counterparty_iban: string | null;
+  payment_reference: string | null;
+  description: string | null;
+  source_format: BankSourceFormat;
+  reconciliation_status: ReconciliationStatus;
+  created_at: string;
+}
+
+export interface BankTransactionDetail extends BankTransaction {
+  matches: PaymentMatch[];
+}
+
+export interface CategorizationRule {
+  id: number;
+  company_id: number;
+  rule_type: CategorizationRuleType;
+  match_value: string;
+  category: string;
+  created_at: string;
+}
+
+export interface CategorySuggestion {
+  suggested_category: string;
+  confidence: number;
+  reasoning: string;
+  evidence: string[];
+  requires_accountant_review: boolean;
+}
+
+export interface RecurringPattern {
+  id: number;
+  company_id: number;
+  counterparty_name: string | null;
+  counterparty_iban: string | null;
+  frequency: RecurringFrequency;
+  expected_amount: string;
+  last_transaction_date: string;
+  next_expected_date: string;
+  status: RecurringStatus;
+  occurrence_count: number;
+}
+
+export interface AnomalyFlag {
+  id: number;
+  company_id: number;
+  rule_code: string;
+  severity: AnomalySeverity;
+  message: string;
+  evidence: Record<string, unknown>;
+  related_entity_type: string;
+  related_entity_id: number;
+  status: AnomalyStatus;
+  created_at: string;
+}
+
+export interface AutomationCentreSummary {
+  company_id: number;
+  unmatched_transactions: number;
+  suggested_matches: number;
+  high_confidence_suggested_matches: number;
+  missing_invoices_estimate: number;
+  expenses_awaiting_categorization: number;
+  open_anomalies: number;
+  recurring_missing: number;
+  failed_import_batches: number;
+  pending_notes: number;
+}
+
+export interface CashFlowForecast {
+  as_of: string;
+  net_bank_transaction_movement: string;
+  net_bank_transaction_movement_disclaimer: string;
+  expected_incoming_total: string;
+  expected_outgoing_total: string;
+  outstanding_sales_invoice_count: number;
+  outstanding_purchase_invoice_count: number;
+  recurring_expenses_monthly_equivalent: string;
+  recurring_pattern_count: number;
+  forecast_vat_payable: string;
+  forecast_vat_refundable: string;
+  forecast_vat_disclaimer: string;
+  monthly_projection: {
+    month: string;
+    expected_incoming: string;
+    expected_outgoing: string;
+    net: string;
+    is_estimate: boolean;
+  }[];
+  monthly_projection_disclaimer: string;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<{ access_token: string }>("/auth/login", {
@@ -741,4 +900,101 @@ export const api = {
     }
   },
   batchExportUrl: (batchId: number) => `${API_BASE}/batches/${batchId}/export`,
+
+  // ---- Phase 6: banking ----
+  listBankAccounts: (token: string, companyId?: number) =>
+    request<BankAccount[]>(`/bank-accounts${companyId ? `?company_id=${companyId}` : ""}`, { token }),
+  createBankAccount: (token: string, payload: { company_id: number; iban: string; account_name: string }) =>
+    request<BankAccount>("/bank-accounts", { method: "POST", token, body: JSON.stringify(payload) }),
+  importBankStatement: async (
+    token: string,
+    bankAccountId: number,
+    sourceFormat: BankSourceFormat,
+    file: File
+  ): Promise<BankImportBatch> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(
+      `${API_BASE}/bank-accounts/${bankAccountId}/import?source_format=${sourceFormat}`,
+      { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form }
+    );
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new ApiError(res.status, body.detail ?? "Import failed");
+    }
+    return res.json();
+  },
+  listImportBatches: (token: string, bankAccountId: number) =>
+    request<BankImportBatch[]>(`/bank-accounts/${bankAccountId}/import-batches`, { token }),
+  listBankTransactions: (
+    token: string,
+    filters: { company_id?: number; bank_account_id?: number; reconciliation_status?: ReconciliationStatus } = {}
+  ) => {
+    const params = new URLSearchParams();
+    if (filters.company_id) params.set("company_id", String(filters.company_id));
+    if (filters.bank_account_id) params.set("bank_account_id", String(filters.bank_account_id));
+    if (filters.reconciliation_status) params.set("reconciliation_status", filters.reconciliation_status);
+    const qs = params.toString();
+    return request<BankTransaction[]>(`/bank-transactions${qs ? `?${qs}` : ""}`, { token });
+  },
+  getBankTransaction: (token: string, id: number) => request<BankTransactionDetail>(`/bank-transactions/${id}`, { token }),
+  suggestMatches: (token: string, bankTransactionId: number) =>
+    request<PaymentMatch[]>(`/bank-transactions/${bankTransactionId}/suggest-matches`, { method: "POST", token }),
+  excludeBankTransaction: (token: string, bankTransactionId: number) =>
+    request<BankTransaction>(`/bank-transactions/${bankTransactionId}/exclude`, { method: "POST", token }),
+  approveMatch: (token: string, matchId: number) =>
+    request<PaymentMatch>(`/payment-matches/${matchId}/approve`, { method: "POST", token }),
+  rejectMatch: (token: string, matchId: number) =>
+    request<PaymentMatch>(`/payment-matches/${matchId}/reject`, { method: "POST", token }),
+  reverseMatch: (token: string, matchId: number, reason: string) =>
+    request<PaymentMatch>(`/payment-matches/${matchId}/reverse`, { method: "POST", token, body: JSON.stringify({ reason }) }),
+  bulkApproveHighConfidence: (token: string, companyId: number) =>
+    request<PaymentMatch[]>(`/payment-matches/bulk-approve-high-confidence?company_id=${companyId}`, { method: "POST", token }),
+
+  // ---- Phase 6: expense categorization ----
+  listCategorizationRules: (token: string, companyId: number) =>
+    request<CategorizationRule[]>(`/categorization-rules?company_id=${companyId}`, { token }),
+  createCategorizationRule: (
+    token: string,
+    payload: { company_id: number; rule_type: CategorizationRuleType; match_value: string; category: string }
+  ) => request<CategorizationRule>("/categorization-rules", { method: "POST", token, body: JSON.stringify(payload) }),
+  suggestCategory: (token: string, transactionId: number) =>
+    request<CategorySuggestion>(`/transactions/${transactionId}/category-suggestion`, { token }),
+  categorizeTransaction: (token: string, transactionId: number, category: string, rememberAsRule: boolean) =>
+    request<{ transaction_id: number; expense_category: string; rule_created_id: number | null }>(
+      `/transactions/${transactionId}/categorize`,
+      { method: "POST", token, body: JSON.stringify({ category, remember_as_rule: rememberAsRule }) }
+    ),
+  applyCategorizationRules: (token: string, companyId: number) =>
+    request<{ transactions_checked: number; rules_applied: number }>(
+      `/companies/${companyId}/apply-categorization-rules`,
+      { method: "POST", token }
+    ),
+  listUncategorizedTransactions: (token: string, companyId: number) =>
+    request<Transaction[]>(`/transactions?company_id=${companyId}`, { token }).then((txs) =>
+      txs.filter((t) => t.ledger_side === "PURCHASES" && !t.expense_category)
+    ),
+
+  // ---- Phase 6: recurring + anomalies ----
+  detectRecurring: (token: string, companyId: number) =>
+    request<RecurringPattern[]>(`/companies/${companyId}/detect-recurring`, { method: "POST", token }),
+  listRecurringPatterns: (token: string, companyId: number) =>
+    request<RecurringPattern[]>(`/companies/${companyId}/recurring-patterns`, { token }),
+  detectAnomalies: (token: string, companyId: number) =>
+    request<AnomalyFlag[]>(`/companies/${companyId}/detect-anomalies`, { method: "POST", token }),
+  listAnomalies: (token: string, companyId: number, statusFilter?: AnomalyStatus) =>
+    request<AnomalyFlag[]>(
+      `/companies/${companyId}/anomalies${statusFilter ? `?status_filter=${statusFilter}` : ""}`,
+      { token }
+    ),
+  acknowledgeAnomaly: (token: string, anomalyId: number) =>
+    request<AnomalyFlag>(`/anomalies/${anomalyId}/acknowledge`, { method: "POST", token }),
+  dismissAnomaly: (token: string, anomalyId: number) =>
+    request<AnomalyFlag>(`/anomalies/${anomalyId}/dismiss`, { method: "POST", token }),
+
+  // ---- Phase 6: automation centre + cash flow ----
+  automationCentreSummary: (token: string, companyId: number) =>
+    request<AutomationCentreSummary>(`/companies/${companyId}/automation-centre`, { token }),
+  cashFlowForecast: (token: string, companyId: number, monthsAhead = 3) =>
+    request<CashFlowForecast>(`/companies/${companyId}/cash-flow-forecast?months_ahead=${monthsAhead}`, { token }),
 };

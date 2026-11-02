@@ -11,7 +11,7 @@ ZERO = Decimal("0")
 
 
 def total_paid(payments: list[Payment]) -> Decimal:
-    return sum((p.amount for p in payments), ZERO)
+    return sum((p.amount for p in payments if not p.voided), ZERO)
 
 
 def compute_payment_status(

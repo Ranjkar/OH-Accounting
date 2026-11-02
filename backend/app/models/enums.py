@@ -128,3 +128,82 @@ class NoteStatus(str, enum.Enum):
 class BatchStatus(str, enum.Enum):
     processing = "processing"
     completed = "completed"
+
+
+class BankSourceFormat(str, enum.Enum):
+    camt053 = "CAMT053"
+    camt054 = "CAMT054"
+    mt940 = "MT940"
+    csv = "CSV"
+
+
+class BankConsentStatus(str, enum.Enum):
+    """Open Banking connection status. Always not_connected in this build --
+    there is no live provider integration, only file import. See
+    docs/bank-integration.md."""
+
+    not_connected = "NOT_CONNECTED"
+    connected = "CONNECTED"
+    error = "ERROR"
+    revoked = "REVOKED"
+
+
+class ReconciliationStatus(str, enum.Enum):
+    imported = "IMPORTED"
+    unmatched = "UNMATCHED"
+    suggested_match = "SUGGESTED_MATCH"
+    matched = "MATCHED"
+    partially_matched = "PARTIALLY_MATCHED"
+    manually_reconciled = "MANUALLY_RECONCILED"
+    excluded = "EXCLUDED"
+
+
+class MatchConfidence(str, enum.Enum):
+    high = "HIGH"
+    medium = "MEDIUM"
+    low = "LOW"
+    none = "NONE"
+
+
+class MatchStatus(str, enum.Enum):
+    suggested = "SUGGESTED"
+    approved = "APPROVED"
+    rejected = "REJECTED"
+    reversed = "REVERSED"
+
+
+class RecurringFrequency(str, enum.Enum):
+    weekly = "WEEKLY"
+    monthly = "MONTHLY"
+    quarterly = "QUARTERLY"
+    annual = "ANNUAL"
+
+
+class RecurringStatus(str, enum.Enum):
+    active = "ACTIVE"
+    missing = "MISSING"
+    stopped = "STOPPED"
+
+
+class CategorySource(str, enum.Enum):
+    rule = "RULE"
+    ai_suggested = "AI_SUGGESTED"
+    manual = "MANUAL"
+
+
+class CategorizationRuleType(str, enum.Enum):
+    supplier_name = "SUPPLIER_NAME"
+    iban = "IBAN"
+    description_pattern = "DESCRIPTION_PATTERN"
+
+
+class AnomalySeverity(str, enum.Enum):
+    info = "info"
+    warning = "warning"
+    critical = "critical"
+
+
+class AnomalyStatus(str, enum.Enum):
+    open = "OPEN"
+    acknowledged = "ACKNOWLEDGED"
+    dismissed = "DISMISSED"

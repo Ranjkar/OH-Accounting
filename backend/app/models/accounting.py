@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.enums import (
+    CategorySource,
     InputVatEligibility,
     LedgerSide,
     PaymentStatus,
@@ -41,6 +42,7 @@ class AccountingTransaction(Base):
     counterparty_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     counterparty_vat_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
     counterparty_country_code: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    counterparty_iban: Mapped[str | None] = mapped_column(String(34), nullable=True)
 
     invoice_date: Mapped[date] = mapped_column(Date)
     delivery_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -68,6 +70,12 @@ class AccountingTransaction(Base):
         default=TransactionApprovalStatus.draft,
     )
     accounting_classification: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    expense_category: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    category_confidence: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    category_source: Mapped[CategorySource | None] = mapped_column(
+        Enum(CategorySource, name="category_source"), nullable=True
+    )
 
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(
@@ -127,6 +135,12 @@ class Payment(Base):
     amount: Mapped[Decimal] = mapped_column(MONEY)
     payment_date: Mapped[date] = mapped_column(Date)
     reference: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    bank_transaction_id: Mapped[int | None] = mapped_column(ForeignKey("bank_transactions.id"), nullable=True)
+
+    voided: Mapped[bool] = mapped_column(default=False)
+    voided_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    void_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(

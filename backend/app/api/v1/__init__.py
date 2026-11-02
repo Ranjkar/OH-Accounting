@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app.api.v1 import (
     assistant,
     auth,
+    automation,
+    banking,
     batches,
     companies,
     dashboard,
@@ -26,3 +28,5 @@ router.include_router(workspace.router)
 router.include_router(tax_calendar.router)
 router.include_router(assistant.router)
 router.include_router(reports.router)
+router.include_router(banking.router)
+router.include_router(automation.router)

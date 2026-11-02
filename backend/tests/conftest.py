@@ -36,7 +36,11 @@ def engine():
 
 @pytest.fixture()
 def test_session_local(engine):
-    return sessionmaker(bind=engine)
+    # autoflush=False to match app.db.session.SessionLocal exactly -- a test
+    # session that autoflushes would hide bugs where a query right after a
+    # same-session mutation silently depends on an implicit flush that the
+    # real app session never performs.
+    return sessionmaker(bind=engine, autoflush=False)
 
 
 @pytest.fixture()

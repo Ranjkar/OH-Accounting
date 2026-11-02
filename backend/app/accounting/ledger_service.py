@@ -99,6 +99,7 @@ def post_document_to_ledger(
         counterparty_name=counterparty_name,
         counterparty_vat_number=counterparty_vat_number,
         counterparty_country_code=vat_rules.country_from_vat_number(counterparty_vat_number),
+        counterparty_iban=fields.iban,
         invoice_date=invoice_date,
         due_date=fields.due_date,
         received_date=received_date,
@@ -198,6 +199,7 @@ def create_manual_entry(
     accounting_classification: str | None,
     line_items: list[dict],
     created_by_user_id: int,
+    counterparty_iban: str | None = None,
 ) -> AccountingTransaction:
     transaction = AccountingTransaction(
         tenant_id=tenant_id,
@@ -210,6 +212,7 @@ def create_manual_entry(
         counterparty_name=counterparty_name,
         counterparty_vat_number=counterparty_vat_number,
         counterparty_country_code=vat_rules.country_from_vat_number(counterparty_vat_number),
+        counterparty_iban=counterparty_iban,
         invoice_date=invoice_date,
         due_date=due_date,
         received_date=invoice_date,
