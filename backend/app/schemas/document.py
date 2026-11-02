@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.enums import DocumentStatus, DocumentType, PaymentStatus, ValidationSeverity
+from app.models.enums import DocumentStatus, DocumentType, LedgerSide, PaymentStatus, ValidationSeverity
 
 
 class ValidationResultOut(BaseModel):
@@ -102,6 +102,10 @@ class DocumentDetailOut(DocumentOut):
 
 class RejectRequest(BaseModel):
     reason: str
+
+
+class ApproveDocumentRequest(BaseModel):
+    credit_note_ledger_side: LedgerSide | None = None  # required only when the document is a credit note
 
 
 class ReassignRequest(BaseModel):

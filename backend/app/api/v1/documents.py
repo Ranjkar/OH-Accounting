@@ -15,12 +15,14 @@ from app.models.enums import DocumentStatus, UserRole
 from app.models.financial_year import FinancialYear
 from app.models.user import User
 from app.schemas.document import (
+    ApproveDocumentRequest,
     DocumentDetailOut,
     DocumentOut,
     ExtractedFieldsUpdate,
     ReassignRequest,
     RejectRequest,
 )
+from app.accounting import ledger_service
 from app.services import document_processing, storage
 from app.services.file_validation import CONTENT_TYPES, UnsupportedFileType, detect_kind, secure_filename, sha256_hex
 
@@ -225,13 +227,28 @@ def update_fields(
 
 
 @router.post("/{document_id}/approve", response_model=DocumentOut)
-def approve_document(document_id: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+def approve_document(
+    document_id: int,
+    payload: ApproveDocumentRequest = ApproveDocumentRequest(),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_editor),
+):
     document = _get_document_or_404(db, user, document_id)
     if document.status not in (DocumentStatus.extracted, DocumentStatus.needs_review):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Only extracted or needs-review documents can be approved",
         )
+
+    transaction = None
+    if ledger_service.is_postable(document.document_type):
+        try:
+            transaction = ledger_service.post_document_to_ledger(
+                db, document, user.id, credit_note_ledger_side=payload.credit_note_ledger_side
+            )
+        except ledger_service.LedgerPostingError as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
     document.status = DocumentStatus.approved
     if document.fields:
         document.fields.review_status = "approved"
@@ -244,6 +261,7 @@ def approve_document(document_id: int, db: Session = Depends(get_db), user: User
             action="approve",
             entity_type="document",
             entity_id=document.id,
+            after={"accounting_transaction_id": transaction.id} if transaction else None,
         )
     )
     db.commit()

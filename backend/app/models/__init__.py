@@ -1,3 +1,4 @@
+from app.models.accounting import AccountingTransaction, Payment, TransactionLineItem, VatReturn
 from app.models.audit_log import AuditLog
 from app.models.company import Company
 from app.models.customer import Customer
@@ -14,6 +15,7 @@ from app.models.tenant import Tenant
 from app.models.user import User, user_companies
 
 __all__ = [
+    "AccountingTransaction",
     "AuditLog",
     "Company",
     "Customer",
@@ -24,7 +26,10 @@ __all__ = [
     "DocumentValidationResult",
     "ExtractedInvoiceFields",
     "FinancialYear",
+    "Payment",
+    "TransactionLineItem",
     "VatPeriod",
+    "VatReturn",
     "Tenant",
     "User",
     "user_companies",

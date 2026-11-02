@@ -269,9 +269,12 @@ def test_approval_workflow_and_reprocess_blocked_after_approval(client, db_sessi
     _create_user(db_session)
     headers = _login(client, "admin@acme.nl")
     company_id = _create_company(client, headers)
+    fy = client.post(
+        f"/api/v1/companies/{company_id}/financial-years", json={"year": 2026}, headers=headers
+    ).json()
     doc = client.post(
         "/api/v1/documents/upload",
-        params={"company_id": company_id},
+        params={"company_id": company_id, "financial_year_id": fy["id"]},
         files={"file": ("invoice.pdf", _sample_pdf_bytes(), "application/pdf")},
         headers=headers,
     ).json()
@@ -282,6 +285,22 @@ def test_approval_workflow_and_reprocess_blocked_after_approval(client, db_sessi
 
     reprocess = client.post(f"/api/v1/documents/{doc['id']}/reprocess", headers=headers)
     assert reprocess.status_code == 409
+
+
+def test_approving_postable_document_without_financial_year_is_rejected(client, db_session, fake_ai_provider):
+    _create_user(db_session)
+    headers = _login(client, "admin@acme.nl")
+    company_id = _create_company(client, headers)
+    doc = client.post(
+        "/api/v1/documents/upload",
+        params={"company_id": company_id},
+        files={"file": ("invoice.pdf", _sample_pdf_bytes(), "application/pdf")},
+        headers=headers,
+    ).json()
+
+    response = client.post(f"/api/v1/documents/{doc['id']}/approve", headers=headers)
+    assert response.status_code == 409
+    assert "financial year" in response.json()["detail"].lower()
 
 
 def test_reject_requires_reason_and_sets_status(client, db_session, fake_ai_provider):

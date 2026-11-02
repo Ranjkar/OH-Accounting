@@ -6,18 +6,23 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/lib/auth-context";
-import { api, Company, FinancialYear } from "@/lib/api";
+import { api, Company, FinancialYear, VatAccountingBasis } from "@/lib/api";
 
 function CompanyDetailContent({ companyId }: { companyId: number }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const canEdit = user?.role === "admin";
   const [company, setCompany] = useState<Company | null>(null);
   const [years, setYears] = useState<FinancialYear[]>([]);
   const [newYear, setNewYear] = useState(new Date().getFullYear());
   const [error, setError] = useState<string | null>(null);
+  const [proRata, setProRata] = useState("");
 
   function refresh() {
     if (!token) return;
-    api.getCompany(token, companyId).then(setCompany).catch((e) => setError(e.message));
+    api.getCompany(token, companyId).then((c) => {
+      setCompany(c);
+      setProRata(c.input_vat_pro_rata_percentage ?? "");
+    }).catch((e) => setError(e.message));
     api.listFinancialYears(token, companyId).then(setYears).catch((e) => setError(e.message));
   }
 
@@ -35,6 +40,28 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
     }
   }
 
+  async function handleBasisChange(basis: VatAccountingBasis) {
+    if (!token) return;
+    try {
+      await api.updateCompany(token, companyId, { vat_accounting_basis: basis });
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update VAT accounting basis");
+    }
+  }
+
+  async function handleProRataSave() {
+    if (!token) return;
+    try {
+      await api.updateCompany(token, companyId, {
+        input_vat_pro_rata_percentage: proRata === "" ? null : Number(proRata),
+      });
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update pro-rata percentage");
+    }
+  }
+
   if (!company) return <p className="text-slate-500">Loading…</p>;
 
   return (
@@ -48,6 +75,41 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
+
+      <div className="bg-white rounded-lg border border-slate-200 p-4 flex items-end gap-6">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-500">VAT accounting basis</label>
+          <select
+            disabled={!canEdit}
+            value={company.vat_accounting_basis}
+            onChange={(e) => handleBasisChange(e.target.value as VatAccountingBasis)}
+            className="rounded-md border border-slate-300 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
+          >
+            <option value="invoice_based">Invoice-based</option>
+            <option value="cash_based">Cash-based</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-500">Input VAT pro-rata % (mixed activities)</label>
+          <div className="flex gap-2">
+            <input
+              disabled={!canEdit}
+              value={proRata}
+              onChange={(e) => setProRata(e.target.value)}
+              placeholder="e.g. 80"
+              className="w-24 rounded-md border border-slate-300 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
+            />
+            {canEdit && (
+              <button
+                onClick={handleProRataSave}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors"
+              >
+                Save
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleAddYear} className="flex items-end gap-3">
         <div className="space-y-1">

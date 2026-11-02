@@ -1,8 +1,9 @@
 from datetime import date
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.enums import VatFrequency, VatPeriodStatus
+from app.models.enums import VatAccountingBasis, VatFrequency, VatPeriodStatus
 
 
 class CompanyCreate(BaseModel):
@@ -20,8 +21,15 @@ class CompanyOut(BaseModel):
     vat_number: str | None
     address: str | None
     vat_frequency: VatFrequency
+    vat_accounting_basis: VatAccountingBasis
+    input_vat_pro_rata_percentage: Decimal | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyUpdate(BaseModel):
+    vat_accounting_basis: VatAccountingBasis | None = None
+    input_vat_pro_rata_percentage: Decimal | None = None
 
 
 class VatPeriodOut(BaseModel):

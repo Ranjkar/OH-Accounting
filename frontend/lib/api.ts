@@ -32,6 +32,152 @@ async function request<T>(
 export type UserRole = "admin" | "accountant" | "viewer";
 export type VatFrequency = "monthly" | "quarterly" | "annual";
 export type VatPeriodStatus = "open" | "filed" | "paid";
+export type VatAccountingBasis = "invoice_based" | "cash_based";
+
+export type TransactionType = "SALES_INVOICE" | "PURCHASE_INVOICE" | "CREDIT_NOTE" | "RECEIPT" | "MANUAL_ENTRY";
+export type LedgerSide = "SALES" | "PURCHASES";
+export type VatTreatment =
+  | "DOMESTIC_STANDARD"
+  | "DOMESTIC_LOW"
+  | "DOMESTIC_OTHER"
+  | "PRIVATE_USE"
+  | "DOMESTIC_ZERO_OR_EXEMPT"
+  | "EXEMPT"
+  | "DOMESTIC_REVERSE_CHARGE_RECEIVED"
+  | "EXPORT_NON_EU"
+  | "EU_SUPPLY"
+  | "EU_DISTANCE_SALE"
+  | "IMPORT_NON_EU"
+  | "EU_ACQUISITION";
+export type InputVatEligibility = "ELIGIBLE" | "INELIGIBLE" | "PARTIALLY_ELIGIBLE" | "REQUIRES_REVIEW";
+export type TransactionApprovalStatus = "DRAFT" | "APPROVED" | "LOCKED";
+export type TransactionPaymentStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID" | "OVERDUE" | "UNKNOWN";
+export type VatReturnStatus = "draft" | "needs_review" | "ready_for_approval" | "approved" | "locked";
+
+export const SALES_TREATMENTS: VatTreatment[] = [
+  "DOMESTIC_STANDARD",
+  "DOMESTIC_LOW",
+  "DOMESTIC_OTHER",
+  "PRIVATE_USE",
+  "DOMESTIC_ZERO_OR_EXEMPT",
+  "EXEMPT",
+  "EXPORT_NON_EU",
+  "EU_SUPPLY",
+  "EU_DISTANCE_SALE",
+];
+export const PURCHASE_TREATMENTS: VatTreatment[] = [
+  "DOMESTIC_STANDARD",
+  "DOMESTIC_LOW",
+  "DOMESTIC_OTHER",
+  "DOMESTIC_ZERO_OR_EXEMPT",
+  "EXEMPT",
+  "DOMESTIC_REVERSE_CHARGE_RECEIVED",
+  "IMPORT_NON_EU",
+  "EU_ACQUISITION",
+];
+
+export interface TransactionLineItem {
+  line_number: number;
+  description: string | null;
+  net_amount: string;
+  vat_rate: string;
+  vat_amount: string;
+  gross_amount: string;
+  vat_treatment: VatTreatment;
+  input_vat_eligibility: InputVatEligibility | null;
+  deductible_vat_amount: string | null;
+}
+
+export interface Payment {
+  id: number;
+  amount: string;
+  payment_date: string;
+  reference: string | null;
+  created_at: string;
+}
+
+export interface Transaction {
+  id: number;
+  company_id: number;
+  financial_year_id: number;
+  vat_period_id: number | null;
+  source_document_id: number | null;
+  corrects_transaction_id: number | null;
+  transaction_type: TransactionType;
+  ledger_side: LedgerSide;
+  invoice_number: string | null;
+  counterparty_name: string | null;
+  counterparty_vat_number: string | null;
+  counterparty_country_code: string | null;
+  invoice_date: string;
+  delivery_date: string | null;
+  due_date: string | null;
+  received_date: string | null;
+  currency: string;
+  fx_rate_to_eur: string | null;
+  net_amount: string;
+  vat_amount: string;
+  gross_amount: string;
+  net_amount_eur: string | null;
+  vat_amount_eur: string | null;
+  gross_amount_eur: string | null;
+  payment_status: TransactionPaymentStatus;
+  approval_status: TransactionApprovalStatus;
+  accounting_classification: string | null;
+  created_at: string;
+}
+
+export interface TransactionDetail extends Transaction {
+  line_items: TransactionLineItem[];
+  payments: Payment[];
+  amount_paid: string;
+  remaining_balance: string;
+}
+
+export interface VatReturn {
+  id: number;
+  company_id: number;
+  vat_period_id: number;
+  status: VatReturnStatus;
+  rules_version: string;
+  box_1a_net: string;
+  box_1a_vat: string;
+  box_1b_net: string;
+  box_1b_vat: string;
+  box_1c_net: string;
+  box_1c_vat: string;
+  box_1d_vat: string;
+  box_1e_net: string;
+  box_2a_net: string;
+  box_2a_vat: string;
+  box_3a_net: string;
+  box_3b_net: string;
+  box_3c_net: string;
+  box_4a_net: string;
+  box_4a_vat: string;
+  box_4b_net: string;
+  box_4b_vat: string;
+  box_5a_vat: string;
+  box_5b_vat: string;
+  net_payable: string;
+  computed_at: string | null;
+  approved_by_user_id: number | null;
+  approved_at: string | null;
+  locked_at: string | null;
+}
+
+export interface Reconciliation {
+  vat_return: VatReturn;
+  sales_total_net: string;
+  purchases_total_net: string;
+  sales_vat_by_rate: Record<string, string>;
+  purchase_vat_by_rate: Record<string, string>;
+  pending_documents: { id: number; original_filename: string; status: string }[];
+  duplicate_documents: { id: number; original_filename: string; duplicate_of_document_id: number | null }[];
+  validation_errors: { document_id: number; rule_code: string; message: string }[];
+  unresolved_fx_transaction_ids: number[];
+  corrections: Transaction[];
+}
 
 export interface User {
   id: number;
@@ -47,6 +193,8 @@ export interface Company {
   vat_number: string | null;
   address: string | null;
   vat_frequency: VatFrequency;
+  vat_accounting_basis: VatAccountingBasis;
+  input_vat_pro_rata_percentage: string | null;
 }
 
 export interface VatPeriod {
@@ -254,4 +402,88 @@ export const api = {
       token,
       body: JSON.stringify(payload),
     }),
+
+  updateCompany: (
+    token: string,
+    id: number,
+    payload: { vat_accounting_basis?: VatAccountingBasis; input_vat_pro_rata_percentage?: number | null }
+  ) =>
+    request<Company>(`/companies/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
+
+  listTransactions: (
+    token: string,
+    filters: { company_id?: number; vat_period_id?: number; transaction_type?: TransactionType } = {}
+  ) => {
+    const params = new URLSearchParams();
+    if (filters.company_id) params.set("company_id", String(filters.company_id));
+    if (filters.vat_period_id) params.set("vat_period_id", String(filters.vat_period_id));
+    if (filters.transaction_type) params.set("transaction_type", filters.transaction_type);
+    const qs = params.toString();
+    return request<Transaction[]>(`/transactions${qs ? `?${qs}` : ""}`, { token });
+  },
+  getTransaction: (token: string, id: number) => request<TransactionDetail>(`/transactions/${id}`, { token }),
+  createManualEntry: (
+    token: string,
+    payload: {
+      company_id: number;
+      financial_year_id: number;
+      ledger_side: LedgerSide;
+      invoice_date: string;
+      due_date?: string | null;
+      currency?: string;
+      fx_rate_to_eur?: string | null;
+      counterparty_name?: string | null;
+      counterparty_vat_number?: string | null;
+      accounting_classification?: string | null;
+      line_items: {
+        description?: string | null;
+        net_amount: string;
+        vat_rate: string;
+        vat_amount: string;
+        vat_treatment: VatTreatment;
+        input_vat_eligibility?: InputVatEligibility | null;
+      }[];
+    }
+  ) => request<TransactionDetail>("/transactions", { method: "POST", token, body: JSON.stringify(payload) }),
+  recordPayment: (token: string, transactionId: number, payload: { amount: string; payment_date: string; reference?: string }) =>
+    request<TransactionDetail>(`/transactions/${transactionId}/payments`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  approveTransaction: (token: string, id: number) =>
+    request<TransactionDetail>(`/transactions/${id}/approve`, { method: "POST", token }),
+  createCorrection: (
+    token: string,
+    transactionId: number,
+    payload: {
+      financial_year_id: number;
+      line_items: {
+        description?: string | null;
+        net_amount: string;
+        vat_rate: string;
+        vat_amount: string;
+        vat_treatment: VatTreatment;
+        input_vat_eligibility?: InputVatEligibility | null;
+      }[];
+    }
+  ) =>
+    request<TransactionDetail>(`/transactions/${transactionId}/corrections`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+
+  getOrComputeVatReturn: (token: string, companyId: number, vatPeriodId: number) =>
+    request<VatReturn>(`/vat-returns?company_id=${companyId}&vat_period_id=${vatPeriodId}`, { token }),
+  getReconciliation: (token: string, vatReturnId: number) =>
+    request<Reconciliation>(`/vat-returns/${vatReturnId}/reconciliation`, { token }),
+  recalculateVatReturn: (token: string, vatReturnId: number) =>
+    request<VatReturn>(`/vat-returns/${vatReturnId}/recalculate`, { method: "POST", token }),
+  submitVatReturnForApproval: (token: string, vatReturnId: number) =>
+    request<VatReturn>(`/vat-returns/${vatReturnId}/submit-for-approval`, { method: "POST", token }),
+  approveVatReturn: (token: string, vatReturnId: number) =>
+    request<VatReturn>(`/vat-returns/${vatReturnId}/approve`, { method: "POST", token }),
+  lockVatReturn: (token: string, vatReturnId: number) =>
+    request<VatReturn>(`/vat-returns/${vatReturnId}/lock`, { method: "POST", token }),
 };

@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/companies", label: "Companies" },
   { href: "/documents", label: "Documents" },
+  { href: "/ledger", label: "Ledger" },
+  { href: "/vat", label: "VAT" },
 ];
 
 export default function Shell({ children }: { children: ReactNode }) {

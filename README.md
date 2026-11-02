@@ -1,7 +1,8 @@
 # OnHolland Accounting
 
-AI-powered accounting and Dutch VAT administration platform. Phase 1 (Foundation) and
-Phase 2 (AI Document Intelligence) complete.
+AI-powered accounting and Dutch VAT administration platform. Phase 1 (Foundation),
+Phase 2 (AI Document Intelligence) and Phase 3 (Accounting Ledger & Dutch VAT Engine)
+complete.
 
 ## Stack
 - Backend: FastAPI + SQLAlchemy + Alembic + PostgreSQL, JWT auth
@@ -87,10 +88,62 @@ createdb onholland_accounting_test   # once
 - Next.js UI: Documents nav, upload, filterable list, review screen (file preview, editable
   fields, VAT breakdown, validation warnings, confidence, approve/reject/reprocess/reassign)
 
+## What's implemented (Phase 3)
+- `app/accounting/` package (separate from AI/OCR `app/services/`): `vat_rules.py`
+  (versioned Dutch rates + the sales/purchase box-mapping table), `vat_engine.py` (pure
+  Decimal calculation of every declaration box), `payment_engine.py` (deterministic
+  payment-status computation), `period_assignment.py` (invoice-based vs cash-based VAT
+  period assignment), `ledger_service.py` (document -> transaction conversion, manual
+  entries, corrections), `reconciliation.py` (the quarterly reconciliation view)
+- New tables: `accounting_transactions`, `transaction_line_items` (the source of truth for
+  multi-rate invoices), `payments` (manual-only, never inferred from invoice text),
+  `vat_returns` (one per VAT period, with computed box totals and a reconciliation
+  workflow status)
+- Approving a postable document (sales/purchase invoice, credit note, receipt) now posts
+  an `AccountingTransaction`, converting `DocumentLineItem`s 1:1 so multi-rate invoices
+  carry through correctly; idempotent (re-approving never double-posts); requires the
+  document to have a financial year assigned first (never guesses one)
+- Dutch VAT box engine: 1a/1b/1c (domestic sales by rate), 1d (private use), 1e (domestic
+  zero/exempt), 2a (domestic reverse-charge received), 3a/3b/3c (export/EU supply/distance
+  sale), 4a/4b (import/EU acquisition), 5a (total VAT due), 5b (deductible input VAT); the
+  final payable/refundable total is exposed as "5g" per this phase's brief, though the
+  current official Belastingdienst form computes that total rather than labeling it as a
+  box — documented in `vat_rules.py` rather than silently inventing a box that doesn't exist
+- Input VAT eligibility (ELIGIBLE/INELIGIBLE/PARTIALLY_ELIGIBLE/REQUIRES_REVIEW) per line
+  item; the deterministic default only ever auto-assigns ELIGIBLE (valid invoice number +
+  supplier VAT number) or REQUIRES_REVIEW — never INELIGIBLE/PARTIALLY_ELIGIBLE, which
+  require accountant judgment; partial deduction uses the company's configured pro-rata %
+  for mixed taxable/exempt activities, defaulting to 0% deducted (never guessed) if unset
+- Payment reconciliation: UNPAID/PARTIALLY_PAID/PAID/OVERDUE/UNKNOWN computed purely from
+  recorded `Payment` rows + due date, never from invoice text; supports multiple partial
+  payments per invoice
+- Money is `Decimal` end-to-end in the ledger (Phase 1/2's `Float` columns are untouched —
+  those stay AI-extraction staging data; floats are converted to Decimal once, at the
+  document -> transaction boundary)
+- Foreign-currency transactions without a confirmed FX rate are excluded from VAT return
+  box totals (flagged, not guessed at a rate of 1); an accountant supplies the rate via
+  `PATCH /transactions/{id}` while the transaction is still in draft
+- VAT return workflow: `draft -> needs_review -> ready_for_approval -> approved -> locked`;
+  once approved, direct transaction edits are blocked (409) and a new, audit-logged
+  correction transaction is required instead; locking a period cascades to lock every
+  transaction in it
+- Reconciliation view: sales/purchase ledger totals, VAT-by-rate breakdown, pending
+  (not-yet-approved) documents, duplicate documents, validation errors, unresolved-FX
+  transactions, and prior corrections — everything an accountant needs before approving
+- Tenant isolation verified on every transaction/VAT-return endpoint
+- Next.js UI: Ledger (list/filter, manual-entry form, transaction detail with payments and
+  corrections), VAT overview (per financial year, per period, with net payable + status),
+  VAT return detail (declaration-box preview, reconciliation checks, approve/lock actions);
+  company settings gained VAT accounting basis (invoice/cash-based) and pro-rata %
+
 ## Explicitly deferred (not needed yet)
 - Docker for backend/frontend, Redis, Celery — single-process BackgroundTasks is enough
-  at current volume (Phase 2); add a real queue if upload throughput or multi-worker
-  scaling requires durability across restarts
+  at current volume; add a real queue if upload throughput or multi-worker scaling
+  requires durability across restarts
 - Azure Blob storage, encryption at rest, SBR integration — Phase 5
-- VAT box calculation, the deterministic accounting/ledger engine, accountant reporting — Phase 3/4
+- Accountant reporting / professional PDF exports, tax calendar reminders — Phase 4
 - Per-row AI extraction for XLSX/CSV (currently deterministic column-mapping only)
+- A DB-editable tax-rule admin screen — rates are versioned in code (`vat_rules.py`); add
+  a DB-backed version if accountants need to adjust rates without a deploy
+- RECEIPT documents always post to the purchases side by default (the common case for an
+  expense receipt); there's no UI yet to flag a receipt as a cash sale instead

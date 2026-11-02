@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String
+from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
-from app.models.enums import VatFrequency
+from app.models.enums import VatAccountingBasis, VatFrequency
 from app.models.user import user_companies
 
 
@@ -19,6 +20,12 @@ class Company(Base):
     address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     vat_frequency: Mapped[VatFrequency] = mapped_column(
         Enum(VatFrequency, name="vat_frequency"), default=VatFrequency.quarterly
+    )
+    vat_accounting_basis: Mapped[VatAccountingBasis] = mapped_column(
+        Enum(VatAccountingBasis, name="vat_accounting_basis"), default=VatAccountingBasis.invoice_based
+    )
+    input_vat_pro_rata_percentage: Mapped[Decimal | None] = mapped_column(
+        Numeric(5, 2), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

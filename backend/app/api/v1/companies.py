@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.company import (
     CompanyCreate,
     CompanyOut,
+    CompanyUpdate,
     FinancialYearCreate,
     FinancialYearOut,
 )
@@ -66,6 +67,40 @@ def get_company(
     company = db.get(Company, company_id)
     if company is None or company.tenant_id != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+    return company
+
+
+@router.patch("/{company_id}", response_model=CompanyOut)
+def update_company(
+    company_id: int,
+    payload: CompanyUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if user.role != UserRole.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    company = db.get(Company, company_id)
+    if company is None or company.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+    before = {k: getattr(company, k) for k in updates}
+    for key, value in updates.items():
+        setattr(company, key, value)
+
+    db.add(
+        AuditLog(
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            action="correct",
+            entity_type="company",
+            entity_id=company.id,
+            before={k: str(v) for k, v in before.items()},
+            after={k: str(v) for k, v in updates.items()},
+        )
+    )
+    db.commit()
+    db.refresh(company)
     return company
 
 
