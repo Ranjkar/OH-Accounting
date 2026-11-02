@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
-import { api, CashFlowForecast, Company } from "@/lib/api";
+import { api, CashFlowForecast, Company, JsonReport } from "@/lib/api";
 
 function CashFlowContent() {
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
   const [forecast, setForecast] = useState<CashFlowForecast | null>(null);
+  const [tab, setTab] = useState<"forecast" | "statement">("forecast");
+  const [periodType, setPeriodType] = useState<"MONTHLY" | "QUARTERLY" | "ANNUAL">("MONTHLY");
+  const [referenceDate, setReferenceDate] = useState(new Date().toISOString().slice(0, 10));
+  const [statement, setStatement] = useState<JsonReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,29 +26,97 @@ function CashFlowContent() {
     api.cashFlowForecast(token, Number(companyId)).then(setForecast).catch((e) => setError(e.message));
   }, [token, companyId]);
 
+  useEffect(() => {
+    if (!token || !companyId || tab !== "statement") return;
+    api
+      .cashFlowStatement(token, { company_id: Number(companyId), period_type: periodType, reference_date: referenceDate })
+      .then(setStatement)
+      .catch((e) => setError(e.message));
+  }, [token, companyId, tab, periodType, referenceDate]);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Cash Flow</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-navy">Cash Flow</h1>
+        <div className="flex items-center gap-2 text-sm">
+          <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}>
+            Forecast
+          </button>
+          <button onClick={() => setTab("statement")} className={`rounded-full px-3 py-1 ${tab === "statement" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}>
+            Statement (actual)
+          </button>
+        </div>
+      </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select
-        value={companyId}
-        onChange={(e) => {
-          setCompanyId(e.target.value ? Number(e.target.value) : "");
-          if (!e.target.value) setForecast(null);
-        }}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-      >
-        <option value="">Select a company</option>
-        {companies.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+      <div className="flex items-center gap-3">
+        <select
+          value={companyId}
+          onChange={(e) => {
+            setCompanyId(e.target.value ? Number(e.target.value) : "");
+            if (!e.target.value) {
+              setForecast(null);
+              setStatement(null);
+            }
+          }}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        >
+          <option value="">Select a company</option>
+          {companies.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        {tab === "statement" && (
+          <>
+            <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+              <option value="MONTHLY">Monthly</option>
+              <option value="QUARTERLY">Quarterly</option>
+              <option value="ANNUAL">Annual</option>
+            </select>
+            <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          </>
+        )}
+      </div>
 
-      {forecast && (
+      {tab === "statement" && statement && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <p className="text-xs text-slate-500">Operating activities (net)</p>
+              <p className="text-xl font-semibold text-navy font-mono">{statement.operating_activities.net}</p>
+              <p className="text-xs text-slate-400">Receipts {statement.operating_activities.receipts} / Payments {statement.operating_activities.payments}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <p className="text-xs text-slate-500">Investing activities (net)</p>
+              <p className="text-xl font-semibold text-navy font-mono">{statement.investing_activities.net}</p>
+              <p className="text-xs text-slate-400">{statement.investing_activities.note}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <p className="text-xs text-slate-500">Financing activities (net)</p>
+              <p className="text-xl font-semibold text-navy font-mono">{statement.financing_activities.net}</p>
+              <p className="text-xs text-slate-400">{statement.financing_activities.note}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm font-medium text-navy">Net change in cash: <span className="font-mono">{statement.net_change_in_cash}</span></p>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <h2 className="font-medium text-navy mb-2">Accrual vs cash reconciliation</h2>
+            <p className="text-sm">Net profit (accrual): <span className="font-mono">{statement.accrual_vs_cash_reconciliation.net_profit_accrual}</span></p>
+            <p className="text-sm">+ Depreciation addback: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.depreciation_addback}</span></p>
+            <p className="text-sm">- Increase in AR: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.increase_in_accounts_receivable}</span></p>
+            <p className="text-sm">+ Increase in AP: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.increase_in_accounts_payable}</span></p>
+            <p className="text-sm font-medium">≈ Approx operating cash: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.approx_operating_cash_from_accrual}</span></p>
+            <p className="text-sm font-medium">Actual operating cash: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.actual_operating_cash}</span></p>
+            <p className="text-xs text-amber-600 mt-2">{statement.accrual_vs_cash_reconciliation.note}</p>
+          </div>
+        </div>
+      )}
+
+      {tab === "forecast" && forecast && (
         <>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white rounded-lg border border-slate-200 p-4">

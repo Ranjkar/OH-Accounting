@@ -1,14 +1,18 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from app.accounting import budget_service, financial_reports as fr, scenario_engine
 from app.core.deps import get_current_user, require_company_access
 from app.db.session import get_db
 from app.models.accounting import VatReturn
+from app.models.budget import Budget
 from app.models.company import Company
 from app.models.financial_year import FinancialYear
 from app.models.user import User
-from app.reporting import financial_report, vat_report
+from app.reporting import financial_report, management_report, vat_report
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -116,3 +120,83 @@ def period_comparison_json(
         "net_income": str(data["net_income"]),
         "payment_status_counts": data["payment_status_counts"],
     }
+
+
+@router.get("/profit-and-loss")
+def profit_and_loss_report(
+    company_id: int, period_type: fr.ReportPeriod = fr.ReportPeriod.annual, reference_date: date | None = None,
+    custom_start: date | None = None, custom_end: date | None = None, format: str = "pdf",
+    db: Session = Depends(get_db), user: User = Depends(get_current_user),
+):
+    company = _get_company(db, user, company_id)
+    period = fr.resolve_period(period_type, reference_date or date.today(), custom_start, custom_end)
+    pnl = fr.profit_and_loss(db, company_id, period)
+    label = f"{period.start} to {period.end}"
+    return _render(
+        format,
+        f"profit-and-loss-{company.id}-{period.start}-{period.end}",
+        {
+            "pdf": lambda: management_report.render_pnl_pdf(company, label, pnl),
+            "xlsx": lambda: management_report.render_pnl_xlsx(company, label, pnl),
+            "csv": lambda: management_report.render_pnl_csv(pnl),
+        },
+    )
+
+
+@router.get("/balance-sheet")
+def balance_sheet_report(
+    company_id: int, as_of_date: date | None = None, format: str = "pdf",
+    db: Session = Depends(get_db), user: User = Depends(get_current_user),
+):
+    company = _get_company(db, user, company_id)
+    as_of = as_of_date or date.today()
+    bs = fr.balance_sheet(db, company_id, as_of)
+    label = f"As of {as_of}"
+    return _render(
+        format,
+        f"balance-sheet-{company.id}-{as_of}",
+        {
+            "pdf": lambda: management_report.render_balance_sheet_pdf(company, label, bs),
+            "xlsx": lambda: management_report.render_balance_sheet_xlsx(company, label, bs),
+            "csv": lambda: management_report.render_balance_sheet_csv(bs),
+        },
+    )
+
+
+@router.get("/budget-vs-actual/{budget_id}")
+def budget_vs_actual_report(budget_id: int, format: str = "pdf", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    budget = db.get(Budget, budget_id)
+    if budget is None or budget.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found")
+    company = _get_company(db, user, budget.company_id)
+    variance = budget_service.budget_vs_actual(db, budget)
+    return _render(
+        format,
+        f"budget-vs-actual-{budget.id}",
+        {
+            "pdf": lambda: management_report.render_budget_vs_actual_pdf(company, variance),
+            "csv": lambda: management_report.render_budget_vs_actual_csv(variance),
+        },
+    )
+
+
+@router.get("/scenario-comparison")
+def scenario_comparison_report(
+    company_id: int, scenario_ids: str, format: str = "csv",
+    db: Session = Depends(get_db), user: User = Depends(get_current_user),
+):
+    from app.models.scenario import Scenario
+
+    company = _get_company(db, user, company_id)
+    ids = [int(x) for x in scenario_ids.split(",") if x.strip()]
+    scenarios = []
+    for sid in ids:
+        scenario = db.get(Scenario, sid)
+        if scenario is None or scenario.tenant_id != user.tenant_id or scenario.company_id != company.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Scenario {sid} not found")
+        scenarios.append(scenario)
+    comparison = scenario_engine.compare_scenarios(
+        db, company.id, [{"name": s.name, "assumptions": s.assumptions} for s in scenarios],
+        horizon_months=scenarios[0].horizon_months, reference_date=scenarios[0].base_date,
+    )
+    return _render(format, f"scenario-comparison-{company.id}", {"csv": lambda: management_report.render_scenario_comparison_csv(comparison)})

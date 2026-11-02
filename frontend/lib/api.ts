@@ -603,6 +603,72 @@ export interface CashFlowForecast {
   monthly_projection_disclaimer: string;
 }
 
+// ---- Phase 8: financial intelligence ----
+
+// Report shapes (P&L, balance sheet, forecasts, scenarios, KPIs, working capital) are deeply
+// nested and vary per report -- displayed generically rather than fully typed, same spirit as
+// the backend's to_json_safe boundary. Money/date values arrive as strings, never floats.
+export type JsonReport = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+export interface PeriodParams {
+  company_id: number;
+  period_type?: "MONTHLY" | "QUARTERLY" | "ANNUAL" | "CUSTOM";
+  reference_date?: string;
+  custom_start?: string;
+  custom_end?: string;
+}
+
+export type BalanceSheetItemCategory = "FIXED_ASSETS" | "INVENTORY" | "OTHER_ASSET" | "EQUITY" | "LOANS" | "OTHER_LIABILITY";
+
+export interface ManualBalanceSheetItem {
+  id: number;
+  company_id: number;
+  category: BalanceSheetItemCategory;
+  label: string;
+  amount: string;
+  as_of_date: string;
+  created_at: string;
+}
+
+export type BudgetStatus = "DRAFT" | "SUBMITTED" | "APPROVED";
+
+export interface BudgetLine {
+  id: number;
+  category: string;
+  month: number;
+  amount: string;
+  source: string;
+}
+
+export interface Budget {
+  id: number;
+  company_id: number;
+  financial_year_id: number;
+  name: string;
+  status: BudgetStatus;
+  version: number;
+  supersedes_budget_id: number | null;
+  created_at: string;
+  submitted_at: string | null;
+  approved_by_user_id: number | null;
+  approved_at: string | null;
+  lines: BudgetLine[];
+}
+
+export type ScenarioType = "BASE" | "OPTIMISTIC" | "CONSERVATIVE" | "CUSTOM";
+
+export interface Scenario {
+  id: number;
+  company_id: number;
+  name: string;
+  scenario_type: ScenarioType;
+  assumptions: Record<string, string>;
+  horizon_months: number;
+  base_date: string;
+  created_by_user_id: number;
+  created_at: string;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<{ access_token: string }>("/auth/login", {
@@ -997,4 +1063,107 @@ export const api = {
     request<AutomationCentreSummary>(`/companies/${companyId}/automation-centre`, { token }),
   cashFlowForecast: (token: string, companyId: number, monthsAhead = 3) =>
     request<CashFlowForecast>(`/companies/${companyId}/cash-flow-forecast?months_ahead=${monthsAhead}`, { token }),
+
+  // ---- Phase 8: financial reporting ----
+  profitAndLoss: (token: string, params: PeriodParams & { compare?: "previous" | "year_on_year" }) =>
+    request<JsonReport>(`/financial-reports/profit-and-loss?${periodQuery(params)}`, { token }),
+  balanceSheet: (token: string, companyId: number, asOfDate?: string) =>
+    request<JsonReport>(`/financial-reports/balance-sheet?company_id=${companyId}${asOfDate ? `&as_of_date=${asOfDate}` : ""}`, { token }),
+  cashFlowStatement: (token: string, params: PeriodParams) =>
+    request<JsonReport>(`/financial-reports/cash-flow-statement?${periodQuery(params)}`, { token }),
+  trialBalance: (token: string, params: PeriodParams) =>
+    request<JsonReport>(`/financial-reports/trial-balance?${periodQuery(params)}`, { token }),
+  generalLedger: (token: string, params: PeriodParams & { ledger_side?: LedgerSide }) =>
+    request<JsonReport[]>(`/financial-reports/general-ledger?${periodQuery(params)}${params.ledger_side ? `&ledger_side=${params.ledger_side}` : ""}`, { token }),
+  debtors: (token: string, companyId: number, asOfDate?: string) =>
+    request<JsonReport>(`/financial-reports/debtors?company_id=${companyId}${asOfDate ? `&as_of_date=${asOfDate}` : ""}`, { token }),
+  creditors: (token: string, companyId: number, asOfDate?: string) =>
+    request<JsonReport>(`/financial-reports/creditors?company_id=${companyId}${asOfDate ? `&as_of_date=${asOfDate}` : ""}`, { token }),
+  vatOverview: (token: string, params: PeriodParams) =>
+    request<JsonReport[]>(`/financial-reports/vat-overview?${periodQuery(params)}`, { token }),
+  revenueBreakdown: (token: string, params: PeriodParams) =>
+    request<JsonReport[]>(`/financial-reports/revenue-breakdown?${periodQuery(params)}`, { token }),
+  expenseBreakdown: (token: string, params: PeriodParams) =>
+    request<JsonReport[]>(`/financial-reports/expense-breakdown?${periodQuery(params)}`, { token }),
+  companyComparison: (token: string, companyIds: number[], params: Omit<PeriodParams, "company_id">) =>
+    request<JsonReport>(`/financial-reports/company-comparison?company_ids=${companyIds.join(",")}&${periodQuery({ ...params, company_id: 0 }, true)}`, { token }),
+  kpis: (token: string, params: PeriodParams) =>
+    request<JsonReport>(`/financial-reports/kpis?${periodQuery(params)}`, { token }),
+
+  workingCapitalCustomerPaymentBehavior: (token: string, params: PeriodParams) =>
+    request<JsonReport[]>(`/financial-reports/working-capital/customer-payment-behavior?${periodQuery(params)}`, { token }),
+  workingCapitalSupplierPaymentTrends: (token: string, params: PeriodParams) =>
+    request<JsonReport[]>(`/financial-reports/working-capital/supplier-payment-trends?${periodQuery(params)}`, { token }),
+  workingCapitalPaymentDelayAlerts: (token: string, companyId: number, asOfDate?: string) =>
+    request<JsonReport[]>(`/financial-reports/working-capital/payment-delay-alerts?company_id=${companyId}${asOfDate ? `&as_of_date=${asOfDate}` : ""}`, { token }),
+  workingCapitalTrend: (token: string, companyId: number, months = 6) =>
+    request<JsonReport[]>(`/financial-reports/working-capital/trend?company_id=${companyId}&months=${months}`, { token }),
+  cashConversionCycle: (token: string, params: PeriodParams) =>
+    request<JsonReport>(`/financial-reports/working-capital/cash-conversion-cycle?${periodQuery(params)}`, { token }),
+  customerConcentration: (token: string, params: PeriodParams) =>
+    request<JsonReport>(`/financial-reports/working-capital/customer-concentration?${periodQuery(params)}`, { token }),
+  supplierDependency: (token: string, params: PeriodParams) =>
+    request<JsonReport>(`/financial-reports/working-capital/supplier-dependency?${periodQuery(params)}`, { token }),
+
+  listBalanceSheetItems: (token: string, companyId: number) =>
+    request<ManualBalanceSheetItem[]>(`/financial-reports/balance-sheet-items?company_id=${companyId}`, { token }),
+  createBalanceSheetItem: (token: string, payload: { company_id: number; category: string; label: string; amount: string; as_of_date: string }) =>
+    request<ManualBalanceSheetItem>("/financial-reports/balance-sheet-items", { method: "POST", token, body: JSON.stringify(payload) }),
+
+  // ---- Phase 8: budgets ----
+  createBudget: (token: string, payload: { company_id: number; financial_year_id: number; name: string; lines: { category: string; month: number; amount: string }[] }) =>
+    request<Budget>("/budgets", { method: "POST", token, body: JSON.stringify(payload) }),
+  listBudgets: (token: string, companyId: number, financialYearId?: number) =>
+    request<Budget[]>(`/budgets?company_id=${companyId}${financialYearId ? `&financial_year_id=${financialYearId}` : ""}`, { token }),
+  getBudget: (token: string, id: number) => request<Budget>(`/budgets/${id}`, { token }),
+  reviseBudget: (token: string, id: number, lines: { category: string; month: number; amount: string }[]) =>
+    request<Budget>(`/budgets/${id}/revise`, { method: "POST", token, body: JSON.stringify({ lines }) }),
+  budgetHistory: (token: string, id: number) => request<Budget[]>(`/budgets/${id}/history`, { token }),
+  submitBudget: (token: string, id: number) => request<Budget>(`/budgets/${id}/submit`, { method: "POST", token }),
+  approveBudget: (token: string, id: number) => request<Budget>(`/budgets/${id}/approve`, { method: "POST", token }),
+  budgetVariance: (token: string, id: number) => request<JsonReport>(`/budgets/${id}/variance`, { token }),
+  suggestBudget: (token: string, companyId: number, financialYearId: number, categories?: string[]) =>
+    request<JsonReport>(`/budgets/suggest?company_id=${companyId}&financial_year_id=${financialYearId}${categories ? `&categories=${categories.join(",")}` : ""}`, { token }),
+
+  // ---- Phase 8: forecasts & scenarios ----
+  fullForecast: (token: string, companyId: number, horizonMonths = 3) =>
+    request<JsonReport>(`/forecasts/full?company_id=${companyId}&horizon_months=${horizonMonths}`, { token }),
+  createScenario: (token: string, payload: { company_id: number; name: string; scenario_type: string; assumptions: Record<string, string>; horizon_months: number; base_date?: string }) =>
+    request<Scenario>("/scenarios", { method: "POST", token, body: JSON.stringify(payload) }),
+  listScenarios: (token: string, companyId: number) => request<Scenario[]>(`/scenarios?company_id=${companyId}`, { token }),
+  duplicateScenario: (token: string, id: number, name: string) =>
+    request<Scenario>(`/scenarios/${id}/duplicate?name=${encodeURIComponent(name)}`, { method: "POST", token }),
+  scenarioResult: (token: string, id: number) => request<JsonReport>(`/scenarios/${id}/result`, { token }),
+  compareScenarios: (token: string, ids: number[]) => request<JsonReport>(`/scenarios/compare?scenario_ids=${ids.join(",")}`, { token }),
+
+  // ---- Phase 8: dashboards ----
+  accountantDashboard: (token: string) => request<JsonReport>("/dashboard/accountant", { token }),
+  businessOwnerDashboard: (token: string, companyId: number) => request<JsonReport>(`/dashboard/business-owner?company_id=${companyId}`, { token }),
+
+  // ---- Phase 8: assistant ----
+  askFinancialQuestion: (
+    token: string,
+    payload: { company_id: number; question: string; period_type?: string; reference_date?: string; scenario_assumptions?: Record<string, string> }
+  ) => request<AssistantResponse>("/assistant/financial-question", { method: "POST", token, body: JSON.stringify(payload) }),
+
+  // ---- Phase 8: exports ----
+  pnlReportUrl: (companyId: number, periodType: string, referenceDate: string, format: "pdf" | "xlsx" | "csv"): string =>
+    `${API_BASE}/reports/profit-and-loss?company_id=${companyId}&period_type=${periodType}&reference_date=${referenceDate}&format=${format}`,
+  balanceSheetReportUrl: (companyId: number, asOfDate: string, format: "pdf" | "xlsx" | "csv"): string =>
+    `${API_BASE}/reports/balance-sheet?company_id=${companyId}&as_of_date=${asOfDate}&format=${format}`,
+  budgetVsActualReportUrl: (budgetId: number, format: "pdf" | "csv"): string =>
+    `${API_BASE}/reports/budget-vs-actual/${budgetId}?format=${format}`,
+  scenarioComparisonReportUrl: (companyId: number, scenarioIds: number[]): string =>
+    `${API_BASE}/reports/scenario-comparison?company_id=${companyId}&scenario_ids=${scenarioIds.join(",")}&format=csv`,
 };
+
+function periodQuery(params: PeriodParams, skipCompanyId = false): string {
+  const search = new URLSearchParams();
+  if (!skipCompanyId) search.set("company_id", String(params.company_id));
+  search.set("period_type", params.period_type ?? "MONTHLY");
+  if (params.reference_date) search.set("reference_date", params.reference_date);
+  if (params.custom_start) search.set("custom_start", params.custom_start);
+  if (params.custom_end) search.set("custom_end", params.custom_end);
+  if ("compare" in params && params.compare) search.set("compare", params.compare as string);
+  return search.toString();
+}

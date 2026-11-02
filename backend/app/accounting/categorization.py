@@ -13,7 +13,17 @@ from app.models.enums import CategorizationRuleType, CategorySource
 EXPENSE_CATEGORIES = [
     "Office expenses", "Travel", "Fuel", "Software subscriptions", "Telecommunications",
     "Rent", "Insurance", "Professional services", "Equipment", "Marketing", "Other",
+    "Cost of goods sold", "Personnel expenses", "Depreciation", "Interest expense",
 ]
+
+# P&L classification of the categories above -- used by app/accounting/financial_reports.py
+# to split cost of sales / personnel / depreciation / interest out of ordinary operating
+# expenses. Never guessed per-transaction: a category only lands in one of these buckets
+# because an accountant (or an AI suggestion the accountant accepted) tagged it that way.
+COST_OF_SALES_CATEGORIES = {"Cost of goods sold"}
+PERSONNEL_CATEGORIES = {"Personnel expenses"}
+DEPRECIATION_CATEGORIES = {"Depreciation"}
+INTEREST_CATEGORIES = {"Interest expense"}
 
 
 def apply_rules(db: Session, transaction: AccountingTransaction) -> bool:

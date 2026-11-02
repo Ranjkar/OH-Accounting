@@ -115,3 +115,40 @@ def period_comparison_facts(db: Session, company: Company, period_a: VatPeriod, 
         "period_a": _period_summary(period_a),
         "period_b": _period_summary(period_b),
     }
+
+
+def financial_intelligence_facts(db: Session, company: Company, period_type: str, reference_date, custom_start=None, custom_end=None) -> dict:
+    """FACTS bundle for Phase 8 financial questions ("how profitable was my
+    business", "why did expenses increase", "what happens if revenue falls
+    15%", "what is my estimated tax liability", ...). Every number comes
+    from app.accounting.financial_reports / financial_forecast / kpi_engine
+    / working_capital -- the AI only explains and compares, it never
+    computes a figure itself. Forecast/estimate figures are kept under keys
+    ending in _forecast or carrying their own is_estimate flag so the
+    assistant can distinguish them from actuals, per its system prompt."""
+    from app.accounting import financial_forecast, financial_reports as fr, kpi_engine, working_capital
+    from app.api.v1._json_safe import to_json_safe
+
+    period = fr.resolve_period(fr.ReportPeriod(period_type), reference_date, custom_start, custom_end)
+    current = fr.profit_and_loss(db, company.id, period)
+    previous = fr.profit_and_loss(db, company.id, fr.previous_period(period))
+    yoy = fr.profit_and_loss(db, company.id, fr.year_on_year_period(period))
+
+    return to_json_safe(
+        {
+            "company_name": company.name,
+            "period_start": period.start,
+            "period_end": period.end,
+            "profit_and_loss_current_period": current,
+            "profit_and_loss_previous_period": previous,
+            "profit_and_loss_same_period_last_year": yoy,
+            "expense_breakdown_current_period": fr.expense_breakdown(db, company.id, period),
+            "expense_breakdown_previous_period": fr.expense_breakdown(db, company.id, fr.previous_period(period)),
+            "balance_sheet": fr.balance_sheet(db, company.id, period.end),
+            "debtors_overdue": fr.debtors(db, company.id, period.end)["aging_summary"],
+            "creditors_overdue": fr.creditors(db, company.id, period.end)["aging_summary"],
+            "kpis": kpi_engine.all_kpis(db, company.id, period),
+            "working_capital_alerts": working_capital.payment_delay_alerts(db, company.id, period.end),
+            "three_month_forecast": financial_forecast.full_forecast(db, company.id, horizon_months=3, reference_date=period.end),
+        }
+    )

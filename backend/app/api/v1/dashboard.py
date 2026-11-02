@@ -1,20 +1,32 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.accounting import financial_forecast, financial_reports as fr
+from app.api.v1._json_safe import to_json_safe
+from app.core.deps import get_current_user, require_company_access
 from app.db.session import get_db
 from app.models.accounting import AccountingTransaction, VatReturn
+from app.models.banking import BankTransaction
+from app.models.budget import Budget
 from app.models.company import Company
 from app.models.document import Document
-from app.models.enums import DocumentStatus, PaymentStatus, UserRole, VatPeriodStatus, VatReturnStatus
+from app.models.enums import BudgetStatus, DocumentStatus, PaymentStatus, ReconciliationStatus, UserRole, VatPeriodStatus, VatReturnStatus
 from app.models.financial_year import FinancialYear, VatPeriod
 from app.models.user import User
 from app.schemas.dashboard import CompanyAttentionFlag, DashboardSummary, UpcomingDeadline
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+
+
+def _get_company_or_404(db: Session, user: User, company_id: int) -> Company:
+    require_company_access(company_id, user, db)
+    company = db.get(Company, company_id)
+    if company is None or company.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+    return company
 
 
 def _is_overdue_unresolved(period: VatPeriod, vat_return_by_period: dict, today: date) -> bool:
@@ -162,4 +174,109 @@ def dashboard_summary(
         estimated_vat_payable=estimated_vat_payable,
         estimated_vat_refundable=estimated_vat_refundable,
         generated_at=datetime.now(timezone.utc),
+    )
+
+
+@router.get("/accountant")
+def accountant_dashboard(reference_date: date | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Portfolio view across every company this user can access: current
+    month profitability, VAT liability, unreconciled bank transactions, and
+    missing data -- each company's own numbers, reusing financial_reports
+    and the Phase 6 reconciliation status rather than a second summary
+    engine."""
+    companies_query = db.query(Company).filter(Company.tenant_id == user.tenant_id)
+    if user.role != UserRole.admin:
+        accessible_ids = [c.id for c in user.companies]
+        companies_query = companies_query.filter(Company.id.in_(accessible_ids))
+    companies = companies_query.all()
+    today = reference_date or date.today()
+    period = fr.resolve_period(fr.ReportPeriod.monthly, today)
+
+    rows = []
+    for company in companies:
+        pnl = fr.profit_and_loss(db, company.id, period)
+        bs = fr.balance_sheet(db, company.id, today)
+        unreconciled = (
+            db.query(BankTransaction)
+            .filter(
+                BankTransaction.company_id == company.id,
+                BankTransaction.reconciliation_status.in_([ReconciliationStatus.unmatched, ReconciliationStatus.suggested_match]),
+            )
+            .count()
+        )
+        rows.append(
+            {
+                "company_id": company.id,
+                "company_name": company.name,
+                "current_month_revenue": pnl["revenue"],
+                "current_month_net_profit": pnl["net_profit"],
+                "vat_payable": bs["liabilities"]["vat_payable"],
+                "vat_receivable": bs["assets"]["vat_receivable"],
+                "unreconciled_bank_transactions": unreconciled,
+                "balance_sheet_balanced": bs["is_balanced"],
+                "missing_balance_sheet_data": bs["missing_opening_balance_warning"] is not None,
+            }
+        )
+
+    return to_json_safe(
+        {
+            "period_start": period.start,
+            "period_end": period.end,
+            "companies_requiring_attention": sum(1 for r in rows if r["unreconciled_bank_transactions"] or not r["balance_sheet_balanced"]),
+            "portfolio": rows,
+            "generated_at": datetime.now(timezone.utc),
+        }
+    )
+
+
+@router.get("/business-owner")
+def business_owner_dashboard(company_id: int, reference_date: date | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Single-company view for the business-owner (customer-role) persona:
+    revenue/expenses/profit, cash position, outstanding customer payments,
+    upcoming supplier payments, tax estimates, budget performance, and a
+    short-horizon forecast -- all reused from financial_reports,
+    financial_forecast, and budget_service, no new computation."""
+    company = _get_company_or_404(db, user, company_id)
+    today = reference_date or date.today()
+    period = fr.resolve_period(fr.ReportPeriod.monthly, today)
+
+    pnl = fr.profit_and_loss(db, company_id, period)
+    bs = fr.balance_sheet(db, company_id, today)
+    debtors = fr.debtors(db, company_id, today)
+    creditors = fr.creditors(db, company_id, today)
+    forecast = financial_forecast.full_forecast(db, company_id, horizon_months=3, reference_date=today)
+
+    latest_budget = (
+        db.query(Budget)
+        .filter(Budget.company_id == company_id, Budget.status == BudgetStatus.approved)
+        .order_by(Budget.approved_at.desc())
+        .first()
+    )
+    budget_summary = None
+    if latest_budget is not None:
+        from app.accounting import budget_service
+
+        variance = budget_service.budget_vs_actual(db, latest_budget)
+        budget_summary = {"budget_id": latest_budget.id, "budget_name": latest_budget.name, "total_budgeted": variance["total_budgeted"], "total_actual": variance["total_actual"], "total_variance": variance["total_variance"]}
+
+    return to_json_safe(
+        {
+            "company_id": company_id,
+            "company_name": company.name,
+            "period_start": period.start,
+            "period_end": period.end,
+            "revenue": pnl["revenue"],
+            "expenses": pnl["cost_of_sales"] + pnl["operating_expenses"] + pnl["uncategorized_expenses"] + pnl["personnel_expenses"] + pnl["depreciation"] + pnl["interest_expense"],
+            "net_profit": pnl["net_profit"],
+            "cash_position": bs["assets"]["cash_and_bank"],
+            "outstanding_customer_payments": debtors["total_outstanding"],
+            "upcoming_supplier_payments": creditors["total_outstanding"],
+            "estimated_vat_position": bs["liabilities"]["vat_payable"] - bs["assets"]["vat_receivable"],
+            "budget_performance": budget_summary,
+            "forecast_summary": {
+                "revenue_expense_profit": forecast["revenue_expense_profit"]["monthly_forecast"],
+                "cash_flow_disclaimer": forecast["cash_flow"]["net_bank_transaction_movement_disclaimer"],
+            },
+            "generated_at": datetime.now(timezone.utc),
+        }
     )

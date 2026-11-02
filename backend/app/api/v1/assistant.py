@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.accounting import assistant_facts
+from app.accounting import assistant_facts, scenario_engine
 from app.core.config import settings
 from app.core.deps import get_current_user, require_company_access
 from app.db.session import get_db
@@ -12,6 +12,7 @@ from app.models.company import Company
 from app.models.financial_year import VatPeriod
 from app.models.user import User
 from app.schemas.assistant import AssistantQuestion, AssistantResponse
+from app.schemas.financial_question import FinancialQuestion
 from app.services import ai_assistant_provider
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
@@ -89,3 +90,25 @@ def period_comparison(
         "Compare these two periods and explain the key differences in sales, purchases, and VAT payable. "
         "If either period is not yet final (is_final is false), say so clearly.",
     )
+
+
+@router.post("/financial-question", response_model=AssistantResponse)
+def financial_question(payload: FinancialQuestion, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Covers Phase 8's financial-intelligence questions ("how profitable
+    was my business this quarter", "why did expenses increase", "which
+    customers have overdue invoices", "how does this year compare with last
+    year", "what is my estimated tax liability"). For a what-if question
+    ("what happens if revenue falls by 15%"), pass scenario_assumptions and
+    the pre-computed scenario result is added to FACTS -- the AI still only
+    narrates numbers app.accounting.scenario_engine already calculated."""
+    company = _get_company(db, user, payload.company_id)
+    facts = assistant_facts.financial_intelligence_facts(
+        db, company, payload.period_type, payload.reference_date or date.today(), payload.custom_start, payload.custom_end
+    )
+    if payload.scenario_assumptions:
+        from app.api.v1._json_safe import to_json_safe
+
+        facts["requested_scenario"] = to_json_safe(
+            scenario_engine.apply_scenario(db, company.id, payload.scenario_assumptions, horizon_months=3, reference_date=payload.reference_date or date.today())
+        )
+    return _respond(facts, payload.question)

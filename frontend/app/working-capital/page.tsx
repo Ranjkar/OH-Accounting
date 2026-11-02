@@ -1,0 +1,163 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import AuthGuard from "@/components/AuthGuard";
+import Shell from "@/components/Shell";
+import { useAuth } from "@/lib/auth-context";
+import { api, Company, JsonReport } from "@/lib/api";
+
+function WorkingCapitalContent() {
+  const { token } = useAuth();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companyId, setCompanyId] = useState<number | "">("");
+  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
+  const [customerBehavior, setCustomerBehavior] = useState<JsonReport[]>([]);
+  const [supplierTrends, setSupplierTrends] = useState<JsonReport[]>([]);
+  const [alerts, setAlerts] = useState<JsonReport[]>([]);
+  const [trend, setTrend] = useState<JsonReport[]>([]);
+  const [ccc, setCcc] = useState<JsonReport | null>(null);
+  const [customerConcentration, setCustomerConcentration] = useState<JsonReport | null>(null);
+  const [supplierDependency, setSupplierDependency] = useState<JsonReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (token) api.listCompanies(token).then(setCompanies).catch((e) => setError(e.message));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !companyId) return;
+    const params = { company_id: Number(companyId), period_type: "ANNUAL" as const, reference_date: asOfDate };
+    api.workingCapitalCustomerPaymentBehavior(token, params).then(setCustomerBehavior).catch((e) => setError(e.message));
+    api.workingCapitalSupplierPaymentTrends(token, params).then(setSupplierTrends).catch((e) => setError(e.message));
+    api.workingCapitalPaymentDelayAlerts(token, Number(companyId), asOfDate).then(setAlerts).catch((e) => setError(e.message));
+    api.workingCapitalTrend(token, Number(companyId), 6).then(setTrend).catch((e) => setError(e.message));
+    api.cashConversionCycle(token, params).then(setCcc).catch((e) => setError(e.message));
+    api.customerConcentration(token, params).then(setCustomerConcentration).catch((e) => setError(e.message));
+    api.supplierDependency(token, params).then(setSupplierDependency).catch((e) => setError(e.message));
+  }, [token, companyId, asOfDate]);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-navy">Working Capital</h1>
+      {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
+
+      <div className="flex items-center gap-3">
+        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+          <option value="">Select a company</option>
+          {companies.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+
+      {companyId && (
+        <>
+          {alerts.length > 0 && (
+            <div className="bg-white rounded-lg border border-red-200 p-4">
+              <h2 className="font-medium text-error mb-2">Payment delay alerts</h2>
+              {alerts.map((a) => (
+                <div key={a.transaction_id} className="flex items-center justify-between text-sm py-1 border-b border-slate-100 last:border-0">
+                  <span>
+                    {a.counterparty_name} -- invoice #{a.transaction_id} ({a.days_overdue} days overdue)
+                  </span>
+                  <span className="font-mono">{a.remaining_balance}</span>
+                  <span className="text-xs text-slate-500">{a.alert_reason}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <h2 className="font-medium text-navy mb-2">Customer payment behavior</h2>
+              {customerBehavior.length === 0 && <p className="text-sm text-slate-500">No fully-settled invoices yet.</p>}
+              {customerBehavior.map((c) => (
+                <p key={c.counterparty_name} className="text-sm">
+                  {c.counterparty_name}: <span className="font-mono">{c.average_days_to_pay}</span> days avg ({c.invoices_settled} invoices)
+                </p>
+              ))}
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <h2 className="font-medium text-navy mb-2">Supplier payment trends</h2>
+              {supplierTrends.length === 0 && <p className="text-sm text-slate-500">No fully-settled purchase invoices yet.</p>}
+              {supplierTrends.map((s) => (
+                <p key={s.counterparty_name} className="text-sm">
+                  {s.counterparty_name}: <span className="font-mono">{s.average_days_to_pay}</span> days avg ({s.invoices_settled} invoices)
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <h2 className="font-medium text-navy mb-2">Working capital trend (6 months)</h2>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-500 border-b border-slate-200">
+                  <th className="py-1">Month end</th>
+                  <th className="py-1">AR</th>
+                  <th className="py-1">AP</th>
+                  <th className="py-1">Net working capital</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trend.map((t) => (
+                  <tr key={t.period_end} className="border-b border-slate-100 last:border-0">
+                    <td className="py-1">{t.period_end}</td>
+                    <td className="py-1 font-mono">{t.accounts_receivable}</td>
+                    <td className="py-1 font-mono">{t.accounts_payable}</td>
+                    <td className="py-1 font-mono">{t.net_working_capital}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <h2 className="font-medium text-navy mb-2">Cash conversion cycle</h2>
+              {ccc && (
+                <>
+                  <p className="text-sm">DSO: <span className="font-mono">{ccc.days_sales_outstanding ?? "n/a"}</span></p>
+                  <p className="text-sm">DPO: <span className="font-mono">{ccc.days_payable_outstanding ?? "n/a"}</span></p>
+                  <p className="text-sm">DIO: <span className="font-mono">n/a</span></p>
+                  <p className="text-xs text-amber-600 mt-1">{ccc.missing_data}</p>
+                </>
+              )}
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <h2 className="font-medium text-navy mb-2">Customer concentration</h2>
+              {customerConcentration?.top_customers?.map((c: JsonReport) => (
+                <p key={c.counterparty_name} className="text-sm">
+                  {c.counterparty_name}: {c.pct_of_total}%
+                </p>
+              ))}
+              {customerConcentration?.missing_data && <p className="text-xs text-amber-600">{customerConcentration.missing_data}</p>}
+            </div>
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <h2 className="font-medium text-navy mb-2">Supplier dependency</h2>
+              {supplierDependency?.top_expense_categories?.map((c: JsonReport) => (
+                <p key={c.category} className="text-sm">
+                  {c.category}: {c.pct_of_total}%
+                </p>
+              ))}
+              {supplierDependency?.missing_data && <p className="text-xs text-amber-600">{supplierDependency.missing_data}</p>}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function WorkingCapitalPage() {
+  return (
+    <AuthGuard>
+      <Shell>
+        <WorkingCapitalContent />
+      </Shell>
+    </AuthGuard>
+  );
+}

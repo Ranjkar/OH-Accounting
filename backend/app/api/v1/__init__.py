@@ -6,9 +6,12 @@ from app.api.v1 import (
     automation,
     banking,
     batches,
+    budgets,
     companies,
     dashboard,
     documents,
+    financial_reports,
+    forecasts,
     reports,
     tax_calendar,
     transactions,
@@ -30,3 +33,6 @@ router.include_router(assistant.router)
 router.include_router(reports.router)
 router.include_router(banking.router)
 router.include_router(automation.router)
+router.include_router(financial_reports.router)
+router.include_router(budgets.router)
+router.include_router(forecasts.router)

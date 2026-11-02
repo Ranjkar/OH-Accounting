@@ -207,3 +207,41 @@ class AnomalyStatus(str, enum.Enum):
     open = "OPEN"
     acknowledged = "ACKNOWLEDGED"
     dismissed = "DISMISSED"
+
+
+class ReportPeriodType(str, enum.Enum):
+    monthly = "MONTHLY"
+    quarterly = "QUARTERLY"
+    annual = "ANNUAL"
+    custom = "CUSTOM"
+
+
+class BalanceSheetItemCategory(str, enum.Enum):
+    """Manually-entered balance-sheet items -- this ledger has no chart of
+    accounts, so fixed assets/equity/loans/inventory are never derived or
+    guessed, only recorded explicitly by an accountant."""
+
+    fixed_assets = "FIXED_ASSETS"
+    inventory = "INVENTORY"
+    other_asset = "OTHER_ASSET"
+    equity = "EQUITY"
+    loans = "LOANS"
+    other_liability = "OTHER_LIABILITY"
+
+
+class BudgetStatus(str, enum.Enum):
+    draft = "DRAFT"
+    submitted = "SUBMITTED"
+    approved = "APPROVED"
+
+
+class BudgetLineSource(str, enum.Enum):
+    manual = "MANUAL"
+    ai_suggested = "AI_SUGGESTED"
+
+
+class ScenarioType(str, enum.Enum):
+    base = "BASE"
+    optimistic = "OPTIMISTIC"
+    conservative = "CONSERVATIVE"
+    custom = "CUSTOM"

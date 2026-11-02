@@ -51,6 +51,20 @@ def require_uploader(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_editor_or_owner(user: User = Depends(get_current_user)) -> User:
+    """Who may create/approve budgets and manual balance-sheet items:
+    accountants/admins for any company they can access, plus a customer
+    (the business-owner persona in this system) for their own company --
+    checked separately via require_company_access. Viewers can still read
+    every Phase 8 report through get_current_user + require_company_access,
+    just never mutate one."""
+    if user.role not in (UserRole.admin, UserRole.accountant, UserRole.customer):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin, accountant, or business-owner role required"
+        )
+    return user
+
+
 def require_company_access(company_id: int, user: User, db: Session) -> None:
     if user.role == UserRole.admin:
         return

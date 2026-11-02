@@ -417,3 +417,148 @@ synthetic; no real bank credentials or real customer financial records were used
 - A customer-facing cut of the new screens (Banking/Reconciliation/etc. are accountant-
   oriented; no customer-role view of any of this was built, consistent with Phase 5's
   customer-portal gap).
+
+## What's implemented (Phase 8)
+
+**Phase 7 does not exist.** Before starting, `git log` was checked (as the phase spec itself
+asked): the most recent commit was `fa85fa9` (Phase 6). There is no Dutch Tax Compliance/
+Government Integration code beyond Phase 5's research-only `docs/sbr-digipoort-integration.md`.
+This phase is built on Phases 1–6 only; nothing here assumes a Phase 7 capability exists.
+
+**Financial reporting engine** (`app/accounting/financial_reports.py`) — deterministic,
+Decimal-only, reused everywhere else in this phase rather than duplicated: Profit & Loss,
+Balance Sheet, Cash Flow Statement, a best-effort Trial Balance (explicitly labeled as such —
+this ledger is single-entry, not double-entry), General Ledger, Debtors/Creditors with aging
+buckets, VAT overview, and revenue/expense breakdowns. Monthly/quarterly/annual/custom periods
+all go through one `resolve_period()`; previous-period and year-on-year comparisons reuse the
+same P&L function twice and diff it. Company comparison is the same function called once per
+authorized company — no separate multi-company engine.
+
+**This ledger has no chart of accounts.** Fixed assets, inventory, equity, and loans are never
+derived or guessed — `ManualBalanceSheetItem` is the only source for them, entered explicitly
+by an accountant. Retained earnings is computed as cumulative net profit from the P&L engine
+(a genuine double-entry link, not a plug), so the balance sheet legitimately balances once
+everything that should be recorded is recorded, and **honestly does not balance** otherwise —
+verified by test with both an unpaid invoice alone (balances, since AR and retained earnings
+move together) and the same invoice with VAT (does not balance, because the VAT portion has
+nowhere to go until a VAT return is computed for that period — a real gap, correctly flagged,
+never hidden).
+
+**Budgets** (`app/accounting/budget_service.py`, `app/models/budget.py`) — annual/monthly
+revenue and expense budgets, actual-vs-budget variance (reusing the P&L engine's own category
+buckets so a budget line and its actual always compare like for like), draft → submitted →
+approved workflow (approval is accountant/admin-only; a business-owner role can create, revise,
+and submit, never approve their own), and revisions as new immutable rows (`version`,
+`supersedes_budget_id`) — the same pattern as ledger corrections, never editing an approved
+budget in place. AI suggestions (`app/services/ai_budget_provider.py`, same forced-tool-use
+pattern as the existing providers) only ever adjust a deterministic historical-average
+baseline with a stated reason, and always require explicit accountant action to apply.
+
+**Forecasting extension** (`app/accounting/financial_forecast.py`) — explicitly imports and
+calls Phase 6's `cash_flow.build_cash_flow_forecast()` for the cash component rather than
+reimplementing it, and adds revenue/expense/profit trend forecasting, confirmed (not
+estimated) outstanding-invoice figures, VAT payment forecasting, and an explicit
+non-fabricated corporate-tax placeholder (this system calculates Dutch VAT only). Every
+forecast carries its horizon, the historical data period used, its stated assumptions, and an
+uncertainty band — never presented as guaranteed.
+
+**Scenario engine** (`app/accounting/scenario_engine.py`, `app/models/scenario.py`) — base/
+optimistic/conservative/custom scenarios with named assumptions (revenue/expense % change,
+new-hire monthly cost, payment delay, one-off equipment investment/financing). Pure function
+of the forecast plus assumptions, recomputed fresh on every read; a `Scenario` row only ever
+stores the assumptions, never a cached result, so nothing can go stale. Verified by test that
+creating and comparing scenarios never writes to `AccountingTransaction`.
+
+**KPI engine** (`app/accounting/kpi_engine.py`) — profitability (gross/operating/net margin,
+ROA), liquidity (current/quick/cash ratio), efficiency (AR days, AP days, inventory turnover),
+and business-performance (revenue/expense growth, recurring-expense ratio, customer/supplier
+concentration) KPIs. Every KPI returns `{value, formula, source, period, explanation,
+missing_data}` — a KPI whose inputs don't exist (no liabilities, no inventory movement
+tracking, no prior-period data) returns `value: null` with `missing_data` explaining why,
+verified by test, rather than showing a misleading 0% or infinite ratio.
+
+**Working capital & payment intelligence** (`app/accounting/working_capital.py`) — extends
+Phase 6's reconciliation data: customer/supplier average days-to-pay (only counting fully-
+settled invoices — a partial payment has no settlement date yet), payment-delay alerts
+(newly-overdue and 90+-days-overdue), working-capital trend across periods, customer/expense-
+category concentration, and an explicitly-incomplete cash-conversion-cycle (DSO and DPO are
+real; DIO is reported as unavailable rather than assumed zero, since inventory movements
+aren't tracked). Read-only — never initiates a payment.
+
+**Financial AI assistant** — one new endpoint, `POST /assistant/financial-question`, reusing
+the exact existing `ai_assistant_provider`/`_respond()` pattern with a new facts bundle
+(`assistant_facts.financial_intelligence_facts`) built from the reporting/forecast/KPI/working-
+capital engines above. The assistant's system prompt was extended (one clause) to explain that
+FACTS may contain forecast/scenario figures and must always be cited as such, never as a
+confirmed actual. Verified live against the real Claude API with "why did my expenses increase
+and how profitable was my business" — the model correctly declined to state an expense-growth
+percentage (flagged as `missing_data` in FACTS) and correctly caveated the balance-sheet
+imbalance and the absence of corporate tax from the profit figure, entirely from FACTS it was
+given, inventing nothing.
+
+**Dashboards** — `GET /dashboard/accountant` (portfolio across every accessible company:
+current-month revenue/profit, VAT position, unreconciled bank transactions, balance-sheet
+health) and `GET /dashboard/business-owner?company_id=` (single company: revenue/expenses/
+profit, cash position, outstanding customer/supplier payments, VAT position, approved-budget
+variance, a 3-month forecast summary). Both reuse the reporting/forecast/budget engines; no
+new computation.
+
+**Exports** (`app/reporting/management_report.py`, extending `app/api/v1/reports.py`) — PDF/
+XLSX/CSV for Profit & Loss and Balance Sheet (reusing `PdfReportBuilder` and the openpyxl/csv
+pattern from Phase 1–5's `financial_report.py`/`vat_report.py`), PDF/CSV for Budget vs Actual,
+CSV for Scenario comparison. A single period-width parameter (monthly/quarterly/annual) on the
+P&L/Balance-Sheet export doubles as the monthly management pack / quarterly review / annual
+summary the spec names as separate products — built as one parameterized report rather than
+three near-identical ones.
+
+**Data integrity** — a JSON-safety helper (`app/api/v1/_json_safe.py`) converts every
+Decimal/date in these report responses to a string before they leave the API, same discipline
+as the rest of this codebase (money is never silently turned into a float by a framework
+default). `AuditLog` rows (the existing Phase 1 mechanism, not a new one) are written for
+budget approval and manual balance-sheet-item creation. Verified by test: monthly P&L sums
+reconcile exactly to the annual P&L (and quarterly to annual) for the same data, a report
+recomputed twice with no ledger change is byte-identical, and a locked transaction's figures
+are provably immutable. **Known limitation, stated plainly**: this ledger has no period-level
+lock that blocks a brand-new transaction from being posted with a backdated `invoice_date`
+into an already-filed VAT period — an individual transaction's own figures are frozen once
+approved/locked (enforced since Phase 3), but nothing yet stops a new one from landing in the
+past. Full period locking would be a cross-cutting Phase 3/4 change, out of scope here, and is
+not claimed to exist.
+
+**Frontend** (all new pages, build/lint/typecheck clean): Financial Overview, Profit & Loss,
+Balance Sheet (with the manual-item entry form), Budgets, Forecasts, Scenario Planning,
+Financial KPIs, Working Capital, and Management Reports — plus the existing Cash Flow page
+extended with a second tab for the new Cash Flow Statement (actual) alongside Phase 6's
+forecast tab, rather than a confusingly-named duplicate nav entry. No new chart-library
+dependency was added — simple CSS bar visualizations cover the one interactive chart used
+(the forecast trend); every other page is tables and numbers, consistent with the rest of the
+app's visual design. `npx tsc --noEmit`, `npm run lint`, and `npm run build` all pass clean.
+
+**Verification**: 76 new backend tests (financial-reports engine, forecasting, scenarios,
+KPIs, working capital, budgets, dashboards, assistant, exports, data integrity), 281 total,
+all passing against a real Postgres test database. Additionally ran the full 16-step synthetic
+E2E acceptance scenario from the phase spec against a live `uvicorn` instance end to end:
+create company → post sales/purchase invoices → import a CAMT.053 statement → reconcile both
+payments → generate P&L → generate balance sheet → verify the balance equation (correctly
+flagged an imbalance caused by malformed test XML, a good demonstration of the "never force a
+balance" requirement) → generate the cash flow statement → create and approve a budget →
+compute variance → generate a 3-month forecast → create optimistic/conservative scenarios →
+compare them → review KPIs → ask the live AI assistant why expenses increased → export P&L and
+Balance Sheet PDFs and a Budget-vs-Actual CSV → verify an audit-log row was written for the
+budget approval → verify the same P&L request returns byte-identical JSON on a second call.
+
+## Explicitly deferred (Phase 8)
+- **Full period locking** at the VAT-period level (see Data integrity above) — individual
+  transaction immutability exists; a ledger-wide lock preventing new backdated postings into a
+  filed period does not.
+- **Department budgets** — the spec says "where applicable"; no department/cost-center entity
+  exists in this system, so budget lines are company+category+month only.
+- **Inventory turnover and the full cash-conversion cycle** — this ledger has no tracked
+  inventory movement (only a manually-entered balance), so these are reported as unavailable
+  rather than computed from an assumed zero.
+- **Separate named report products** (monthly management pack / quarterly review / annual
+  summary) are one parameterized P&L/Balance-Sheet export, not three distinct documents.
+- **Scenario adjustments to cost-of-sales specifically** — a scenario currently scales total
+  revenue and total expenses; it does not yet let gross margin itself be an assumption.
+- Corporate income tax estimation — explicitly never fabricated; this system calculates Dutch
+  VAT only, consistent with every prior phase's own scope.
