@@ -1,11 +1,17 @@
+import shutil
+import tempfile
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+import app.api.v1.documents as documents_api
 from app.core.config import settings
 from app.db.session import Base, get_db
 from app.main import app
+from app.services import ai_provider, ocr_provider
+from tests.fakes import FakeAIProvider, FakeOCRProvider
 
 TEST_DATABASE_URL = settings.database_url.rsplit("/", 1)[0] + "/onholland_accounting_test"
 
@@ -20,9 +26,13 @@ def engine():
 
 
 @pytest.fixture()
-def db_session(engine):
-    TestingSessionLocal = sessionmaker(bind=engine)
-    session = TestingSessionLocal()
+def test_session_local(engine):
+    return sessionmaker(bind=engine)
+
+
+@pytest.fixture()
+def db_session(engine, test_session_local):
+    session = test_session_local()
     for table in reversed(Base.metadata.sorted_tables):
         session.execute(table.delete())
     session.commit()
@@ -31,10 +41,35 @@ def db_session(engine):
 
 
 @pytest.fixture()
-def client(db_session):
+def tmp_storage(monkeypatch):
+    storage_dir = tempfile.mkdtemp(prefix="onholland_test_storage_")
+    monkeypatch.setattr(settings, "storage_root", storage_dir)
+    yield storage_dir
+    shutil.rmtree(storage_dir, ignore_errors=True)
+
+
+@pytest.fixture()
+def fake_ai_provider(monkeypatch):
+    fake = FakeAIProvider()
+    monkeypatch.setattr(ai_provider, "get_ai_provider", lambda: fake)
+    return fake
+
+
+@pytest.fixture()
+def fake_ocr_provider(monkeypatch):
+    fake = FakeOCRProvider()
+    monkeypatch.setattr(ocr_provider, "get_ocr_provider", lambda: fake)
+    return fake
+
+
+@pytest.fixture()
+def client(db_session, test_session_local, tmp_storage, fake_ai_provider, fake_ocr_provider, monkeypatch):
     def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    # Background document-processing tasks open their own session; point that
+    # at the same test database instead of the real dev/prod one.
+    monkeypatch.setattr(documents_api, "SessionLocal", test_session_local)
     yield TestClient(app)
     app.dependency_overrides.clear()

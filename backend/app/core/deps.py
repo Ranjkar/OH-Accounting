@@ -31,6 +31,14 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_editor(user: User = Depends(get_current_user)) -> User:
+    if user.role not in (UserRole.admin, UserRole.accountant):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin or accountant role required"
+        )
+    return user
+
+
 def require_company_access(company_id: int, user: User, db: Session) -> None:
     if user.role == UserRole.admin:
         return
