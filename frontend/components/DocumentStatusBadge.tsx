@@ -13,14 +13,17 @@ const STYLES: Record<DocumentStatus, string> = {
 const LABELS: Record<DocumentStatus, string> = {
   pending: "Pending",
   processing: "Processing…",
-  extracted: "Ready for review",
+  extracted: "Extracted",
   needs_review: "Needs review",
   approved: "Approved",
   rejected: "Rejected",
   failed: "Failed",
 };
 
-export default function DocumentStatusBadge({ status }: { status: DocumentStatus }) {
+export default function DocumentStatusBadge({ status, isDuplicate }: { status: DocumentStatus; isDuplicate?: boolean }) {
+  if (isDuplicate) {
+    return <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-error">Duplicate</span>;
+  }
   return (
     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STYLES[status]}`}>
       {LABELS[status]}

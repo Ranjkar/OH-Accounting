@@ -79,6 +79,8 @@ class DocumentOut(BaseModel):
     id: int
     company_id: int
     financial_year_id: int | None
+    upload_batch_id: int | None
+    upload_category: LedgerSide | None
     original_filename: str
     content_type: str
     file_size: int

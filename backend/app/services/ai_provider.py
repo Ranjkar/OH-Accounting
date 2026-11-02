@@ -5,6 +5,7 @@ from typing import Protocol
 
 from app.core.config import settings
 from app.schemas.extraction import InvoiceExtraction
+from app.services.retry import call_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -54,19 +55,21 @@ class ClaudeExtractionProvider:
             if client_vat_number:
                 preamble += f" (VAT number {client_vat_number})"
             preamble += "\n\n"
-        response = self._client.messages.create(
-            model=settings.anthropic_model,
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            tools=[
-                {
-                    "name": EXTRACTION_TOOL_NAME,
-                    "description": "Record the extracted invoice fields.",
-                    "input_schema": schema,
-                }
-            ],
-            tool_choice={"type": "tool", "name": EXTRACTION_TOOL_NAME},
-            messages=[{"role": "user", "content": (preamble + text)[:50_000]}],
+        response = call_with_retry(
+            lambda: self._client.messages.create(
+                model=settings.anthropic_model,
+                max_tokens=4096,
+                system=SYSTEM_PROMPT,
+                tools=[
+                    {
+                        "name": EXTRACTION_TOOL_NAME,
+                        "description": "Record the extracted invoice fields.",
+                        "input_schema": schema,
+                    }
+                ],
+                tool_choice={"type": "tool", "name": EXTRACTION_TOOL_NAME},
+                messages=[{"role": "user", "content": (preamble + text)[:50_000]}],
+            )
         )
         for block in response.content:
             if block.type == "tool_use" and block.name == EXTRACTION_TOOL_NAME:

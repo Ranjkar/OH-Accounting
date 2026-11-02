@@ -9,6 +9,7 @@ from app.models.document import (
     DocumentProcessingAttempt,
     DocumentValidationResult,
     ExtractedInvoiceFields,
+    UploadBatch,
 )
 from app.models.financial_year import FinancialYear, VatPeriod
 from app.models.note import AccountantNote
@@ -30,6 +31,7 @@ __all__ = [
     "FinancialYear",
     "Payment",
     "TransactionLineItem",
+    "UploadBatch",
     "VatPeriod",
     "VatReturn",
     "Tenant",

@@ -25,7 +25,7 @@ from app.core.config import settings
 from app.services import ai_provider, ocr_provider, storage, text_extraction
 from app.services.file_validation import CONTENT_TYPES
 from app.services.spreadsheet_parser import parse_rows
-from app.services.validation_engine import validate_document
+from app.services.validation_engine import check_business_duplicate, validate_document
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +103,11 @@ def _run_pipeline(db: Session, document: Document, attempt: DocumentProcessingAt
         _process_text_document(db, document, content, kind, attempt.attempt_number)
 
     findings = validate_document(document, document.fields)
+    if document.fields is not None:
+        business_duplicate = check_business_duplicate(db, document, document.fields)
+        if business_duplicate is not None:
+            findings.append(business_duplicate)
+
     db.query(DocumentValidationResult).filter(DocumentValidationResult.document_id == document.id).delete()
     for finding in findings:
         db.add(
@@ -183,6 +188,7 @@ def _process_text_document(db: Session, document: Document, content: bytes, kind
     if fields is None:
         fields = ExtractedInvoiceFields(document_id=document.id)
         db.add(fields)
+        document.fields = fields  # keep the in-memory relationship in sync for the rest of this request
 
     fields.invoice_number = extraction.invoice_number
     fields.invoice_date = _parse_date(extraction.invoice_date)

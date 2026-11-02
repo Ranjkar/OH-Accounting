@@ -5,6 +5,7 @@ class UserRole(str, enum.Enum):
     admin = "admin"
     accountant = "accountant"
     viewer = "viewer"
+    customer = "customer"
 
 
 class VatFrequency(str, enum.Enum):
@@ -122,3 +123,8 @@ class NoteStatus(str, enum.Enum):
     open = "OPEN"
     answered = "ANSWERED"
     resolved = "RESOLVED"
+
+
+class BatchStatus(str, enum.Enum):
+    processing = "processing"
+    completed = "completed"

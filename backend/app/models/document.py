@@ -16,12 +16,38 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.enums import (
+    BatchStatus,
     DocumentStatus,
     DocumentType,
+    LedgerSide,
     PaymentStatus,
     ProcessingAttemptStatus,
     ValidationSeverity,
 )
+
+
+class UploadBatch(Base):
+    """A bulk upload of sales OR purchase documents. `category` is the
+    accountant's explicit choice of upload screen -- the source of truth for
+    which ledger side these documents belong to, independent of (and checked
+    against) whatever Claude classifies each document as."""
+
+    __tablename__ = "upload_batches"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    financial_year_id: Mapped[int] = mapped_column(ForeignKey("financial_years.id"))
+    category: Mapped[LedgerSide] = mapped_column(Enum(LedgerSide, name="ledger_side"))
+    status: Mapped[BatchStatus] = mapped_column(Enum(BatchStatus, name="batch_status"), default=BatchStatus.processing)
+    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    company: Mapped["Company"] = relationship()
+    financial_year: Mapped["FinancialYear"] = relationship()
+    documents: Mapped[list["Document"]] = relationship(back_populates="upload_batch")
 
 
 class Document(Base):
@@ -34,6 +60,10 @@ class Document(Base):
         ForeignKey("financial_years.id"), nullable=True
     )
     uploaded_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    upload_batch_id: Mapped[int | None] = mapped_column(ForeignKey("upload_batches.id"), nullable=True)
+    upload_category: Mapped[LedgerSide | None] = mapped_column(
+        Enum(LedgerSide, name="ledger_side"), nullable=True
+    )
 
     original_filename: Mapped[str] = mapped_column(String(255))
     secure_filename: Mapped[str] = mapped_column(String(255))
@@ -65,6 +95,7 @@ class Document(Base):
     company: Mapped["Company"] = relationship()
     financial_year: Mapped["FinancialYear | None"] = relationship()
     uploaded_by: Mapped["User"] = relationship()
+    upload_batch: Mapped["UploadBatch | None"] = relationship(back_populates="documents")
 
     processing_attempts: Mapped[list["DocumentProcessingAttempt"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="DocumentProcessingAttempt.attempt_number"

@@ -8,6 +8,9 @@ something this engine or the AI infers.
 from dataclasses import dataclass
 from datetime import date
 
+from sqlalchemy.orm import Session
+
+from app.accounting.ledger_service import LEDGER_SIDE_BY_DOCUMENT_TYPE
 from app.models.document import Document, ExtractedInvoiceFields
 from app.models.enums import DocumentType, ValidationSeverity
 
@@ -135,7 +138,61 @@ def validate_document(document: Document, fields: ExtractedInvoiceFields | None)
             )
         )
 
+    if document.upload_category is not None and document.document_type is not None:
+        expected_side = LEDGER_SIDE_BY_DOCUMENT_TYPE.get(document.document_type)
+        if expected_side is not None and expected_side != document.upload_category:
+            findings.append(
+                ValidationFinding(
+                    "UPLOAD_CATEGORY_MISMATCH",
+                    ValidationSeverity.error,
+                    f"Uploaded via the {document.upload_category.value.lower()} screen, but this document reads "
+                    f"as a {expected_side.value.lower()}-side {document.document_type.value}. "
+                    "Verify which company is the supplier and which is the customer before approving.",
+                )
+            )
+
     return findings
+
+
+# Business-duplicate matching: same counterparty + invoice number/date/amount
+# on a different physical file. A warning, never an auto-reject -- two
+# genuinely different documents can share these fields by coincidence.
+BUSINESS_DUPLICATE_AMOUNT_TOLERANCE = 0.01
+
+
+def check_business_duplicate(db: Session, document: Document, fields: ExtractedInvoiceFields) -> ValidationFinding | None:
+    if not fields.invoice_number or fields.gross_amount is None:
+        return None
+
+    counterparty_vat = fields.supplier_vat_number or fields.customer_vat_number
+    candidates = (
+        db.query(Document)
+        .join(ExtractedInvoiceFields, ExtractedInvoiceFields.document_id == Document.id)
+        .filter(
+            Document.company_id == document.company_id,
+            Document.id != document.id,
+            ExtractedInvoiceFields.invoice_number == fields.invoice_number,
+        )
+        .all()
+    )
+    for other in candidates:
+        other_fields = other.fields
+        if other_fields is None or other_fields.gross_amount is None:
+            continue
+        if abs(other_fields.gross_amount - fields.gross_amount) > BUSINESS_DUPLICATE_AMOUNT_TOLERANCE:
+            continue
+        other_vat = other_fields.supplier_vat_number or other_fields.customer_vat_number
+        if counterparty_vat and other_vat and counterparty_vat != other_vat:
+            continue
+        if fields.invoice_date and other_fields.invoice_date and fields.invoice_date != other_fields.invoice_date:
+            continue
+        return ValidationFinding(
+            "POTENTIAL_BUSINESS_DUPLICATE",
+            ValidationSeverity.warning,
+            f"Document #{other.id} ({other.original_filename}) has the same invoice number, counterparty, "
+            f"and amount. Verify this is not a duplicate before approving.",
+        )
+    return None
 
 
 def _as_date(value: date | str) -> date:

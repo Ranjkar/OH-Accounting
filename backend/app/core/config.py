@@ -19,6 +19,19 @@ class Settings(BaseSettings):
     max_upload_size_bytes: int = 20 * 1024 * 1024
     extraction_confidence_threshold: float = 0.7
 
+    # Bulk batch processing: bounded worker pool, no Celery/Redis. Tune these
+    # for Claude's actual rate limits rather than firing every doc at once.
+    batch_max_concurrency: int = 3
+    batch_max_files: int = 100
+    claude_max_retries: int = 3
+    claude_retry_base_delay_seconds: float = 2.0
+
+    # Sensitive-endpoint in-memory rate limiting (single process -- resets on
+    # restart, not shared across workers; move to a shared store if the app
+    # is ever run with multiple worker processes).
+    rate_limit_login_per_minute: int = 10
+    rate_limit_upload_per_minute: int = 30
+
     class Config:
         env_file = ".env"
 

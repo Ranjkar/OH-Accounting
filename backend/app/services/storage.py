@@ -29,3 +29,10 @@ def read(storage_path: str) -> bytes:
     if not str(full_path).startswith(str(_root().resolve())):
         raise ValueError("Invalid storage path")
     return full_path.read_bytes()
+
+
+def delete(storage_path: str) -> None:
+    full_path = (_root() / storage_path).resolve()
+    if not str(full_path).startswith(str(_root().resolve())):
+        raise ValueError("Invalid storage path")
+    full_path.unlink(missing_ok=True)

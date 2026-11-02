@@ -237,6 +237,8 @@ export interface DocumentSummary {
   id: number;
   company_id: number;
   financial_year_id: number | null;
+  upload_batch_id: number | null;
+  upload_category: LedgerSide | null;
   original_filename: string;
   content_type: string;
   file_size: number;
@@ -248,6 +250,50 @@ export interface DocumentSummary {
   error_message: string | null;
   created_at: string;
   processed_at: string | null;
+}
+
+export type BatchStatus = "processing" | "completed";
+
+export interface BatchCounts {
+  total: number;
+  extracted: number;
+  needs_review: number;
+  duplicates: number;
+  failed: number;
+  approved: number;
+  pending_or_processing: number;
+  rejected: number;
+}
+
+export interface Batch {
+  id: number;
+  company_id: number;
+  financial_year_id: number;
+  category: LedgerSide;
+  status: BatchStatus;
+  created_at: string;
+  counts: BatchCounts;
+}
+
+export interface BatchDetail extends Batch {
+  documents: DocumentSummary[];
+}
+
+export interface RejectedFile {
+  filename: string;
+  reason: string;
+}
+
+export interface BatchUploadResponse {
+  batch: Batch;
+  documents: DocumentSummary[];
+  rejected_files: RejectedFile[];
+}
+
+export interface BulkActionItemResult {
+  document_id: number;
+  success: boolean;
+  detail: string;
 }
 
 export interface ExtractedFields {
@@ -638,4 +684,61 @@ export const api = {
       net_income: string;
       payment_status_counts: Record<string, number>;
     }>(`/reports/period-comparison?company_id=${companyId}&financial_year_id=${financialYearId}`, { token }),
+
+  uploadBatch: async (
+    token: string,
+    files: File[],
+    companyId: number,
+    financialYearId: number,
+    category: LedgerSide
+  ): Promise<BatchUploadResponse> => {
+    const params = new URLSearchParams({
+      company_id: String(companyId),
+      financial_year_id: String(financialYearId),
+      category,
+    });
+    const form = new FormData();
+    files.forEach((f) => form.append("files", f));
+    const res = await fetch(`${API_BASE}/batches/upload?${params}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new ApiError(res.status, body.detail ?? "Batch upload failed");
+    }
+    return res.json();
+  },
+  listBatches: (token: string, filters: { company_id?: number; category?: LedgerSide } = {}) => {
+    const params = new URLSearchParams();
+    if (filters.company_id) params.set("company_id", String(filters.company_id));
+    if (filters.category) params.set("category", filters.category);
+    const qs = params.toString();
+    return request<Batch[]>(`/batches${qs ? `?${qs}` : ""}`, { token });
+  },
+  getBatch: (token: string, batchId: number) => request<BatchDetail>(`/batches/${batchId}`, { token }),
+  bulkApproveDocuments: (token: string, batchId: number, documentIds: number[]) =>
+    request<{ results: BulkActionItemResult[] }>(`/batches/${batchId}/approve`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ document_ids: documentIds }),
+    }),
+  bulkRejectDocuments: (token: string, batchId: number, documentIds: number[], reason: string) =>
+    request<{ results: BulkActionItemResult[] }>(`/batches/${batchId}/reject`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ document_ids: documentIds, reason }),
+    }),
+  deleteDocument: async (token: string, documentId: number): Promise<void> => {
+    const res = await fetch(`${API_BASE}/documents/${documentId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok && res.status !== 204) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new ApiError(res.status, body.detail ?? "Failed to delete document");
+    }
+  },
+  batchExportUrl: (batchId: number) => `${API_BASE}/batches/${batchId}/export`,
 };

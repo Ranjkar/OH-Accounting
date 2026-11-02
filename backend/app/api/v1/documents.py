@@ -1,12 +1,13 @@
 import logging
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, UploadFile, status
 from fastapi.responses import Response
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.deps import get_current_user, require_company_access, require_editor
+from app.core.deps import get_current_user, require_company_access, require_editor, require_uploader
+from app.core.rate_limit import enforce as enforce_rate_limit
 from app.db.session import SessionLocal, get_db
 from app.models.audit_log import AuditLog
 from app.models.company import Company
@@ -24,7 +25,14 @@ from app.schemas.document import (
 )
 from app.accounting import ledger_service
 from app.services import document_processing, storage
-from app.services.file_validation import CONTENT_TYPES, UnsupportedFileType, detect_kind, secure_filename, sha256_hex
+from app.services.document_approval import (
+    DocumentAlreadyApprovedError,
+    DocumentNotApprovableError,
+    approve_document_record,
+    reject_document_record,
+)
+from app.services.document_intake import create_document_record
+from app.services.file_validation import UnsupportedFileType
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +57,15 @@ def _run_processing_in_background(document_id: int) -> None:
 
 @router.post("/upload", response_model=DocumentOut, status_code=status.HTTP_201_CREATED)
 async def upload_document(
+    request: Request,
     background_tasks: BackgroundTasks,
     company_id: int,
     file: UploadFile,
     financial_year_id: int | None = None,
     db: Session = Depends(get_db),
-    user: User = Depends(require_editor),
+    user: User = Depends(require_uploader),
 ):
+    enforce_rate_limit(request, "upload", settings.rate_limit_upload_per_minute)
     require_company_access(company_id, user, db)
     company = db.get(Company, company_id)
     if company is None or company.tenant_id != user.tenant_id:
@@ -71,47 +81,12 @@ async def upload_document(
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large")
 
     try:
-        kind = detect_kind(file.filename or "upload", content)
+        document = create_document_record(
+            db, user, company_id, content, file.filename or "upload", financial_year_id=financial_year_id
+        )
     except UnsupportedFileType as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
-    file_hash = sha256_hex(content)
-    duplicate = (
-        db.query(Document)
-        .filter(Document.company_id == company_id, Document.sha256_hash == file_hash)
-        .first()
-    )
-
-    clean_name = secure_filename(file.filename or "upload")
-    document = Document(
-        tenant_id=user.tenant_id,
-        company_id=company_id,
-        financial_year_id=financial_year_id,
-        uploaded_by_user_id=user.id,
-        original_filename=file.filename or clean_name,
-        secure_filename=clean_name,
-        storage_path="",
-        content_type=CONTENT_TYPES[kind],
-        file_size=len(content),
-        sha256_hash=file_hash,
-        status=DocumentStatus.pending,
-        is_duplicate=duplicate is not None,
-        duplicate_of_document_id=duplicate.id if duplicate else None,
-    )
-    db.add(document)
-    db.flush()
-
-    document.storage_path = storage.save(user.tenant_id, company_id, document.id, clean_name, content)
-    db.add(
-        AuditLog(
-            tenant_id=user.tenant_id,
-            user_id=user.id,
-            action="upload",
-            entity_type="document",
-            entity_id=document.id,
-            after={"original_filename": document.original_filename, "sha256_hash": file_hash},
-        )
-    )
     db.commit()
     db.refresh(document)
 
@@ -234,36 +209,12 @@ def approve_document(
     user: User = Depends(require_editor),
 ):
     document = _get_document_or_404(db, user, document_id)
-    if document.status not in (DocumentStatus.extracted, DocumentStatus.needs_review):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Only extracted or needs-review documents can be approved",
-        )
-
-    transaction = None
-    if ledger_service.is_postable(document.document_type):
-        try:
-            transaction = ledger_service.post_document_to_ledger(
-                db, document, user.id, credit_note_ledger_side=payload.credit_note_ledger_side
-            )
-        except ledger_service.LedgerPostingError as exc:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-
-    document.status = DocumentStatus.approved
-    if document.fields:
-        document.fields.review_status = "approved"
-        document.fields.reviewed_by_user_id = user.id
-        document.fields.reviewed_at = datetime.now(timezone.utc)
-    db.add(
-        AuditLog(
-            tenant_id=user.tenant_id,
-            user_id=user.id,
-            action="approve",
-            entity_type="document",
-            entity_id=document.id,
-            after={"accounting_transaction_id": transaction.id} if transaction else None,
-        )
-    )
+    try:
+        approve_document_record(db, document, user, credit_note_ledger_side=payload.credit_note_ledger_side)
+    except DocumentNotApprovableError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ledger_service.LedgerPostingError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     db.commit()
     db.refresh(document)
     return document
@@ -277,23 +228,10 @@ def reject_document(
     user: User = Depends(require_editor),
 ):
     document = _get_document_or_404(db, user, document_id)
-    if document.status == DocumentStatus.approved:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Document already approved")
-    document.status = DocumentStatus.rejected
-    if document.fields:
-        document.fields.review_status = "rejected"
-        document.fields.reviewed_by_user_id = user.id
-        document.fields.reviewed_at = datetime.now(timezone.utc)
-    db.add(
-        AuditLog(
-            tenant_id=user.tenant_id,
-            user_id=user.id,
-            action="reject",
-            entity_type="document",
-            entity_id=document.id,
-            after={"reason": payload.reason},
-        )
-    )
+    try:
+        reject_document_record(db, document, user, payload.reason)
+    except DocumentAlreadyApprovedError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     db.commit()
     db.refresh(document)
     return document
@@ -336,3 +274,35 @@ def reassign_document(
     db.commit()
     db.refresh(document)
     return document
+
+
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_document(document_id: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    """Remove an unprocessed/failed/rejected file. Never allowed once approved
+    and posted to the ledger -- that requires a correction, not a deletion."""
+    document = _get_document_or_404(db, user, document_id)
+    if document.status == DocumentStatus.approved:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Cannot delete an approved document")
+
+    db.add(
+        AuditLog(
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            action="delete",
+            entity_type="document",
+            entity_id=document.id,
+            before={"original_filename": document.original_filename, "status": document.status.value},
+        )
+    )
+    storage_path = document.storage_path
+    db.delete(document)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete: another document references this one as a duplicate match",
+        ) from exc
+    storage.delete(storage_path)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

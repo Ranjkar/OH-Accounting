@@ -1,3 +1,10 @@
+# Optional full-stack deployment. Local dev normally runs Postgres via
+# Homebrew + the backend/frontend directly (see README) -- this is for
+# staging/production-style deployment or anyone who prefers containers.
+# Secrets come from backend/.env (gitignored, never committed) via env_file,
+# never hardcoded here. The named volume is never removed by `docker compose
+# up` -- only an explicit `docker compose down -v` would drop it, and that
+# should never be run against a real environment's data.
 services:
   postgres:
     image: postgres:16-alpine
@@ -9,6 +16,35 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onholland"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://onholland:onholland@postgres:5432/onholland_accounting
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
+  backend_storage:

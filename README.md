@@ -217,3 +217,94 @@ createdb onholland_accounting_test   # once
   rendered month grid) — list view covers the same information with less UI complexity
 - Customer-facing portal for answering questions/providing documents — notes/questions are
   accountant-facing only; there is no separate client login
+
+## What's implemented (Phase 5)
+
+**Bulk invoice upload (highest priority)** — `app/services/document_intake.py` (shared
+file-validate/hash/dedupe/store logic, used by both single- and batch-upload),
+`app/services/batch_processing.py` (bounded-concurrency `ThreadPoolExecutor`, no Celery/
+Redis), `app/api/v1/batches.py`:
+- `POST /batches/upload`: multiple files, one company/financial-year/category (SALES or
+  PURCHASES) per batch; per-file validation failures are collected as `rejected_files` and
+  never abort the rest of the batch
+- Strict sales/purchase separation: `upload_category` is stored on every `Document` and
+  checked against Claude's own classification (`UPLOAD_CATEGORY_MISMATCH`, error severity
+  → forces `needs_review`) — a document is never silently posted to the wrong ledger side
+  because the uploader picked the wrong screen or Claude misread the direction
+  (`app/services/validation_engine.py`)
+- Business-duplicate detection beyond SHA-256: same invoice number + counterparty VAT
+  number + invoice date + gross amount across *different* files → `POTENTIAL_BUSINESS_DUPLICATE`
+  warning, never an auto-reject
+- Batch dashboard: `GET /batches`, `GET /batches/{id}` (per-file status + counts), bulk
+  `approve`/`reject` (one failing document never blocks the rest — reuses
+  `app/services/document_approval.py`, shared with the single-document endpoints so the two
+  workflows can't drift), `DELETE /documents/{id}` (remove an unprocessed file; blocked once
+  approved), CSV export
+- Idempotent, restart-safe: re-approving never double-posts (existing Phase 3 guarantee,
+  reused); documents stuck in `processing` at startup are reset to `pending` by a lifespan
+  hook (`app/main.py`) instead of staying stuck forever after a crash/restart
+- Retry with backoff for Claude API rate limits/overload (`app/services/retry.py`), used by
+  both the extraction and assistant providers
+
+**Found and fixed a real, previously-undetected Phase 2 bug while building this**: after
+creating a brand-new `ExtractedInvoiceFields` row, the code never updated the in-memory
+`document.fields` relationship, so `document.fields` read back as stale `None` later in the
+*same* request/session. `DUPLICATE_DOCUMENT` findings (checked before fields are touched)
+were never affected, which is why this went undetected since Phase 2 — but *any* validation
+rule depending on `fields` (amount checks, missing-invoice-number, and now the category-
+mismatch and business-duplicate checks) silently never fired on a document's first-ever
+extraction. Fixed by setting `document.fields = fields` immediately after creating it.
+
+**Customer role and permission split** — `UserRole.customer` added; `require_uploader`
+(admin/accountant/customer) now gates uploads while `require_editor` (admin/accountant only)
+still gates every approval/rejection/correction/lock action, so a customer can upload their
+own company's invoices but can never approve them. Tenant/company isolation reuses the
+existing `require_company_access` check unchanged.
+
+**Rate limiting** — in-memory fixed-window limiter (`app/core/rate_limit.py`) on `/auth/login`
+and both upload endpoints. Single-process, resets on restart; documented as the ceiling to
+replace with a shared store if this is ever run with multiple worker processes.
+
+**Security fixes made while reviewing for this phase**:
+- CORS origins are now read from `CORS_ALLOWED_ORIGINS` (comma-separated) instead of being
+  hardcoded to `localhost:3000`, so a real frontend domain can be configured without a code
+  change — and so nobody is tempted to widen it to `*` with credentials enabled
+- Added a `DELETE /documents/{id}` that's blocked once a document is approved (can't delete
+  something already posted to the ledger — a correction is required instead, same rule as
+  everywhere else in the ledger)
+
+**Production infrastructure**: `backend/Dockerfile` (includes Tesseract + the Dutch
+language pack), `frontend/Dockerfile`, `docker-compose.yml` extended with backend/frontend
+services (Postgres service unchanged, volume never dropped by a normal `up`); real,
+tested backup/restore scripts (`backend/scripts/backup_db.sh` / `restore_db.sh` — actually
+run against the dev database for this report, not just written: a backup was taken,
+restored into a fresh database, data verified, and the restore script's own overwrite
+guard was confirmed to refuse restoring onto a non-empty database).
+
+**SBR/Digipoort**: research and architecture only, in `docs/sbr-digipoort-integration.md` —
+no submission code, no simulated acknowledgement. A real integration needs a PKIoverheid
+SBR certificate, Logius registration, and passing their conformance test suite, none of
+which exist in this environment; building a fake version of any of that would violate the
+explicit "don't simulate submission" instruction.
+
+**Frontend**: `/sales/upload` and `/purchases/upload` (distinct screens, drag-and-drop,
+multi-file select, green/amber visual distinction), `/batches` (dashboard) and
+`/batches/{id}` (per-file status table, checkbox-driven bulk approve/reject, retry, remove,
+CSV export) — all built on a shared `BulkUploadScreen` component parameterized by category
+so the two screens can never drift apart, while still being genuinely separate routes/URLs.
+
+## Explicitly deferred (Phase 5)
+- **Customer portal UI**: the backend fully supports it (customer role, scoped company
+  access, upload permission without approval rights, all verified by tests) but there is no
+  dedicated customer-facing frontend yet — a customer would currently see the same
+  accountant-oriented pages, just with mutating actions correctly blocked server-side. The
+  "view VAT summaries / missing documents / deadlines" customer-facing screens are not built.
+- **Bank-grade production hardening** beyond what's listed above: no WAF/reverse-proxy
+  config, no centralized log aggregation or error-tracking service (e.g. Sentry) wired up,
+  no staged blue/green deployment config — this environment doesn't have a real
+  staging/production target to configure against
+- **File malware scanning** (e.g. ClamAV) — magic-byte content validation catches
+  mismatched/malformed files, but nothing scans for embedded malware; would need a new
+  dependency, deliberately not added without a concrete requirement
+- A full nav redesign — the top nav is now 12 items and visibly dense; a collapsible
+  sidebar would be the right follow-up but is a design change beyond this phase's scope

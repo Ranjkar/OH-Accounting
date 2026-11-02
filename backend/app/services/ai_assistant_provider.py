@@ -38,12 +38,16 @@ class ClaudeAssistantProvider:
         self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def ask(self, facts: dict, question: str) -> str:
+        from app.services.retry import call_with_retry
+
         user_message = f"FACTS:\n{json.dumps(facts, indent=2, default=str)}\n\nQUESTION:\n{question}"
-        response = self._client.messages.create(
-            model=settings.anthropic_model,
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
+        response = call_with_retry(
+            lambda: self._client.messages.create(
+                model=settings.anthropic_model,
+                max_tokens=1024,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_message}],
+            )
         )
         return "".join(block.text for block in response.content if block.type == "text").strip()
 

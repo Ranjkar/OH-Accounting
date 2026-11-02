@@ -39,6 +39,18 @@ def require_editor(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_uploader(user: User = Depends(get_current_user)) -> User:
+    """Who may upload documents: accountants/admins for any company they can
+    access, plus customers uploading their own company's invoices. Approval,
+    rejection, locking, and every other mutating accounting action stay
+    require_editor-only -- customers can upload, never approve."""
+    if user.role not in (UserRole.admin, UserRole.accountant, UserRole.customer):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin, accountant, or customer role required"
+        )
+    return user
+
+
 def require_company_access(company_id: int, user: User, db: Session) -> None:
     if user.role == UserRole.admin:
         return
