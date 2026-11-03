@@ -24,6 +24,8 @@ Production SBR/Digipoort access requires a **PKIoverheid "services server certif
 
 **SANDBOX VERIFIED.** `app/services/kvk_provider.py` calls the real, officially published KVK API test sandbox (`api.kvk.nl/test`) using KVK's own publicly documented test API key — fetched directly from `developers.kvk.nl/documentation/testing` and exercised over the network this session (`tests/test_kvk_integration.py`, not mocked). Production requires a signed KVK agreement and a paid key (**€6.40/month + €0.02/query**, per KVK's own published pricing at `developers.kvk.nl/nl/pricing`). Scraping is explicitly prohibited by KVK's own terms (Databankenwet) and was never considered.
 
+**Phase 13 addition — company verification:** `GET /kvk/verify/{company_id}` cross-checks a company's own stored name against the live KVK record for its stored `kvk_number` (deterministic, case/punctuation-insensitive substring match — not a fuzzy/AI match), surfaced in the frontend's Government Integration Centre as a "Verify against KVK" action per company. SANDBOX VERIFIED the same way as the lookup itself (real network calls, `tests/test_kvk_integration.py`). This is a lightweight consistency check, not KVK's own verification product, and it reuses the existing `HttpKvkProvider` rather than a second client.
+
 ## Status summary
 
 | Integration | Status |

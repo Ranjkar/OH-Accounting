@@ -33,3 +33,13 @@ Building an HTTP client against a provider whose API shape wasn't independently 
 | Consent lifecycle (stub) | IMPLEMENTED |
 | Real bank connectivity | BLOCKED BY EXTERNAL REQUIREMENT (no authorised provider agreement, no credentials, DNB/EBA authorization not independently re-verified) |
 | Manual bank import | unaffected, still the primary path |
+
+## Phase 13
+
+No backend changes — re-verified against the existing test suite
+(`test_open_banking.py` still passing unchanged) and confirmed CAMT.053/
+054, MT940, and CSV imports remain untouched. The Phase 12 frontend
+connection panel (`/banking`, connect/complete-sandbox-consent/sync/
+disconnect against the stub provider) was reviewed and is unchanged.
+Payment initiation remains **NOT IMPLEMENTED** and was not activated —
+no code path in this codebase can initiate a payment.
