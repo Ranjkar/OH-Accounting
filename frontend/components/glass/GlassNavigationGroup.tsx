@@ -27,12 +27,17 @@ export default function GlassNavigationGroup({ label, icon: Icon, items, open, o
           onClick={onToggle}
           title={label}
           aria-label={label}
+          aria-haspopup="true"
           className={`nav-item-v2 w-full flex items-center justify-center p-2.5 ${groupHasActive ? "active" : ""}`}
         >
           <Icon size={18} />
         </button>
-        {/* Flyout on hover for collapsed rail */}
-        <div className="absolute left-full top-0 ml-2 hidden group-hover:block z-50 min-w-[14rem] glass-panel-dark p-2">
+        {/* Flyout shown on hover OR keyboard focus (group-focus-within) --
+            hover alone left keyboard users with no way to ever reach these
+            items, since `hidden` removes them from the tab order entirely
+            until shown. group-focus-within keeps the flyout visible for as
+            long as the toggle button or any item inside it has focus. */}
+        <div className="absolute left-full top-0 ml-2 hidden group-hover:block group-focus-within:block z-50 min-w-[14rem] glass-panel-dark p-2">
           <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-on-dark-secondary">{label}</p>
           {items.map((item) => (
             <NavLeafLink key={item.label} item={item} active={!!item.href && isActive(item.href)} onNavigate={onNavigate} />
