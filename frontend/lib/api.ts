@@ -1155,6 +1155,73 @@ export const api = {
     `${API_BASE}/reports/budget-vs-actual/${budgetId}?format=${format}`,
   scenarioComparisonReportUrl: (companyId: number, scenarioIds: number[]): string =>
     `${API_BASE}/reports/scenario-comparison?company_id=${companyId}&scenario_ids=${scenarioIds.join(",")}&format=csv`,
+
+  // ---- Phase 9: legal forms ----
+  listLegalFormDefinitions: (token: string) => request<JsonReport[]>("/legal-form-definitions", { token }),
+  setCompanyLegalForm: (token: string, payload: { company_id: number; legal_form_code: string; effective_from: string }) =>
+    request<JsonReport>("/company-legal-forms", { method: "POST", token, body: JSON.stringify(payload) }),
+  listCompanyLegalForms: (token: string, companyId: number) =>
+    request<JsonReport[]>(`/company-legal-forms?company_id=${companyId}`, { token }),
+  getCurrentLegalForm: (token: string, companyId: number) =>
+    request<JsonReport>(`/company-legal-forms/current?company_id=${companyId}`, { token }),
+  createPartner: (token: string, payload: { company_id: number; name: string; partner_type?: string; profit_share_percentage: string; entrepreneur_hours_eligible?: boolean; effective_from: string }) =>
+    request<JsonReport>("/partners", { method: "POST", token, body: JSON.stringify(payload) }),
+  listPartners: (token: string, companyId: number) => request<JsonReport[]>(`/partners?company_id=${companyId}`, { token }),
+  setPartnerHoursEligibility: (token: string, partnerId: number, eligible: boolean) =>
+    request<JsonReport>(`/partners/${partnerId}/entrepreneur-hours-eligibility?eligible=${eligible}`, { method: "PATCH", token }),
+  createShareholder: (token: string, payload: { company_id: number; name: string; ownership_percentage: string; is_director?: boolean; is_dga?: boolean; effective_from: string }) =>
+    request<JsonReport>("/shareholders", { method: "POST", token, body: JSON.stringify(payload) }),
+  listShareholders: (token: string, companyId: number) => request<JsonReport[]>(`/shareholders?company_id=${companyId}`, { token }),
+
+  // ---- Phase 9: employees ----
+  createEmployee: (token: string, payload: Record<string, unknown>) =>
+    request<JsonReport>("/employees", { method: "POST", token, body: JSON.stringify(payload) }),
+  listEmployees: (token: string, companyId: number) => request<JsonReport[]>(`/employees?company_id=${companyId}`, { token }),
+  getEmployee: (token: string, id: number) => request<JsonReport>(`/employees/${id}`, { token }),
+  employeeHoursSummary: (token: string, employeeId: number, year: number) =>
+    request<JsonReport>(`/employees/${employeeId}/hours-summary?year=${year}`, { token }),
+
+  // ---- Phase 9: timesheets & entrepreneur hours ----
+  createTimesheetEntry: (token: string, payload: { employee_id: number; entry_date: string; entry_type: string; hours: string; description?: string }) =>
+    request<JsonReport>("/timesheet-entries", { method: "POST", token, body: JSON.stringify(payload) }),
+  listTimesheetEntries: (token: string, employeeId: number) => request<JsonReport[]>(`/timesheet-entries?employee_id=${employeeId}`, { token }),
+  submitTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/timesheet-entries/${id}/submit`, { method: "POST", token }),
+  approveTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/timesheet-entries/${id}/approve`, { method: "POST", token }),
+  rejectTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/timesheet-entries/${id}/reject`, { method: "POST", token }),
+
+  createEntrepreneurHoursEntry: (token: string, payload: { company_id: number; partner_id?: number | null; entry_date: string; activity_category: string; duration_hours: string; description?: string; customer_name?: string; project?: string }) =>
+    request<JsonReport>("/entrepreneur-hours-entries", { method: "POST", token, body: JSON.stringify(payload) }),
+  listEntrepreneurHoursEntries: (token: string, companyId: number, partnerId?: number) =>
+    request<JsonReport[]>(`/entrepreneur-hours-entries?company_id=${companyId}${partnerId ? `&partner_id=${partnerId}` : ""}`, { token }),
+  urencriteriumDashboard: (token: string, companyId: number, year: number, partnerId?: number) =>
+    request<JsonReport>(`/companies/${companyId}/urencriterium-dashboard?year=${year}${partnerId ? `&partner_id=${partnerId}` : ""}`, { token }),
+
+  // ---- Phase 9: payroll ----
+  createPayrollRun: (token: string, payload: { company_id: number; period_type: string; period_year: number; period_number: number; tax_year?: number }) =>
+    request<JsonReport>("/payroll-runs", { method: "POST", token, body: JSON.stringify(payload) }),
+  listPayrollRuns: (token: string, companyId: number) => request<JsonReport[]>(`/payroll-runs?company_id=${companyId}`, { token }),
+  getPayrollRun: (token: string, id: number) => request<JsonReport>(`/payroll-runs/${id}`, { token }),
+  listPayslips: (token: string, runId: number) => request<JsonReport[]>(`/payroll-runs/${runId}/payslips`, { token }),
+  addPayslip: (token: string, runId: number, payload: Record<string, unknown>) =>
+    request<JsonReport>(`/payroll-runs/${runId}/payslips`, { method: "POST", token, body: JSON.stringify(payload) }),
+  approvePayrollRun: (token: string, runId: number) => request<JsonReport>(`/payroll-runs/${runId}/approve`, { method: "POST", token }),
+  markPayrollRunPaid: (token: string, runId: number) => request<JsonReport>(`/payroll-runs/${runId}/mark-paid`, { method: "POST", token }),
+  correctPayslip: (token: string, payslipId: number, payload: { reason: string } & Record<string, unknown>) =>
+    request<JsonReport>(`/payslips/${payslipId}/correct`, { method: "POST", token, body: JSON.stringify(payload) }),
+  payslipPdfUrl: (payslipId: number): string => `${API_BASE}/payslips/${payslipId}/pdf`,
+
+  // ---- Phase 9: tax centre ----
+  taxCentreOverview: (token: string, companyId: number) => request<JsonReport>(`/tax-centre/overview?company_id=${companyId}`, { token }),
+  incomeTaxEstimate: (token: string, companyId: number, annualProfit: string, hoursCriterionMet: boolean, isStarter: boolean) =>
+    request<JsonReport>(`/tax-centre/income-tax-estimate?company_id=${companyId}&annual_profit=${annualProfit}&hours_criterion_met=${hoursCriterionMet}&is_starter=${isStarter}`, { token }),
+  corporateTaxEstimate: (token: string, companyId: number, annualTaxableProfit: string) =>
+    request<JsonReport>(`/tax-centre/corporate-tax-estimate?company_id=${companyId}&annual_taxable_profit=${annualTaxableProfit}`, { token }),
+  dgaPosition: (token: string, companyId: number, proposedSalary: string, dividendDeclared: string) =>
+    request<JsonReport>(`/tax-centre/dga-position?company_id=${companyId}&proposed_dga_salary=${proposedSalary}&dividend_declared=${dividendDeclared}`, { token }),
+  taxOptimizationOpportunities: (token: string, companyId: number, annualProfit?: string, annualRevenue?: string) =>
+    request<JsonReport[]>(`/tax-centre/tax-optimization?company_id=${companyId}${annualProfit ? `&annual_profit=${annualProfit}` : ""}${annualRevenue ? `&annual_revenue=${annualRevenue}` : ""}&hours_criterion_met=true`, { token }),
+  structureComparison: (token: string, companyId: number, annualRevenue: string, annualOperatingExpenses: string) =>
+    request<JsonReport>(`/tax-centre/structure-comparison?company_id=${companyId}&annual_revenue=${annualRevenue}&annual_operating_expenses=${annualOperatingExpenses}`, { token }),
 };
 
 function periodQuery(params: PeriodParams, skipCompanyId = false): string {

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* ---- Legacy tokens (kept so existing pages built in Phases 1-8 keep working unchanged) ---- */
   --background: #ffffff;
   --foreground: #0f172a;
   --navy: #0f1b3d;
@@ -8,6 +9,46 @@
   --status-approved: #15803d;
   --status-pending: #b45309;
   --status-error: #b91c1c;
+
+  /* ---- Phase 9 design system: premium fintech identity ----
+     Purple/violet is the primary brand accent; cyan marks positive/
+     secondary financial information; semantic warning/error colours are
+     unchanged from the legacy palette above so old and new pages read
+     consistently. Written from the brief's own description (section 3.1) --
+     no reference screenshots were supplied this session, so this is an
+     original implementation of that written spec, not a pixel-matched
+     copy of unseen images. */
+  --surface-page: #f6f5fa;
+  --surface-card: #ffffff;
+  --surface-nav: #0b0a12;
+  --surface-nav-hover: #1c1a2b;
+
+  --brand-purple-50: #f5f3ff;
+  --brand-purple-100: #ede9fe;
+  --brand-purple-400: #a78bfa;
+  --brand-purple-500: #8b5cf6;
+  --brand-purple-600: #7c3aed;
+  --brand-purple-700: #6d28d9;
+  --brand-violet-600: #6d28d9;
+  --brand-gradient: linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #4c1d95 100%);
+
+  --accent-cyan-400: #22d3ee;
+  --accent-cyan-500: #06b6d4;
+  --accent-cyan-50: #ecfeff;
+
+  --semantic-warning: #b45309;
+  --semantic-error: #b91c1c;
+  --semantic-success: #15803d;
+
+  --text-primary: #0f0e17;
+  --text-secondary: #6b7280;
+  --text-on-dark: #f4f3f8;
+
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(16, 13, 40, 0.04), 0 8px 24px -8px rgba(16, 13, 40, 0.08);
+  --shadow-card-hover: 0 4px 12px rgba(16, 13, 40, 0.08), 0 16px 32px -12px rgba(16, 13, 40, 0.14);
+  --border-subtle: #e9e7f0;
 }
 
 @theme inline {
@@ -18,6 +59,28 @@
   --color-approved: var(--status-approved);
   --color-pending: var(--status-pending);
   --color-error: var(--status-error);
+
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-nav: var(--surface-nav);
+  --color-surface-nav-hover: var(--surface-nav-hover);
+  --color-brand-purple-50: var(--brand-purple-50);
+  --color-brand-purple-100: var(--brand-purple-100);
+  --color-brand-purple-400: var(--brand-purple-400);
+  --color-brand-purple-500: var(--brand-purple-500);
+  --color-brand-purple-600: var(--brand-purple-600);
+  --color-brand-purple-700: var(--brand-purple-700);
+  --color-accent-cyan-400: var(--accent-cyan-400);
+  --color-accent-cyan-500: var(--accent-cyan-500);
+  --color-accent-cyan-50: var(--accent-cyan-50);
+  --color-semantic-warning: var(--semantic-warning);
+  --color-semantic-error: var(--semantic-error);
+  --color-semantic-success: var(--semantic-success);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-on-dark: var(--text-on-dark);
+  --color-border-subtle: var(--border-subtle);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -26,4 +89,90 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ---- Phase 9 shared component classes ----
+   Centralized here so every new screen uses the same card/button/input
+   shapes instead of re-deriving ad hoc Tailwind strings per page. */
+
+.app-shell-v2 {
+  background: var(--surface-page);
+}
+
+.card-v2 {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+.card-v2-hover {
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.card-v2-hover:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.hero-gradient-v2 {
+  background: var(--brand-gradient);
+  border-radius: var(--radius-card);
+  color: var(--text-on-dark);
+}
+
+.pill-v2 {
+  border-radius: var(--radius-pill);
+}
+
+.btn-primary-v2 {
+  background: var(--brand-purple-600);
+  color: #ffffff;
+  border-radius: 0.6rem;
+  font-weight: 500;
+  transition: background 150ms ease;
+}
+.btn-primary-v2:hover {
+  background: var(--brand-purple-700);
+}
+
+.btn-secondary-v2 {
+  background: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.6rem;
+  font-weight: 500;
+  transition: background 150ms ease;
+}
+.btn-secondary-v2:hover {
+  background: var(--surface-page);
+}
+
+.nav-rail-v2 {
+  background: var(--surface-nav);
+  color: var(--text-on-dark);
+}
+
+.nav-item-v2 {
+  border-radius: 0.6rem;
+  color: #a6a3b8;
+  transition: background 120ms ease, color 120ms ease;
+}
+.nav-item-v2:hover {
+  background: var(--surface-nav-hover);
+  color: #ffffff;
+}
+.nav-item-v2.active {
+  background: var(--brand-purple-600);
+  color: #ffffff;
+}
+
+.input-v2 {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.6rem;
+  background: #ffffff;
+}
+.input-v2:focus {
+  outline: none;
+  border-color: var(--brand-purple-400);
+  box-shadow: 0 0 0 3px var(--brand-purple-100);
 }

@@ -562,3 +562,142 @@ budget approval → verify the same P&L request returns byte-identical JSON on a
   revenue and total expenses; it does not yet let gross margin itself be an assumption.
 - Corporate income tax estimation — explicitly never fabricated; this system calculates Dutch
   VAT only, consistent with every prior phase's own scope.
+
+## What's implemented (Phase 9)
+
+**Phase 7 did not exist before this phase** — confirmed via `git log` (HEAD was Phase 8's
+`d05e49f`) before starting, per this phase's own instruction to verify rather than assume.
+This phase substantially implements it at the backend/API level. **No reference screenshots
+were supplied** for the UI-redesign brief despite the brief referring to "the supplied three
+screenshots" — the visual redesign below is an original implementation of the brief's
+*written* description (section 3.1-3.2), not a pixel-matched copy of images never received,
+and that distinction is stated plainly rather than glossed over. No browser automation
+connection was available this session, so no visual screenshots were captured — this is
+stated rather than a fabricated claim of pixel verification.
+
+**Dutch legal-form registry** (`app/models/legal_form.py`, seeded via migration + shared with
+the test suite via `app/models/legal_form_seed_data.py`) — 13 legal forms (eenmanszaak, VOF,
+maatschap, CV, BV, NV, coöperatie, OWM, stichting, vereniging, VvE, rederij, other), each with
+real tax-obligation flags (income tax vs. corporate tax vs. conditional-on-facts for
+foundations/associations) — never assumes every entity faces the same taxes. Companies record
+their legal form with effective-dated history (changing form closes the old row, never
+overwrites it). VOF/Maatschap/CV get a `Partner` model with per-partner profit share and an
+`entrepreneur_hours_eligible` flag that defaults to **false** and must be explicitly set --
+never assumed shared across partners. BV/NV get a `Shareholder` model with DGA marking.
+
+**Dutch tax rules engine** (`app/accounting/dutch_tax_rules.py`) — box 1/2 brackets, Vpb
+brackets, zelfstandigenaftrek + startersaftrek, mkb-winstvrijstelling, KOR threshold, DGA
+gebruikelijk-loon norm, algemene heffingskorting (with its real phase-out curve), and
+arbeidskorting (all 4 brackets) for tax year 2025. Every figure was looked up this session via
+web search against Belastingdienst-sourced material (cited inline in the module and in commit
+history) rather than recalled from training data and presented as authoritative. Every
+consumer function returns `requires_accountant_confirmation: True`.
+
+**Entity-specific tax estimation** (`app/accounting/entity_tax.py`) — eenmanszaak/VOF/
+Maatschap/CV income tax (entrepreneur deduction only applied when the urencriterium is
+explicitly confirmed met), VOF profit allocation by each partner's own share and eligibility,
+BV corporate tax + DGA position (gebruikelijk-loon compliance check using the correct rule --
+the *highest* of the norm amount, the highest-paid employee, and the comparable role, never
+just the flat norm), and an explicit non-answer for foundations/associations (never guesses
+whether they're running a taxable enterprise).
+
+**Deterministic Dutch payroll** (`app/accounting/payroll_engine.py`,
+`app/accounting/payroll_service.py`) — monthly and four-weekly periods, hourly and salaried
+employees, overtime, holiday allowance, pension deduction, bonuses, expense reimbursement
+(added back untaxed). Withholding is approximated by annualizing the period's gross pay
+through the same tax-bracket engine used for personal income tax -- methodologically how the
+official loonbelastingtabel is itself derived, but explicitly labeled as an approximation that
+must be checked against the real published table before any filing. Employer Zvw levy uses a
+clearly-flagged placeholder rate; WW/WIA/Aof/sector premiums are **not** included and
+`employer_costs_total` is documented as understating true cost rather than silently
+presenting an incomplete number as final. Payslips are never edited in place -- a correction
+voids the original (kept as a permanent audit record) and creates a new, linked Payslip.
+
+**Employees and BSN protection** (`app/models/employee.py`, `app/core/crypto.py`) -- BSN is
+encrypted at rest with Fernet (`cryptography`, already a transitive dependency via
+`python-jose[cryptography]`, now pinned directly) and the API **never** returns it in
+plaintext, only masked (`******789`); it is never logged and never passed to the AI assistant.
+Verified by test that the encrypted bytes on disk never contain the plaintext BSN substring.
+
+**Working hours** (`app/accounting/hours_service.py`) — employee timesheets with a submit/
+approve/reject audit trail, and entrepreneur hours logging (by category: business activity,
+training, administration, business development, travel, other) feeding a 1,225-hour
+urencriterium dashboard that explicitly states recorded hours meeting the threshold is
+*necessary but not sufficient* for the deduction -- never auto-grants anything.
+
+**Tax optimization catalogue** (`app/accounting/tax_optimization.py`) — zelfstandigenaftrek
+and KOR get a real computed before/after figure from data this system actually has; MKB-
+winstvrijstelling is surfaced as already-applied, not a separate action; KIA/EIA/MIA/VAMIL/
+WKR/pension/loss-utilization/BV-vs-eenmanszaak are returned as fully-specified catalogue
+entries (legal basis, conditions, required evidence, official source) with
+`estimated_tax_before/after: null` and `confidence: "requires_data_not_tracked"` -- never a
+fabricated savings number. Nothing here resembles false invoices, concealed income, or
+fabricated hours.
+
+**Legal structure comparator** (`app/accounting/structure_comparator.py`) — eenmanszaak vs.
+VOF (with custom per-partner profit shares) vs. BV (with a DGA salary defaulting to the
+gebruikelijk-loon norm and its own compliance check) under one set of revenue/expense
+assumptions. Pure what-if computation -- verified by test that it never writes to
+`AccountingTransaction` or any real record. Explicitly refuses to claim one structure is
+always best.
+
+**Tax Centre** (`app/api/v1/tax_centre.py`) -- aggregates the *existing* VAT engine's own
+`VatReturn` rows (no second VAT tracking system) alongside the new income/corporate tax
+estimates, with ICP/OSS/income tax/corporate tax/payroll tax all explicitly marked
+`NOT_TRACKED`/`NOT_FILED` rather than silently implying a filing capability that doesn't
+exist, and SBR/Digipoort reported as `NOT_CONNECTED` pointing at the Phase 5 research doc.
+
+**Security**: BSN encryption (above) is the one genuinely new control this phase adds; a full
+pass confirmed the existing CORS allowlist, bearer-JWT auth (no cookies, so CSRF doesn't
+apply to this API shape), file-upload magic-byte validation, login rate limiting, and
+ORM-only queries (no raw SQL anywhere, no injection surface) all still hold, and that no
+Anthropic credential is reachable from frontend code. No new gaps found or introduced.
+
+**UI redesign** -- a new design-token system (`app/globals.css`): purple/violet gradient as
+the primary brand accent, cyan for secondary/positive figures, white cards on a light-grey
+page surface, a black icon-based vertical nav rail replacing the old horizontal top nav,
+grouped into the five sections the brief specifies (Main/Accounting/Tax & Payroll/
+Intelligence/Administration), collapsible. The Dashboard page is fully rebuilt as the
+flagship of the new identity, including a purple/violet "OnHolland AI" hero card with the
+four suggested-question shortcuts the brief names, each linking to a real, working page (no
+dead buttons). **This redesign was applied to the shared `Shell` component (so every page
+inherits the new nav rail) and to the Dashboard page itself; the ~30 other existing pages from
+Phases 1-8 still use their original Phase-1-era card styling and were not individually
+reskinned** -- doing that for every screen was not achievable in this session alongside the
+rest of this phase's backend scope, and this gap is stated here rather than glossed over.
+
+**Frontend**: 7 new pages (Employees, Salarisadministratie/Payroll with payslip PDF download
+and a correction flow, Working Hours, Entrepreneur Hours with the 1,225-hour dashboard, Tax
+Centre, Tax Optimisation, Legal Structure Calculator), all wired to real backend data, no
+mock/placeholder values. `npx tsc --noEmit`, `npm run lint`, and `npm run build` all pass
+clean; no new frontend dependency was added (icons are inline SVG/CSS, not a library).
+
+**Verification**: 77 new backend tests, 358 total passing against a real Postgres test
+database. Smoke-tested end to end against a live `uvicorn` instance (separate port, existing
+dev server untouched): legal form registry → set a company's legal form → Tax Centre overview
+→ create an employee with a real BSN (masked correctly in the response) → create a payroll
+run → add a payslip (gross €4,500.00 → net €3,394.37) → download the Loonstrook PDF (valid,
+2 pages).
+
+## Explicitly deferred / known limitations (Phase 9)
+- **Pixel-fidelity UI redesign** — no reference screenshots were received this session; the
+  visual identity follows the brief's written description, and was applied to the nav
+  shell + Dashboard only, not all ~30 existing pages (see above).
+- **Official loonbelastingtabel reproduction** — payroll withholding is a methodologically-
+  sound approximation (same annualize/bracket approach the real table is derived from), not a
+  byte-for-byte reproduction of the published table's rounding/edge cases. Must be verified
+  against the official table before any real payroll filing.
+- **Employer WW/WIA/Aof/sector-fund premiums** — not modeled at all; `employer_costs_total`
+  is documented as understating true employer cost, not presented as final.
+- **SBR/Digipoort and all other government filing integrations** — architecture-only
+  (unchanged from Phase 5's own finding); nothing here ever claims a return was filed.
+- **Employee self-service payslip portal** — `Employee.linked_user_id` exists as a hook for
+  this, but the actual self-service auth/permission flow was not built this session; all
+  payroll endpoints are admin/accountant-only for now.
+- **Full KIA/EIA/MIA/VAMIL/WKR/pension eligibility computation** — correctly scoped as
+  catalogue entries requiring data (specific asset purchases, payroll structure) this system
+  does not track; never fabricated.
+- **DGA customary-salary "comparable role" and "highest employee" inputs** are accepted as
+  optional parameters to the estimate endpoints but nothing yet looks up a real comparable-
+  salary benchmark or auto-fills the highest employee salary from payroll data -- both must
+  currently be supplied by the caller.
