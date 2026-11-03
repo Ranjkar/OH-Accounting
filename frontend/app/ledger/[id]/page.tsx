@@ -76,7 +76,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Net / VAT / Gross</p>
           <p className="text-lg font-semibold text-navy mt-1">

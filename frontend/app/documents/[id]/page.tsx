@@ -232,7 +232,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
             </div>
 
             <h3 className="text-xs font-semibold text-text-secondary uppercase pt-2">VAT breakdown</h3>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <FieldInput label="Net amount" type="number" value={form.net_amount ?? null} onChange={(v) => setField("net_amount", v ? Number(v) : null)} />
               <FieldInput label="VAT rate %" type="number" value={form.vat_rate ?? null} onChange={(v) => setField("vat_rate", v ? Number(v) : null)} />
               <FieldInput label="VAT amount" type="number" value={form.vat_amount ?? null} onChange={(v) => setField("vat_amount", v ? Number(v) : null)} />

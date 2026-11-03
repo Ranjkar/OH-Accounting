@@ -75,7 +75,7 @@ function EmployeesContent() {
       {companyId && (
         <form onSubmit={createEmployee} className="card-v2 p-4 space-y-3">
           <h2 className="font-medium text-text-primary">Add employee</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <input required value={employeeNumber} onChange={(e) => setEmployeeNumber(e.target.value)} placeholder="Employee number" className="input-v2 px-3 py-2 text-sm" />
             <input required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className="input-v2 px-3 py-2 text-sm" />
             <input value={bsn} onChange={(e) => setBsn(e.target.value)} placeholder="BSN (optional)" className="input-v2 px-3 py-2 text-sm" />

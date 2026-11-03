@@ -94,7 +94,7 @@ function FinancialOverviewContent() {
         </select>
 
         {owner && (
-          <div className="grid grid-cols-4 gap-4 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
             <Tile label="Revenue (this month)" value={owner.revenue} href="/profit-and-loss" />
             <Tile label="Net profit (this month)" value={owner.net_profit} href="/profit-and-loss" />
             <Tile label="Cash position" value={owner.cash_position} href="/balance-sheet" />

@@ -68,7 +68,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Financial years</p>
           <p className="text-2xl font-semibold text-navy mt-1">{workspace.financial_year_count}</p>

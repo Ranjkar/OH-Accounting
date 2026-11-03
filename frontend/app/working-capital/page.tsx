@@ -115,7 +115,7 @@ function WorkingCapitalContent() {
             </table>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Cash conversion cycle</h2>
               {ccc && (

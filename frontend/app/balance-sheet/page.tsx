@@ -105,7 +105,7 @@ function BalanceSheetContent() {
             <div className="rounded-md bg-amber-50 text-amber-700 text-sm px-3 py-2">{bs.missing_opening_balance_warning}</div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Assets</h2>
               <Row label="Cash and bank" value={bs.assets.cash_and_bank} />

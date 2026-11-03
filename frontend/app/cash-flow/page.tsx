@@ -83,7 +83,7 @@ function CashFlowContent() {
 
       {tab === "statement" && statement && (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">Operating activities (net)</p>
               <p className="text-xl font-semibold text-navy font-mono">{statement.operating_activities.net}</p>
@@ -118,7 +118,7 @@ function CashFlowContent() {
 
       {tab === "forecast" && forecast && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">Actual -- net bank movement to date</p>
               <p className="text-2xl font-semibold text-navy font-mono">{forecast.net_bank_transaction_movement}</p>

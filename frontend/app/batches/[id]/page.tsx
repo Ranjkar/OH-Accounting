@@ -124,7 +124,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="grid grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         <StatCard label="Total" value={batch.counts.total} />
         <StatCard label="Extracted" value={batch.counts.extracted} tone="green" />
         <StatCard label="Needs review" value={batch.counts.needs_review} tone="amber" />

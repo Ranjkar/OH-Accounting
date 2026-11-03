@@ -83,7 +83,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Sales (net)</p>
           <p className="text-lg font-semibold text-navy mt-1">{reconciliation.sales_total_net}</p>

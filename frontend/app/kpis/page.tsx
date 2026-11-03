@@ -26,7 +26,7 @@ function KpiSection({ title, kpis }: { title: string; kpis: Record<string, JsonR
   return (
     <div className="space-y-2">
       <h2 className="text-lg font-medium text-navy">{title}</h2>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Object.entries(kpis).map(([key, kpi]) => (
           <KpiCard key={key} name={key.replace(/_/g, " ")} kpi={kpi} />
         ))}

@@ -133,7 +133,7 @@ function LedgerContent() {
 
       {showForm && (
         <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-text-secondary">Company</label>
               <select
@@ -210,7 +210,7 @@ function LedgerContent() {
           <div className="space-y-2">
             <label className="text-xs font-medium text-text-secondary">Line items</label>
             {lines.map((line, i) => (
-              <div key={i} className="grid grid-cols-6 gap-2 items-end">
+              <div key={i} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
                 <input
                   placeholder="Description"
                   value={line.description}

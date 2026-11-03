@@ -76,7 +76,7 @@ function AutomationContent() {
 
       {summary && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Tile label="Unmatched transactions" value={summary.unmatched_transactions} href="/bank-transactions" tone="warn" />
             <Tile label="Suggested matches" value={summary.suggested_matches} href="/reconciliation" />
             <Tile label="High-confidence suggested" value={summary.high_confidence_suggested_matches} href="/reconciliation" />

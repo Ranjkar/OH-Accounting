@@ -68,7 +68,7 @@ function LegalStructureContent() {
 
       {result && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <OptionCard title="Eenmanszaak" total_tax={result.eenmanszaak.total_tax} net_result={result.eenmanszaak.net_result} highlight={result.lowest_total_tax_option === "eenmanszaak"} />
             <OptionCard title="VOF (equal split)" total_tax={result.vof.total_tax} net_result={result.vof.net_result} highlight={result.lowest_total_tax_option === "vof"} />
             <OptionCard title="BV" total_tax={result.bv.total_tax} net_result={result.bv.net_result} highlight={result.lowest_total_tax_option === "bv"} />
