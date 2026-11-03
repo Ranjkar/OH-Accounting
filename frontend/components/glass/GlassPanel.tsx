@@ -18,8 +18,8 @@ export default function GlassPanel({ title, subtitle, actions, children, classNa
       {(title || actions) && (
         <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/40">
           <div>
-            {title && <h2 className="font-semibold text-text-primary">{title}</h2>}
-            {subtitle && <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>}
+            {title && <h2 className="text-card-heading">{title}</h2>}
+            {subtitle && <p className="text-helper-v2 mt-0.5">{subtitle}</p>}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
