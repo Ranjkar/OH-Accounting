@@ -181,6 +181,30 @@ def test_employer_premiums_zero_once_cap_fully_reached():
     assert result["total_employer_premiums"] == Decimal("0.00")
 
 
+def test_wkr_free_space_single_bracket():
+    rules = tax.get_rule_set(2025)
+    result = tax.calculate_wkr_free_space(Decimal("200000"), rules)
+    assert result["bracket1_wage"] == Decimal("200000")
+    assert result["bracket2_wage"] == Decimal("0")
+    assert result["total_free_space"] == (Decimal("200000") * Decimal("0.02")).quantize(Decimal("0.01"))
+
+
+def test_wkr_free_space_crosses_both_brackets():
+    rules = tax.get_rule_set(2025)
+    # Official Belastingdienst worked example: 2.00% up to EUR 400,000, 1.18% above.
+    result = tax.calculate_wkr_free_space(Decimal("500000"), rules)
+    assert result["bracket1_wage"] == Decimal("400000")
+    assert result["bracket2_wage"] == Decimal("100000")
+    expected = (Decimal("400000") * Decimal("0.02") + Decimal("100000") * Decimal("0.0118")).quantize(Decimal("0.01"))
+    assert result["total_free_space"] == expected
+
+
+def test_wkr_free_space_zero_wage():
+    rules = tax.get_rule_set(2025)
+    result = tax.calculate_wkr_free_space(Decimal("0"), rules)
+    assert result["total_free_space"] == Decimal("0.00")
+
+
 def test_unknown_tax_year_raises_rather_than_falling_back():
     import pytest
 

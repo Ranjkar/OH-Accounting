@@ -32,6 +32,25 @@ def test_catalogue_entries_never_fabricate_a_savings_figure():
     assert kia.confidence == "requires_data_not_tracked"
 
 
+def test_wkr_falls_back_to_catalogue_entry_without_fiscal_wage_data():
+    opportunities = tax_optimization.find_opportunities(legal_form_code="BV", annual_profit=Decimal("100000"), annual_revenue=Decimal("150000"))
+    wkr = next(o for o in opportunities if "Werkkostenregeling" in o.recommendation)
+    assert wkr.confidence == "requires_data_not_tracked"
+    assert wkr.potential_savings is None
+
+
+def test_wkr_computes_free_space_from_real_fiscal_wage():
+    opportunities = tax_optimization.find_opportunities(
+        legal_form_code="BV", annual_profit=Decimal("100000"), annual_revenue=Decimal("150000"),
+        total_fiscal_wage=Decimal("500000"),
+    )
+    wkr = next(o for o in opportunities if "Werkkostenregeling" in o.recommendation)
+    assert wkr.confidence == "computed_from_recorded_data"
+    # Never claims this computed figure as a confirmed saving -- it's an available budget, not a known saving.
+    assert wkr.potential_savings is None
+    assert "EUR 500000" in wkr.notes[0]
+
+
 def test_bv_comparison_only_offered_for_bv_nv():
     eenmanszaak_opps = tax_optimization.find_opportunities(legal_form_code="EENMANSZAAK", annual_profit=Decimal("50000"), annual_revenue=Decimal("60000"))
     bv_opps = tax_optimization.find_opportunities(legal_form_code="BV", annual_profit=Decimal("50000"), annual_revenue=Decimal("60000"))

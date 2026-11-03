@@ -98,6 +98,34 @@ def _mkb_winstvrijstelling_note(rules: tax.DutchTaxRuleSet) -> TaxOpportunity:
     )
 
 
+def _wkr_opportunity(total_fiscal_wage: Decimal, rules: tax.DutchTaxRuleSet) -> TaxOpportunity:
+    free_space = tax.calculate_wkr_free_space(total_fiscal_wage, rules)
+    return TaxOpportunity(
+        recommendation="Werkkostenregeling (WKR) -- tax-free allowance budget",
+        legal_basis="Wet LB 1964, art. 31a",
+        tax_year=rules.year,
+        eligibility_conditions=["Employer with a payroll -- a free space (vrije ruimte) percentage of total taxable wage may be given tax-free"],
+        required_evidence=["A list of reimbursements/benefits already provided this year, to compare against this budget"],
+        estimated_tax_before=None, estimated_tax_after=None,
+        # Not a confirmed saving -- this is the available tax-free BUDGET; the actual saving depends on whether
+        # the employer spends reimbursements/benefits up to it, which this system does not track.
+        potential_savings=None,
+        additional_costs="Spending beyond the free space is subject to an 80% final levy (eindheffing) on the excess",
+        risk="LOW",
+        confidence="computed_from_recorded_data",
+        deadline=f"Vrije ruimte applies for the {rules.year} calendar year; eindheffing is settled via the final payroll period",
+        accountant_approval_required=True,
+        official_source="Belastingdienst 'Wat is de werkkostenregeling (WKR)?' (fetched directly)",
+        notes=[
+            f"Computed from this company's actual total fiscal wage of EUR {total_fiscal_wage} for {rules.year}: "
+            f"EUR {free_space['bracket1_free_space']} (2.00% of the first EUR {rules.wkr_bracket1_threshold}) + "
+            f"EUR {free_space['bracket2_free_space']} (1.18% above that) = EUR {free_space['total_free_space']} "
+            "available tax-free budget.",
+            free_space["note"],
+        ],
+    )
+
+
 def _catalogue_entry_requiring_data(name: str, legal_basis: str, conditions: list[str], evidence: list[str], source: str, risk: str, tax_year: int) -> TaxOpportunity:
     return TaxOpportunity(
         recommendation=name, legal_basis=legal_basis, tax_year=tax_year,
@@ -115,7 +143,8 @@ def _catalogue_entry_requiring_data(name: str, legal_basis: str, conditions: lis
 
 def find_opportunities(
     *, legal_form_code: str, annual_profit: Decimal | None, annual_revenue: Decimal | None,
-    hours_criterion_met: bool = False, is_starter: bool = False, rules: tax.DutchTaxRuleSet | None = None,
+    hours_criterion_met: bool = False, is_starter: bool = False, total_fiscal_wage: Decimal | None = None,
+    rules: tax.DutchTaxRuleSet | None = None,
 ) -> list[TaxOpportunity]:
     rules = rules or tax.get_rule_set()
     opportunities: list[TaxOpportunity] = []
@@ -139,12 +168,15 @@ def find_opportunities(
         ["Asset specification matched against the current Energy-list/Milieulijst code"],
         "RVO.nl energy/environment investment lists", "MEDIUM", rules.year,
     ))
-    opportunities.append(_catalogue_entry_requiring_data(
-        "Werkkostenregeling (WKR) -- tax-free allowance budget", "Wet LB 1964, art. 31a",
-        ["Employer with a payroll -- a free space (vrije ruimte) percentage of total taxable wage may be given tax-free"],
-        ["Total fiscal wage sum for the year and a list of reimbursements/benefits already provided"],
-        "Belastingdienst werkkostenregeling", "LOW", rules.year,
-    ))
+    if total_fiscal_wage is not None:
+        opportunities.append(_wkr_opportunity(total_fiscal_wage, rules))
+    else:
+        opportunities.append(_catalogue_entry_requiring_data(
+            "Werkkostenregeling (WKR) -- tax-free allowance budget", "Wet LB 1964, art. 31a",
+            ["Employer with a payroll -- a free space (vrije ruimte) percentage of total taxable wage may be given tax-free"],
+            ["Total fiscal wage sum for the year and a list of reimbursements/benefits already provided"],
+            "Belastingdienst werkkostenregeling", "LOW", rules.year,
+        ))
     opportunities.append(_catalogue_entry_requiring_data(
         "Pension arrangement (lijfrente / oudedagsreserve alternatives)", "Wet IB 2001, art. 3.126a",
         ["Sufficient 'jaarruimte' pension contribution space", "No existing employer pension scheme covering the same years"],

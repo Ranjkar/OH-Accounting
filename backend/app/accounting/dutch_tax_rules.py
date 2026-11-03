@@ -124,6 +124,12 @@ class DutchTaxRuleSet:
     # the exact official tabel bijzondere beloningen, not an approximation.
     special_remuneration_brackets: list[tuple[Decimal, Decimal]]
 
+    # ---- Phase 10: werkkostenregeling (WKR) free space ----
+    wkr_bracket1_threshold: Decimal  # fiscal wage up to this amount uses wkr_free_space_rate_bracket1
+    wkr_free_space_rate_bracket1: Decimal
+    wkr_free_space_rate_bracket2: Decimal  # applies to fiscal wage above wkr_bracket1_threshold
+    wkr_excess_eindheffing_rate: Decimal  # final levy on untaxed spending above the free space
+
     sources: list[str] = field(default_factory=list)
 
 
@@ -185,6 +191,10 @@ RULES_2025 = DutchTaxRuleSet(
         (Decimal("76818"), Decimal("0.5601")),
         (Decimal("139405"), Decimal("0.4950")),
     ],
+    wkr_bracket1_threshold=Decimal("400000"),
+    wkr_free_space_rate_bracket1=Decimal("0.02"),
+    wkr_free_space_rate_bracket2=Decimal("0.0118"),
+    wkr_excess_eindheffing_rate=Decimal("0.80"),
     sources=[
         "Belastingdienst box 1 tarieven 2025 (via MKB Servicedesk overview)",
         "Belastingdienst 'Zelfstandigenaftrek 2025'",
@@ -207,6 +217,9 @@ RULES_2025 = DutchTaxRuleSet(
         "independently validate the regular-wage annualize/divide approximation (see test_payroll_validation.py: "
         "EUR 2,500/4,000/8,000 monthly wage all matched the official 'met loonheffingskorting' column within "
         "EUR 0.40)",
+        "Belastingdienst 'Wat is de werkkostenregeling (WKR)?' -- fetched and read directly "
+        "(belastingdienst.nl/.../werkkostenregeling): vrije ruimte 2,00% up to EUR 400.000 fiscal wage, 1,18% "
+        "above that, 80% eindheffing on untaxed spending beyond the free space (2025 rates).",
     ],
 )
 
@@ -386,4 +399,35 @@ def employer_social_insurance_premiums(
         "max_premieloon": rules.max_premieloon,
         "whk_is_nationwide_average_not_employer_specific": True,
         "requires_accountant_confirmation": True,
+    }
+
+
+def calculate_wkr_free_space(total_fiscal_wage: Decimal, rules: DutchTaxRuleSet) -> dict:
+    """Werkkostenregeling vrije ruimte: this only computes the tax-free
+    BUDGET available for the year from the employer's own total fiscal wage
+    sum (loonsom) -- it has no visibility into reimbursements or benefits
+    already granted, so it cannot say how much of that budget remains
+    unused or whether anything is already over the limit. Never presented
+    as a savings figure on its own."""
+    total_fiscal_wage = max(total_fiscal_wage, ZERO)
+    bracket1_wage = min(total_fiscal_wage, rules.wkr_bracket1_threshold)
+    bracket2_wage = max(total_fiscal_wage - rules.wkr_bracket1_threshold, ZERO)
+    bracket1_free_space = (bracket1_wage * rules.wkr_free_space_rate_bracket1).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    bracket2_free_space = (bracket2_wage * rules.wkr_free_space_rate_bracket2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return {
+        "total_fiscal_wage": total_fiscal_wage,
+        "bracket1_wage": bracket1_wage,
+        "bracket1_rate": rules.wkr_free_space_rate_bracket1,
+        "bracket1_free_space": bracket1_free_space,
+        "bracket2_wage": bracket2_wage,
+        "bracket2_rate": rules.wkr_free_space_rate_bracket2,
+        "bracket2_free_space": bracket2_free_space,
+        "total_free_space": bracket1_free_space + bracket2_free_space,
+        "excess_eindheffing_rate": rules.wkr_excess_eindheffing_rate,
+        "requires_accountant_confirmation": True,
+        "note": (
+            "This is the available tax-free budget computed from total fiscal wage only -- this system does not "
+            "track reimbursements or benefits already provided this year, so it cannot report how much of this "
+            "budget remains, or whether the 80% eindheffing on excess spending already applies."
+        ),
     }

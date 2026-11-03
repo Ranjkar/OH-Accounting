@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.accounting import dutch_tax_rules as tax
@@ -14,6 +15,7 @@ from app.models.company import Company
 from app.models.employee import Employee
 from app.models.enums import LegalFormCode, SalaryBasis, VatReturnStatus
 from app.models.legal_form import CompanyLegalForm, Partner
+from app.models.payroll import PayrollRun, Payslip
 from app.models.user import User
 
 router = APIRouter(prefix="/tax-centre", tags=["tax-centre"])
@@ -158,17 +160,28 @@ def dga_position(
     return to_json_safe(result)
 
 
+def _total_fiscal_wage_for_year(db: Session, company_id: int, tax_year: int) -> Decimal | None:
+    total = (
+        db.query(func.coalesce(func.sum(Payslip.gross_salary), Decimal("0")))
+        .join(PayrollRun, Payslip.payroll_run_id == PayrollRun.id)
+        .filter(PayrollRun.company_id == company_id, PayrollRun.tax_year == tax_year, Payslip.voided.is_(False))
+        .scalar()
+    )
+    return total if total and total > 0 else None
+
+
 @router.get("/tax-optimization")
 def tax_optimization_opportunities(
     company_id: int, annual_profit: Decimal | None = None, annual_revenue: Decimal | None = None,
-    hours_criterion_met: bool = False, is_starter: bool = False,
+    hours_criterion_met: bool = False, is_starter: bool = False, tax_year: int | None = None,
     db: Session = Depends(get_db), user: User = Depends(get_current_user),
 ):
     _get_company_or_404(db, user, company_id)
     legal_form = _current_legal_form(db, company_id, date.today())
+    total_fiscal_wage = _total_fiscal_wage_for_year(db, company_id, tax_year or tax.CURRENT_TAX_YEAR)
     opportunities = tax_optimization.find_opportunities(
         legal_form_code=legal_form.value if legal_form else "OTHER", annual_profit=annual_profit, annual_revenue=annual_revenue,
-        hours_criterion_met=hours_criterion_met, is_starter=is_starter,
+        hours_criterion_met=hours_criterion_met, is_starter=is_starter, total_fiscal_wage=total_fiscal_wage,
     )
     return to_json_safe([vars(o) for o in opportunities])
 
