@@ -1,23 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  /* ---- Legacy tokens (kept so existing pages built in Phases 1-8 keep working unchanged) ---- */
+  /* ---- Legacy tokens ----
+     --navy/--navy-light back every `bg-navy`/`text-navy`/`hover:bg-navy-light`
+     utility used across ~30 pages built in Phases 1-8 (buttons, active pills,
+     table header rows, the login background). Repointing their VALUES here
+     (Phase 11) re-skins every one of those usages to the new glass palette
+     without touching a single page file -- the classes and the conditional
+     logic that picks them (active/inactive, etc.) are completely unchanged. */
   --background: #ffffff;
   --foreground: #0f172a;
-  --navy: #0f1b3d;
-  --navy-light: #1e2a4f;
+  --navy: #4c1d95;
+  --navy-light: #6d28d9;
   --status-approved: #15803d;
   --status-pending: #b45309;
   --status-error: #b91c1c;
 
-  /* ---- Phase 9 design system: premium fintech identity ----
-     Purple/violet is the primary brand accent; cyan marks positive/
-     secondary financial information; semantic warning/error colours are
-     unchanged from the legacy palette above so old and new pages read
-     consistently. Written from the brief's own description (section 3.1) --
-     no reference screenshots were supplied this session, so this is an
-     original implementation of that written spec, not a pixel-matched
-     copy of unseen images. */
+  /* ---- Phase 11: glassmorphism design system ----
+     No reference screenshot was available this session (docs/design-reference/
+     onholland-glass-dashboard.png does not exist in the repo and none was
+     attached) -- this implements the brief's own detailed written
+     specification (purple/violet primary, indigo secondary, cyan/teal
+     accent, deep navy gradient background, frosted glass surfaces) rather
+     than a pixel-matched copy of an unseen image. That limitation is
+     documented in the Phase 11 delivery report, not hidden. */
   --surface-page: #f6f5fa;
   --surface-card: #ffffff;
   --surface-nav: #0b0a12;
@@ -35,6 +41,9 @@
   --accent-cyan-400: #22d3ee;
   --accent-cyan-500: #06b6d4;
   --accent-cyan-50: #ecfeff;
+  --accent-teal-400: #2dd4bf;
+  --accent-indigo-500: #6366f1;
+  --accent-indigo-600: #4f46e5;
 
   --semantic-warning: #b45309;
   --semantic-error: #b91c1c;
@@ -43,12 +52,33 @@
   --text-primary: #0f0e17;
   --text-secondary: #6b7280;
   --text-on-dark: #f4f3f8;
+  --text-on-dark-secondary: #c9c6dc;
 
   --radius-card: 1rem;
   --radius-pill: 999px;
   --shadow-card: 0 1px 2px rgba(16, 13, 40, 0.04), 0 8px 24px -8px rgba(16, 13, 40, 0.08);
   --shadow-card-hover: 0 4px 12px rgba(16, 13, 40, 0.08), 0 16px 32px -12px rgba(16, 13, 40, 0.14);
   --border-subtle: #e9e7f0;
+
+  /* Deep navy/indigo/violet app background -- the base every glass panel
+     floats on. Fixed gradient (not scroll-attached) so it reads as one
+     continuous surface behind scrollable content. */
+  --app-gradient: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124, 58, 237, 0.35), transparent),
+    radial-gradient(ellipse 60% 50% at 100% 0%, rgba(34, 211, 238, 0.12), transparent),
+    linear-gradient(160deg, #0b0a1f 0%, #15113a 45%, #1b1240 75%, #0f0b26 100%);
+
+  /* Frosted glass surface: translucent, not transparent-to-illegibility --
+     text stays fully readable on top of it (explicit brief requirement). */
+  --glass-surface: rgba(255, 255, 255, 0.86);
+  --glass-surface-strong: rgba(255, 255, 255, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 8px 32px -8px rgba(13, 10, 44, 0.28), 0 1px 1px rgba(13, 10, 44, 0.04);
+  --glass-blur: 20px;
+
+  /* Dark glass surface (nav rail, hero cards, stat tiles on the gradient). */
+  --glass-dark-surface: rgba(21, 17, 46, 0.6);
+  --glass-dark-surface-strong: rgba(21, 17, 46, 0.78);
+  --glass-dark-border: rgba(255, 255, 255, 0.12);
 }
 
 @theme inline {
@@ -73,16 +103,29 @@
   --color-accent-cyan-400: var(--accent-cyan-400);
   --color-accent-cyan-500: var(--accent-cyan-500);
   --color-accent-cyan-50: var(--accent-cyan-50);
+  --color-accent-teal-400: var(--accent-teal-400);
+  --color-accent-indigo-500: var(--accent-indigo-500);
+  --color-accent-indigo-600: var(--accent-indigo-600);
   --color-semantic-warning: var(--semantic-warning);
   --color-semantic-error: var(--semantic-error);
   --color-semantic-success: var(--semantic-success);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-on-dark: var(--text-on-dark);
+  --color-text-on-dark-secondary: var(--text-on-dark-secondary);
   --color-border-subtle: var(--border-subtle);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {
@@ -91,27 +134,77 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* ---- Phase 9 shared component classes ----
-   Centralized here so every new screen uses the same card/button/input
-   shapes instead of re-deriving ad hoc Tailwind strings per page. */
-
-.app-shell-v2 {
-  background: var(--surface-page);
+::selection {
+  background: var(--brand-purple-200, #ddd6fe);
 }
 
-.card-v2 {
-  background: var(--surface-card);
+/* Visible focus ring everywhere, including custom glass controls --
+   accessibility requirement, never suppressed. */
+:focus-visible {
+  outline: 2px solid var(--brand-purple-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- App background shell ---- */
+.app-shell-v2 {
+  background: var(--app-gradient);
+  background-attachment: fixed;
+}
+
+/* ---- Glass primitives (Phase 11) ---- */
+.glass-panel {
+  background: var(--glass-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-card);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-panel-dark {
+  background: var(--glass-dark-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border: 1px solid var(--glass-dark-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow);
+  color: var(--text-on-dark);
+}
+
+.glass-hero {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.92) 0%, rgba(99, 102, 241, 0.92) 50%, rgba(34, 211, 238, 0.35) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow);
+  color: var(--text-on-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Phase 9 shared component classes, re-themed for Phase 11 ----
+   Kept under the SAME class names deliberately: every page already using
+   card-v2/btn-primary-v2/input-v2/nav-item-v2/etc. (Shell.tsx plus every
+   Phase 9 page) is re-skinned by this definition alone, with no page-level
+   edits required. */
+
+.card-v2 {
+  background: var(--glass-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  color: var(--text-primary);
 }
 
 .card-v2-hover {
-  transition: box-shadow 150ms ease, transform 150ms ease;
+  transition: box-shadow 150ms ease, transform 150ms ease, background 150ms ease;
 }
 .card-v2-hover:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-1px);
+  background: var(--glass-surface-strong);
+  box-shadow: var(--shadow-card-hover), var(--glass-shadow);
+  transform: translateY(-2px);
 }
 
 .hero-gradient-v2 {
@@ -125,31 +218,43 @@ body {
 }
 
 .btn-primary-v2 {
-  background: var(--brand-purple-600);
+  background: linear-gradient(135deg, var(--brand-purple-600), var(--accent-indigo-600));
   color: #ffffff;
   border-radius: 0.6rem;
   font-weight: 500;
-  transition: background 150ms ease;
+  box-shadow: 0 4px 14px -4px rgba(124, 58, 237, 0.5);
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 100ms ease;
 }
 .btn-primary-v2:hover {
-  background: var(--brand-purple-700);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 18px -4px rgba(124, 58, 237, 0.6);
+}
+.btn-primary-v2:active {
+  transform: translateY(1px);
+}
+.btn-primary-v2:disabled {
+  opacity: 0.5;
+  filter: none;
+  box-shadow: none;
 }
 
 .btn-secondary-v2 {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glass-border);
   border-radius: 0.6rem;
   font-weight: 500;
   transition: background 150ms ease;
 }
 .btn-secondary-v2:hover {
-  background: var(--surface-page);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .nav-rail-v2 {
-  background: var(--surface-nav);
+  background: linear-gradient(180deg, #0b0a1f 0%, #130f2e 100%);
   color: var(--text-on-dark);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .nav-item-v2 {
@@ -158,21 +263,38 @@ body {
   transition: background 120ms ease, color 120ms ease;
 }
 .nav-item-v2:hover {
-  background: var(--surface-nav-hover);
+  background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
 }
 .nav-item-v2.active {
-  background: var(--brand-purple-600);
+  background: linear-gradient(135deg, var(--brand-purple-600), var(--accent-indigo-600));
   color: #ffffff;
+  box-shadow: 0 2px 10px -2px rgba(124, 58, 237, 0.5);
 }
 
 .input-v2 {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glass-border);
   border-radius: 0.6rem;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+}
+.input-v2::placeholder {
+  color: var(--text-secondary);
 }
 .input-v2:focus {
   outline: none;
   border-color: var(--brand-purple-400);
   box-shadow: 0 0 0 3px var(--brand-purple-100);
+  background: rgba(255, 255, 255, 0.95);
 }
+
+/* ---- Semantic value colouring (financial figures) ---- */
+.value-positive { color: var(--semantic-success); }
+.value-negative { color: var(--semantic-error); }
+.value-warning { color: var(--semantic-warning); }
+
+/* ---- Scrollbar: subtle, not default chrome, inside dark nav/panels ---- */
+.glass-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.glass-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 999px; }
+.glass-scroll::-webkit-scrollbar-track { background: transparent; }

@@ -29,7 +29,7 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
-export type UserRole = "admin" | "accountant" | "viewer";
+export type UserRole = "admin" | "accountant" | "viewer" | "customer" | "employee";
 export type VatFrequency = "monthly" | "quarterly" | "annual";
 export type VatPeriodStatus = "open" | "filed" | "paid";
 export type VatAccountingBasis = "invoice_based" | "cash_based";
@@ -213,6 +213,8 @@ export interface FinancialYear {
   year: number;
   start_date: string;
   end_date: string;
+  is_locked: boolean;
+  locked_at: string | null;
   vat_periods: VatPeriod[];
 }
 
@@ -1222,6 +1224,48 @@ export const api = {
     request<JsonReport[]>(`/tax-centre/tax-optimization?company_id=${companyId}${annualProfit ? `&annual_profit=${annualProfit}` : ""}${annualRevenue ? `&annual_revenue=${annualRevenue}` : ""}&hours_criterion_met=true`, { token }),
   structureComparison: (token: string, companyId: number, annualRevenue: string, annualOperatingExpenses: string) =>
     request<JsonReport>(`/tax-centre/structure-comparison?company_id=${companyId}&annual_revenue=${annualRevenue}&annual_operating_expenses=${annualOperatingExpenses}`, { token }),
+
+  // ---- Phase 10: loonheffingen declarations ----
+  createLoonheffingenDeclaration: (token: string, runId: number) =>
+    request<JsonReport>(`/payroll-runs/${runId}/loonheffingen-declaration`, { method: "POST", token }),
+  getLoonheffingenDeclaration: (token: string, id: number) => request<JsonReport>(`/loonheffingen-declarations/${id}`, { token }),
+  validateLoonheffingenDeclaration: (token: string, id: number) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/validate`, { method: "POST", token }),
+  approveLoonheffingenDeclaration: (token: string, id: number) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/approve`, { method: "POST", token }),
+  markLoonheffingenReadyForSubmission: (token: string, id: number) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/mark-ready-for-submission`, { method: "POST", token }),
+  recordLoonheffingenSubmission: (token: string, id: number, submissionReference: string) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/record-submission`, {
+      method: "POST", token, body: JSON.stringify({ submission_reference: submissionReference }),
+    }),
+  recordLoonheffingenGovernmentResponse: (
+    token: string, id: number, payload: { accepted: boolean; response_reference: string; rejection_reason?: string }
+  ) => request<JsonReport>(`/loonheffingen-declarations/${id}/record-government-response`, { method: "POST", token, body: JSON.stringify(payload) }),
+
+  // ---- Phase 10: annual statements (jaaropgaaf) ----
+  getAnnualStatement: (token: string, employeeId: number, taxYear: number) =>
+    request<JsonReport>(`/employees/${employeeId}/annual-statement?tax_year=${taxYear}`, { token }),
+  annualStatementPdfUrl: (employeeId: number, taxYear: number): string =>
+    `${API_BASE}/employees/${employeeId}/annual-statement/pdf?tax_year=${taxYear}`,
+
+  // ---- Phase 10: employee self-service portal ----
+  myProfile: (token: string) => request<JsonReport>("/me/profile", { token }),
+  myPayslips: (token: string) => request<JsonReport[]>("/me/payslips", { token }),
+  myPayslipPdfUrl: (payslipId: number): string => `${API_BASE}/me/payslips/${payslipId}/pdf`,
+  myAnnualStatement: (token: string, taxYear: number) => request<JsonReport>(`/me/annual-statement?tax_year=${taxYear}`, { token }),
+  myAnnualStatementPdfUrl: (taxYear: number): string => `${API_BASE}/me/annual-statement/pdf?tax_year=${taxYear}`,
+  myTimesheetEntries: (token: string) => request<JsonReport[]>("/me/timesheet-entries", { token }),
+  createMyTimesheetEntry: (token: string, payload: { employee_id: number; entry_date: string; entry_type: string; hours: string; description?: string }) =>
+    request<JsonReport>("/me/timesheet-entries", { method: "POST", token, body: JSON.stringify(payload) }),
+  submitMyTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/me/timesheet-entries/${id}/submit`, { method: "POST", token }),
+  myHoursSummary: (token: string, year: number) => request<JsonReport>(`/me/hours-summary?year=${year}`, { token }),
+
+  // ---- Phase 10: financial year locking ----
+  lockFinancialYear: (token: string, companyId: number, financialYearId: number) =>
+    request<FinancialYear>(`/companies/${companyId}/financial-years/${financialYearId}/lock`, { method: "POST", token }),
+  unlockFinancialYear: (token: string, companyId: number, financialYearId: number) =>
+    request<FinancialYear>(`/companies/${companyId}/financial-years/${financialYearId}/unlock`, { method: "POST", token }),
 };
 
 function periodQuery(params: PeriodParams, skipCompanyId = false): string {
