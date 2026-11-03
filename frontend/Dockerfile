@@ -6,12 +6,20 @@ COPY . .
 RUN npm run build
 
 FROM node:22-slim
+RUN useradd --create-home --shell /bin/false appuser
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/login', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"
+
 CMD ["npm", "start"]

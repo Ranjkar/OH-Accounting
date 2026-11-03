@@ -1,0 +1,77 @@
+# PRODUCTION-ORIENTED compose. Differences from docker-compose.yml:
+# - Postgres is NOT exposed to the host at all -- only reachable from
+#   backend, on an internal-only network.
+# - No credentials are hardcoded anywhere in this file -- every secret
+#   comes from the environment (a real .env you create, or your platform's
+#   secret store), with no insecure default baked in here.
+# - restart: unless-stopped, and depends_on uses service_healthy for both
+#   postgres AND backend (frontend waits for a backend that's actually
+#   passing its own healthcheck, not just "container started").
+# - A reverse proxy (nginx/Caddy) terminating real TLS sits in FRONT of
+#   this stack -- see docs/production-deployment.md for a worked nginx
+#   example. It is deliberately not included as a container here: a real
+#   deployment's TLS certificate paths, domain name, and renewal process
+#   are environment-specific and must not be guessed at in a generic
+#   compose file.
+#
+# Usage: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# Required env vars: see .env.example (backend/.env.example) plus
+# POSTGRES_PASSWORD below -- generate a real one, never reuse the dev value.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-onholland}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set -- no default in production}
+      POSTGRES_DB: ${POSTGRES_DB:-onholland_accounting}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-onholland}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-onholland}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-onholland_accounting}
+    volumes:
+      - backend_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+      - public
+    expose:
+      - "8000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?NEXT_PUBLIC_API_URL must be set to the public API URL}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - public
+    expose:
+      - "3000"
+
+networks:
+  internal:
+    internal: true # no route to the outside world -- Postgres is unreachable except from backend
+  public: {} # the reverse proxy you run in front of this stack joins this network
+
+volumes:
+  postgres_data:
+  backend_storage:

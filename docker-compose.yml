@@ -1,10 +1,16 @@
-# Optional full-stack deployment. Local dev normally runs Postgres via
-# Homebrew + the backend/frontend directly (see README) -- this is for
-# staging/production-style deployment or anyone who prefers containers.
+# DEVELOPMENT compose -- exposes Postgres on the host for local tooling
+# (psql, a GUI client), uses the weak postgres/onholland credentials below
+# deliberately (this file is for local dev only). For a production-oriented
+# deployment use docker-compose.prod.yml instead, which does not expose
+# Postgres to the host and takes all credentials from the environment.
+#
+# Local dev normally runs Postgres via Homebrew + the backend/frontend
+# directly (see README) -- this is for anyone who prefers containers.
 # Secrets come from backend/.env (gitignored, never committed) via env_file,
-# never hardcoded here. The named volume is never removed by `docker compose
-# up` -- only an explicit `docker compose down -v` would drop it, and that
-# should never be run against a real environment's data.
+# never hardcoded here except the dev-only Postgres password. The named
+# volume is never removed by `docker compose up` -- only an explicit
+# `docker compose down -v` would drop it, and that should never be run
+# against a real environment's data.
 services:
   postgres:
     image: postgres:16-alpine
