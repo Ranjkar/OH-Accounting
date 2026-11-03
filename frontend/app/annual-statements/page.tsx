@@ -62,8 +62,8 @@ function AnnualStatementsContent() {
 
       <GlassCard className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="text-xs text-text-secondary block mb-1">Company</label>
-          <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+          <label htmlFor="as-company" className="text-label-v2 block mb-1">Company</label>
+          <GlassSelect id="as-company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
             <option value="">Select a company</option>
             {companies.map((c) => (
               <option key={c.id} value={c.id}>
@@ -73,8 +73,8 @@ function AnnualStatementsContent() {
           </GlassSelect>
         </div>
         <div>
-          <label className="text-xs text-text-secondary block mb-1">Employee</label>
-          <GlassSelect value={employeeId} onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : "")} disabled={!companyId}>
+          <label htmlFor="as-employee" className="text-label-v2 block mb-1">Employee</label>
+          <GlassSelect id="as-employee" value={employeeId} onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : "")} disabled={!companyId}>
             <option value="">Select an employee</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -84,8 +84,8 @@ function AnnualStatementsContent() {
           </GlassSelect>
         </div>
         <div>
-          <label className="text-xs text-text-secondary block mb-1">Tax year</label>
-          <GlassInput type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
+          <label htmlFor="as-tax-year" className="text-label-v2 block mb-1">Tax year</label>
+          <GlassInput id="as-tax-year" type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
         </div>
         <GlassButton onClick={fetchStatement} disabled={!employeeId || loading}>
           {loading ? "Loading…" : "View statement"}

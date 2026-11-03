@@ -40,7 +40,7 @@ function TrialBalanceContent() {
       {error && <GlassErrorState message={error} />}
 
       <div className="flex flex-wrap items-end gap-3">
-        <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -48,12 +48,12 @@ function TrialBalanceContent() {
             </option>
           ))}
         </GlassSelect>
-        <GlassSelect value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)}>
+        <GlassSelect aria-label="Period type" value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)}>
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
           <option value="ANNUAL">Annual</option>
         </GlassSelect>
-        <GlassInput type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} />
+        <GlassInput aria-label="Reference date" type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} />
       </div>
 
       {!companyId ? (

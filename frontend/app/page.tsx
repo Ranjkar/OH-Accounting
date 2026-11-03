@@ -182,8 +182,8 @@ function TaxCalculatorCard({ companyId }: { companyId: number | "" }) {
       ) : (
         <form onSubmit={calculate} className="space-y-3 flex-1 flex flex-col">
           <div>
-            <label className="text-xs text-text-secondary">Annual profit (EUR)</label>
-            <GlassInput type="number" min="0" step="1" value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} className="mt-1" />
+            <label htmlFor="dash-annual-profit" className="text-label-v2">Annual profit (EUR)</label>
+            <GlassInput id="dash-annual-profit" type="number" min="0" step="1" value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} className="mt-1" />
           </div>
           <label className="flex items-center gap-2 text-sm text-text-primary">
             <input type="checkbox" checked={hoursCriterionMet} onChange={(e) => setHoursCriterionMet(e.target.checked)} />

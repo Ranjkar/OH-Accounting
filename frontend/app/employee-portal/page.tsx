@@ -128,7 +128,7 @@ function StatementTab() {
   return (
     <GlassCard padding="lg" className="max-w-lg space-y-4">
       <div className="flex items-end gap-2">
-        <GlassInput type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
+        <GlassInput aria-label="Tax year" type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
         <GlassButton onClick={load} disabled={loading} size="sm">
           {loading ? "Loading…" : "View my annual statement"}
         </GlassButton>
@@ -189,14 +189,14 @@ function HoursTab() {
       {error && <GlassErrorState message={error} />}
       <GlassCard>
         <form onSubmit={submitEntry} className="flex flex-wrap items-end gap-2">
-          <GlassInput type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
-          <GlassSelect value={entryType} onChange={(e) => setEntryType(e.target.value)}>
+          <GlassInput aria-label="Entry date" type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
+          <GlassSelect aria-label="Entry type" value={entryType} onChange={(e) => setEntryType(e.target.value)}>
             <option value="WORKED">Worked</option>
             <option value="HOLIDAY">Holiday</option>
             <option value="SICK">Sick</option>
             <option value="ABSENCE">Absence</option>
           </GlassSelect>
-          <GlassInput type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} className="w-24" />
+          <GlassInput aria-label="Hours" type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} className="w-24" />
           <GlassButton type="submit" size="sm">
             Log entry
           </GlassButton>

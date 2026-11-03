@@ -96,7 +96,7 @@ function LoonheffingenContent() {
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -185,7 +185,7 @@ function LoonheffingenContent() {
 
                 {declaration.status === "READY_FOR_SUBMISSION" && (
                   <div className="flex items-end gap-2 pt-2 border-t border-white/40">
-                    <GlassInput placeholder="SBR/Digipoort kenmerk from your filing software" value={submissionRef} onChange={(e) => setSubmissionRef(e.target.value)} className="flex-1" />
+                    <GlassInput aria-label="Submission reference" placeholder="SBR/Digipoort kenmerk from your filing software" value={submissionRef} onChange={(e) => setSubmissionRef(e.target.value)} className="flex-1" />
                     <GlassButton
                       size="sm"
                       disabled={busy || !submissionRef.trim()}
@@ -198,8 +198,8 @@ function LoonheffingenContent() {
 
                 {declaration.status === "SUBMITTED" && (
                   <div className="space-y-2 pt-2 border-t border-white/40">
-                    <GlassInput placeholder="Belastingdienst response reference" value={responseRef} onChange={(e) => setResponseRef(e.target.value)} />
-                    <GlassInput placeholder="Rejection reason (only if rejecting)" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
+                    <GlassInput aria-label="Government response reference" placeholder="Belastingdienst response reference" value={responseRef} onChange={(e) => setResponseRef(e.target.value)} />
+                    <GlassInput aria-label="Rejection reason" placeholder="Rejection reason (only if rejecting)" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
                     <div className="flex gap-2">
                       <GlassButton
                         size="sm"

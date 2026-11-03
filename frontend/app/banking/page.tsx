@@ -99,12 +99,12 @@ function BankingContent() {
         <GlassCard>
           <form onSubmit={handleCreateAccount} className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">IBAN</label>
-              <GlassInput required value={iban} onChange={(e) => setIban(e.target.value)} placeholder="NL91ABNA0417164300" />
+              <label htmlFor="bank-iban" className="text-label-v2">IBAN</label>
+              <GlassInput id="bank-iban" required value={iban} onChange={(e) => setIban(e.target.value)} placeholder="NL91ABNA0417164300" />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">Account name</label>
-              <GlassInput required value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="Main business account" />
+              <label htmlFor="bank-account-name" className="text-label-v2">Account name</label>
+              <GlassInput id="bank-account-name" required value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="Main business account" />
             </div>
             <GlassButton type="submit">Add bank account</GlassButton>
           </form>
@@ -140,8 +140,8 @@ function BankingContent() {
           </h2>
           <form onSubmit={handleImport} className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">Format</label>
-              <GlassSelect value={sourceFormat} onChange={(e) => setSourceFormat(e.target.value as BankSourceFormat)}>
+              <label htmlFor="bank-source-format" className="text-label-v2">Format</label>
+              <GlassSelect id="bank-source-format" value={sourceFormat} onChange={(e) => setSourceFormat(e.target.value as BankSourceFormat)}>
                 {SOURCE_FORMATS.map((f) => (
                   <option key={f} value={f}>
                     {f}
@@ -150,8 +150,8 @@ function BankingContent() {
               </GlassSelect>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">File</label>
-              <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
+              <label htmlFor="bank-import-file" className="text-label-v2">File</label>
+              <input id="bank-import-file" type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
             </div>
             <GlassButton type="submit" disabled={!file}>
               Import
