@@ -8,14 +8,14 @@ import { api, Company, JsonReport } from "@/lib/api";
 
 function KpiCard({ name, kpi }: { name: string; kpi: JsonReport }) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
-      <p className="text-xs text-slate-500">{name}</p>
+    <div className="card-v2 p-4">
+      <p className="text-xs text-text-secondary">{name}</p>
       {kpi.value !== null ? (
         <p className="text-2xl font-semibold text-navy font-mono">{kpi.value}</p>
       ) : (
         <p className="text-sm text-amber-600">Not available</p>
       )}
-      <p className="text-xs text-slate-400 mt-1">{kpi.explanation}</p>
+      <p className="text-xs text-text-secondary mt-1">{kpi.explanation}</p>
       <p className="text-xs text-slate-300 mt-1 font-mono">{kpi.formula}</p>
       {kpi.missing_data && <p className="text-xs text-error mt-1">{kpi.missing_data}</p>}
     </div>
@@ -56,14 +56,14 @@ function KpisContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Financial KPIs</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         Every KPI shows its formula and source; where the underlying data doesn&apos;t exist, the KPI says so instead
         of showing a misleading number.
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -71,12 +71,12 @@ function KpisContent() {
             </option>
           ))}
         </select>
-        <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
           <option value="ANNUAL">Annual</option>
         </select>
-        <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
       </div>
 
       {kpis && (

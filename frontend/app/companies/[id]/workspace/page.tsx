@@ -52,7 +52,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
     }
   }
 
-  if (!workspace) return <p className="text-slate-500">Loading…</p>;
+  if (!workspace) return <p className="text-text-secondary">Loading…</p>;
 
   return (
     <div className="space-y-6">
@@ -61,7 +61,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
           ← Back to company settings
         </button>
         <h1 className="text-2xl font-semibold text-navy mt-1">{workspace.company_name} — Workspace</h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-text-secondary">
           {workspace.vat_frequency} filing · {workspace.vat_accounting_basis.replace("_", "-")} VAT accounting
         </p>
       </div>
@@ -69,26 +69,26 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Financial years</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Financial years</p>
           <p className="text-2xl font-semibold text-navy mt-1">{workspace.financial_year_count}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Transactions</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Transactions</p>
           <p className="text-2xl font-semibold text-navy mt-1">{workspace.transaction_count}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Documents awaiting approval</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Documents awaiting approval</p>
           <p className="text-2xl font-semibold text-pending mt-1">{workspace.documents_awaiting_approval}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Open customer questions</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Open customer questions</p>
           <p className="text-2xl font-semibold text-pending mt-1">{workspace.open_customer_questions}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-navy">Period completeness</h2>
         </div>
         <div className="divide-y divide-slate-100">
@@ -96,7 +96,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
             <div key={p.vat_period_id} className="px-5 py-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-medium text-navy text-sm">{p.label}</p>
-                <span className="text-xs text-slate-500">Filing deadline {p.filing_deadline}</span>
+                <span className="text-xs text-text-secondary">Filing deadline {p.filing_deadline}</span>
               </div>
               <table className="w-full text-sm">
                 <tbody>
@@ -108,7 +108,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                           {row.complete ? "Complete" : "Pending"}
                         </span>
                       </td>
-                      <td className="py-1 text-slate-500 text-xs">{row.detail}</td>
+                      <td className="py-1 text-text-secondary text-xs">{row.detail}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -118,18 +118,18 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-navy">Notes &amp; customer questions</h2>
         </div>
         <div className="divide-y divide-slate-100">
           {workspace.notes.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-slate-500">No notes yet.</p>
+            <p className="px-5 py-4 text-sm text-text-secondary">No notes yet.</p>
           ) : (
             workspace.notes.map((note) => (
               <div key={note.id} className="px-5 py-3 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-text-secondary">
                     {NOTE_TYPE_LABELS[note.note_type]} · {note.status} · {new Date(note.created_at).toLocaleDateString()}
                   </p>
                   <p className="text-sm text-slate-800 mt-1">{note.body}</p>
@@ -148,7 +148,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
             <select
               value={noteType}
               onChange={(e) => setNoteType(e.target.value as NoteType)}
-              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="input-v2 px-2 py-1.5 text-sm"
             >
               <option value="INTERNAL">Internal note</option>
               <option value="CUSTOMER_QUESTION">Customer question</option>
@@ -158,11 +158,11 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
               value={noteBody}
               onChange={(e) => setNoteBody(e.target.value)}
               placeholder="Write a note…"
-              className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+              className="flex-1 input-v2 px-3 py-1.5 text-sm"
             />
             <button
               type="submit"
-              className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+              className="btn-primary-v2 px-4 py-2 text-sm"
             >
               Add
             </button>
@@ -170,12 +170,12 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
         )}
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-navy">VAT returns</h2>
         </div>
         {workspace.vat_returns.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No VAT returns computed yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">No VAT returns computed yet.</p>
         ) : (
           <table className="w-full text-sm">
             <tbody>

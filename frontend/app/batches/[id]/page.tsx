@@ -11,8 +11,8 @@ import { api, BatchDetail } from "@/lib/api";
 function StatCard({ label, value, tone = "navy" }: { label: string; value: number; tone?: "navy" | "amber" | "red" | "green" }) {
   const toneClass = { navy: "text-navy", amber: "text-pending", red: "text-error", green: "text-approved" }[tone];
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-3">
-      <p className="text-xs text-slate-500">{label}</p>
+    <div className="card-v2 p-3">
+      <p className="text-xs text-text-secondary">{label}</p>
       <p className={`text-xl font-semibold mt-0.5 ${toneClass}`}>{value}</p>
     </div>
   );
@@ -104,7 +104,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
     }
   }
 
-  if (!batch) return <p className="text-slate-500">Loading…</p>;
+  if (!batch) return <p className="text-text-secondary">Loading…</p>;
 
   return (
     <div className="space-y-6">
@@ -156,10 +156,10 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
+            <tr className="text-left text-text-secondary border-b border-border-subtle">
               {canEdit && <th className="px-4 py-2"></th>}
               <th className="px-4 py-2 font-medium">Document</th>
               <th className="px-4 py-2 font-medium">Type</th>

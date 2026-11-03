@@ -123,7 +123,7 @@ function LedgerContent() {
         <h1 className="text-2xl font-semibold text-navy">Accounting Ledger</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+          className="btn-primary-v2 px-4 py-2 text-sm"
         >
           {showForm ? "Cancel" : "New manual entry"}
         </button>
@@ -132,14 +132,14 @@ function LedgerContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+        <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4">
           <div className="grid grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Company</label>
+              <label className="text-xs font-medium text-text-secondary">Company</label>
               <select
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
                 <option value="">Select…</option>
                 {companies.map((c) => (
@@ -150,11 +150,11 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Financial year</label>
+              <label className="text-xs font-medium text-text-secondary">Financial year</label>
               <select
                 value={financialYearId}
                 onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
                 <option value="">Select…</option>
                 {financialYears.map((fy) => (
@@ -165,83 +165,83 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Ledger side</label>
+              <label className="text-xs font-medium text-text-secondary">Ledger side</label>
               <select
                 value={ledgerSide}
                 onChange={(e) => setLedgerSide(e.target.value as LedgerSide)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
                 <option value="SALES">Sales</option>
                 <option value="PURCHASES">Purchases</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Counterparty</label>
+              <label className="text-xs font-medium text-text-secondary">Counterparty</label>
               <input
                 value={counterpartyName}
                 onChange={(e) => setCounterpartyName(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Invoice date</label>
+              <label className="text-xs font-medium text-text-secondary">Invoice date</label>
               <input
                 type="date"
                 required
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Due date</label>
+              <label className="text-xs font-medium text-text-secondary">Due date</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-500">Line items</label>
+            <label className="text-xs font-medium text-text-secondary">Line items</label>
             {lines.map((line, i) => (
               <div key={i} className="grid grid-cols-6 gap-2 items-end">
                 <input
                   placeholder="Description"
                   value={line.description}
                   onChange={(e) => updateLine(i, { description: e.target.value })}
-                  className="col-span-2 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="col-span-2 input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
                   placeholder="Net"
                   required
                   value={line.net_amount}
                   onChange={(e) => updateLine(i, { net_amount: e.target.value })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
                   placeholder="VAT rate %"
                   required
                   value={line.vat_rate}
                   onChange={(e) => updateLine(i, { vat_rate: e.target.value })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
                   placeholder="VAT amount"
                   required
                   value={line.vat_amount}
                   onChange={(e) => updateLine(i, { vat_amount: e.target.value })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <select
                   value={line.vat_treatment}
                   onChange={(e) => updateLine(i, { vat_treatment: e.target.value as VatTreatment })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 >
                   {treatmentOptions.map((t) => (
                     <option key={t} value={t}>
@@ -263,7 +263,7 @@ function LedgerContent() {
                 <button
                   type="button"
                   onClick={() => setLines((prev) => prev.slice(0, -1))}
-                  className="text-sm text-slate-500 hover:underline"
+                  className="text-sm text-text-secondary hover:underline"
                 >
                   Remove last
                 </button>
@@ -273,7 +273,7 @@ function LedgerContent() {
 
           <button
             type="submit"
-            className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+            className="btn-primary-v2 px-4 py-2 text-sm"
           >
             Create entry
           </button>
@@ -284,7 +284,7 @@ function LedgerContent() {
         <select
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">All companies</option>
           {companies.map((c) => (
@@ -299,7 +299,7 @@ function LedgerContent() {
               key={f.value}
               onClick={() => setTypeFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                typeFilter === f.value ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                typeFilter === f.value ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
               }`}
             >
               {f.label}
@@ -308,13 +308,13 @@ function LedgerContent() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         {transactions.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No transactions yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">No transactions yet.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-5 py-2 font-medium">Date</th>
                 <th className="px-5 py-2 font-medium">Type</th>
                 <th className="px-5 py-2 font-medium">Counterparty</th>

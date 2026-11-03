@@ -34,13 +34,13 @@ function ManagementReportsContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Management Reports</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         Every export includes the company, period, generation timestamp, accounting basis, and whether figures are
         actual or forecast.
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -51,50 +51,50 @@ function ManagementReportsContent() {
 
       {companyId && (
         <>
-          <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+          <div className="card-v2 p-4 space-y-3">
             <h2 className="font-medium text-navy">Profit &amp; Loss / monthly management pack, quarterly review, annual summary</h2>
-            <p className="text-xs text-slate-500">Choose a period width -- monthly for a management pack, quarterly for a review, annual for a summary.</p>
+            <p className="text-xs text-text-secondary">Choose a period width -- monthly for a management pack, quarterly for a review, annual for a summary.</p>
             <div className="flex items-center gap-3">
-              <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+              <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
                 <option value="MONTHLY">Monthly</option>
                 <option value="QUARTERLY">Quarterly</option>
                 <option value="ANNUAL">Annual</option>
               </select>
-              <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
               {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
-                <a key={fmt} href={api.pnlReportUrl(Number(companyId), periodType, referenceDate, fmt)} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm">
+                <a key={fmt} href={api.pnlReportUrl(Number(companyId), periodType, referenceDate, fmt)} className="input-v2 px-3 py-1.5 text-sm">
                   P&amp;L {fmt.toUpperCase()}
                 </a>
               ))}
             </div>
             <div className="flex items-center gap-3">
               {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
-                <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), referenceDate, fmt)} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm">
+                <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), referenceDate, fmt)} className="input-v2 px-3 py-1.5 text-sm">
                   Balance Sheet {fmt.toUpperCase()}
                 </a>
               ))}
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+          <div className="card-v2 p-4 space-y-3">
             <h2 className="font-medium text-navy">Budget vs Actual</h2>
-            {budgets.length === 0 && <p className="text-sm text-slate-500">No budgets for this company yet.</p>}
+            {budgets.length === 0 && <p className="text-sm text-text-secondary">No budgets for this company yet.</p>}
             {budgets.map((b) => (
               <div key={b.id} className="flex items-center gap-3 text-sm">
                 <span className="flex-1">{b.name} (v{b.version}, {b.status})</span>
-                <a href={api.budgetVsActualReportUrl(b.id, "pdf")} className="rounded-md border border-slate-300 px-2 py-1 text-xs">
+                <a href={api.budgetVsActualReportUrl(b.id, "pdf")} className="input-v2 px-2 py-1 text-xs">
                   PDF
                 </a>
-                <a href={api.budgetVsActualReportUrl(b.id, "csv")} className="rounded-md border border-slate-300 px-2 py-1 text-xs">
+                <a href={api.budgetVsActualReportUrl(b.id, "csv")} className="input-v2 px-2 py-1 text-xs">
                   CSV
                 </a>
               </div>
             ))}
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+          <div className="card-v2 p-4 space-y-3">
             <h2 className="font-medium text-navy">Scenario comparison</h2>
-            {scenarios.length === 0 && <p className="text-sm text-slate-500">No scenarios for this company yet.</p>}
+            {scenarios.length === 0 && <p className="text-sm text-text-secondary">No scenarios for this company yet.</p>}
             {scenarios.map((s) => (
               <label key={s.id} className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={scenarioIds.includes(s.id)} onChange={() => toggleScenario(s.id)} />
@@ -102,7 +102,7 @@ function ManagementReportsContent() {
               </label>
             ))}
             {scenarioIds.length >= 2 && (
-              <a href={api.scenarioComparisonReportUrl(Number(companyId), scenarioIds)} className="rounded-md border border-slate-300 px-3 py-1.5 text-sm inline-block">
+              <a href={api.scenarioComparisonReportUrl(Number(companyId), scenarioIds)} className="input-v2 px-3 py-1.5 text-sm inline-block">
                 Export comparison CSV
               </a>
             )}

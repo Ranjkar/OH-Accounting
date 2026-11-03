@@ -74,13 +74,13 @@ function ScenariosContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Scenario Planning</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         Scenarios never touch the ledger -- every result here is recomputed on the fly from your current forecast
         plus the assumptions below.
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -90,12 +90,12 @@ function ScenariosContent() {
       </select>
 
       {companyId && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+        <div className="card-v2 p-4 space-y-3">
           <h2 className="font-medium text-navy">New scenario</h2>
           <form onSubmit={createScenario} className="space-y-3">
             <div className="flex items-center gap-3">
-              <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="rounded-md border border-slate-300 px-3 py-2 text-sm w-56" />
-              <select value={scenarioType} onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+              <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="input-v2 px-3 py-2 text-sm w-56" />
+              <select value={scenarioType} onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="input-v2 px-2 py-2 text-sm">
                 <option value="BASE">Base case</option>
                 <option value="OPTIMISTIC">Optimistic</option>
                 <option value="CONSERVATIVE">Conservative</option>
@@ -109,7 +109,7 @@ function ScenariosContent() {
                   value={assumptions[f.key] ?? ""}
                   onChange={(e) => setAssumptions((prev) => ({ ...prev, [f.key]: e.target.value }))}
                   placeholder={`${f.label} (${f.placeholder})`}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-xs"
+                  className="input-v2 px-3 py-2 text-xs"
                 />
               ))}
             </div>
@@ -120,10 +120,10 @@ function ScenariosContent() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
+            <tr className="text-left text-text-secondary border-b border-border-subtle">
               <th className="px-4 py-2 font-medium" />
               <th className="px-4 py-2 font-medium">Name</th>
               <th className="px-4 py-2 font-medium">Type</th>
@@ -147,7 +147,7 @@ function ScenariosContent() {
             ))}
             {scenarios.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-slate-500">
+                <td colSpan={4} className="px-4 py-4 text-text-secondary">
                   No scenarios yet.
                 </td>
               </tr>
@@ -168,11 +168,11 @@ function ScenariosContent() {
       </div>
 
       {comparison && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="card-v2 p-4">
           <h2 className="font-medium text-navy mb-2">Comparison</h2>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="py-1">Scenario</th>
                 <th className="py-1">Forecast profit</th>
                 <th className="py-1">Net cash change</th>

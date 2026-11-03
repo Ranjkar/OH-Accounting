@@ -55,7 +55,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
     }
   }
 
-  if (!transaction) return <p className="text-slate-500">Loading…</p>;
+  if (!transaction) return <p className="text-text-secondary">Loading…</p>;
 
   return (
     <div className="space-y-6">
@@ -77,20 +77,20 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Net / VAT / Gross</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Net / VAT / Gross</p>
           <p className="text-lg font-semibold text-navy mt-1">
             {transaction.net_amount} / {transaction.vat_amount} / {transaction.gross_amount} {transaction.currency}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Paid / Remaining</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Paid / Remaining</p>
           <p className="text-lg font-semibold text-navy mt-1">
             {transaction.amount_paid} / {transaction.remaining_balance}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Dates</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Dates</p>
           <p className="text-sm text-navy mt-1">
             Invoice {transaction.invoice_date}
             {transaction.due_date && <> · Due {transaction.due_date}</>}
@@ -98,13 +98,13 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-navy">Line items</h2>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
+            <tr className="text-left text-text-secondary border-b border-border-subtle">
               <th className="px-5 py-2 font-medium">#</th>
               <th className="px-5 py-2 font-medium">Description</th>
               <th className="px-5 py-2 font-medium">Net</th>
@@ -132,8 +132,8 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         </table>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-navy">Payments</h2>
         </div>
         {transaction.payments.length > 0 && (
@@ -143,7 +143,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
                 <tr key={p.id} className="border-b border-slate-100 last:border-0">
                   <td className="px-5 py-2">{p.payment_date}</td>
                   <td className="px-5 py-2">{p.amount}</td>
-                  <td className="px-5 py-2 text-slate-500">{p.reference ?? ""}</td>
+                  <td className="px-5 py-2 text-text-secondary">{p.reference ?? ""}</td>
                 </tr>
               ))}
             </tbody>
@@ -152,35 +152,35 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         {canEdit && (
           <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-slate-100">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Amount</label>
+              <label className="text-xs font-medium text-text-secondary">Amount</label>
               <input
                 required
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                className="w-28 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="w-28 input-v2 px-2 py-1.5 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Date</label>
+              <label className="text-xs font-medium text-text-secondary">Date</label>
               <input
                 type="date"
                 required
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="input-v2 px-2 py-1.5 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Reference</label>
+              <label className="text-xs font-medium text-text-secondary">Reference</label>
               <input
                 value={paymentReference}
                 onChange={(e) => setPaymentReference(e.target.value)}
-                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="input-v2 px-2 py-1.5 text-sm"
               />
             </div>
             <button
               type="submit"
-              className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+              className="btn-primary-v2 px-4 py-2 text-sm"
             >
               Record payment
             </button>

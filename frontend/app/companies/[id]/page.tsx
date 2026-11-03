@@ -62,21 +62,21 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
     }
   }
 
-  if (!company) return <p className="text-slate-500">Loading…</p>;
+  if (!company) return <p className="text-text-secondary">Loading…</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-navy">{company.name}</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-text-secondary">
             {company.kvk_number ? `KVK ${company.kvk_number}` : "No KVK number"} ·{" "}
             {company.vat_number ?? "No VAT number"} · {company.vat_frequency} filing
           </p>
         </div>
         <a
           href={`/companies/${companyId}/workspace`}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+          className="btn-primary-v2 px-4 py-2 text-sm"
         >
           Open workspace
         </a>
@@ -84,33 +84,33 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="bg-white rounded-lg border border-slate-200 p-4 flex items-end gap-6">
+      <div className="card-v2 p-4 flex items-end gap-6">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-500">VAT accounting basis</label>
+          <label className="text-xs font-medium text-text-secondary">VAT accounting basis</label>
           <select
             disabled={!canEdit}
             value={company.vat_accounting_basis}
             onChange={(e) => handleBasisChange(e.target.value as VatAccountingBasis)}
-            className="rounded-md border border-slate-300 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
+            className="input-v2 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
           >
             <option value="invoice_based">Invoice-based</option>
             <option value="cash_based">Cash-based</option>
           </select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-500">Input VAT pro-rata % (mixed activities)</label>
+          <label className="text-xs font-medium text-text-secondary">Input VAT pro-rata % (mixed activities)</label>
           <div className="flex gap-2">
             <input
               disabled={!canEdit}
               value={proRata}
               onChange={(e) => setProRata(e.target.value)}
               placeholder="e.g. 80"
-              className="w-24 rounded-md border border-slate-300 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
+              className="w-24 input-v2 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
             />
             {canEdit && (
               <button
                 onClick={handleProRataSave}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors"
+                className="input-v2 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors"
               >
                 Save
               </button>
@@ -126,12 +126,12 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
             type="number"
             value={newYear}
             onChange={(e) => setNewYear(Number(e.target.value))}
-            className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="w-32 input-v2 px-3 py-2 text-sm"
           />
         </div>
         <button
           type="submit"
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+          className="btn-primary-v2 px-4 py-2 text-sm"
         >
           Generate VAT periods
         </button>
@@ -139,13 +139,13 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
 
       <div className="space-y-6">
         {years.map((fy) => (
-          <div key={fy.id} className="bg-white rounded-lg border border-slate-200">
-            <div className="px-5 py-4 border-b border-slate-200">
+          <div key={fy.id} className="card-v2">
+            <div className="px-5 py-4 border-b border-border-subtle">
               <h2 className="font-medium text-navy">Financial year {fy.year}</h2>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
+                <tr className="text-left text-text-secondary border-b border-border-subtle">
                   <th className="px-5 py-2 font-medium">Period</th>
                   <th className="px-5 py-2 font-medium">Start</th>
                   <th className="px-5 py-2 font-medium">End</th>

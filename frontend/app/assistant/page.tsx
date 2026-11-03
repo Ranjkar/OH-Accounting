@@ -41,7 +41,7 @@ function AssistantContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Accountant Assistant</h1>
-      <p className="text-sm text-slate-500 max-w-2xl">
+      <p className="text-sm text-text-secondary max-w-2xl">
         The assistant explains and summarizes using the figures already computed by the accounting engine. It
         cannot change, approve, or lock any record, and it is instructed never to state a number that isn&apos;t
         in the underlying facts.
@@ -49,11 +49,11 @@ function AssistantContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+      <div className="card-v2 p-5 space-y-4">
         <select
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">Select a company…</option>
           {companies.map((c) => (
@@ -67,14 +67,14 @@ function AssistantContent() {
           <button
             disabled={!companyId || loading}
             onClick={() => companyId && run(() => api.assistantCompanySummary(token!, Number(companyId)))}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="input-v2 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             Summarize financial position
           </button>
           <button
             disabled={!companyId || loading}
             onClick={() => companyId && run(() => api.assistantMissingDocuments(token!, Number(companyId)))}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="input-v2 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             Identify missing documents
           </button>
@@ -82,18 +82,18 @@ function AssistantContent() {
 
         <form onSubmit={handleAsk} className="flex items-end gap-3">
           <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium text-slate-500">Ask a question</label>
+            <label className="text-xs font-medium text-text-secondary">Ask a question</label>
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="e.g. Why does this company have overdue payments?"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="w-full input-v2 px-3 py-2 text-sm"
             />
           </div>
           <button
             type="submit"
             disabled={!companyId || loading}
-            className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors disabled:opacity-50"
+            className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50"
           >
             {loading ? "Thinking…" : "Ask"}
           </button>
@@ -101,12 +101,12 @@ function AssistantContent() {
       </div>
 
       {response && (
-        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+        <div className="card-v2 p-5 space-y-4">
           <div className="whitespace-pre-wrap text-sm text-slate-800">{response.answer}</div>
           <div className="rounded-md bg-amber-50 border border-amber-200 text-pending text-xs px-3 py-2">
             {response.disclaimer}
           </div>
-          <details className="text-xs text-slate-500">
+          <details className="text-xs text-text-secondary">
             <summary className="cursor-pointer hover:text-navy">View underlying facts (what the assistant was given)</summary>
             <pre className="mt-2 overflow-x-auto bg-slate-50 rounded-md p-3 text-xs">{JSON.stringify(response.facts, null, 2)}</pre>
           </details>

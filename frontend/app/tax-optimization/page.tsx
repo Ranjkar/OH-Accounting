@@ -76,7 +76,7 @@ function TaxOptimizationContent() {
                 <li key={j}>{c}</li>
               ))}
             </ul>
-            {(o.notes as string[])?.length > 0 && <p className="text-xs text-slate-400">{(o.notes as string[]).join(" ")}</p>}
+            {(o.notes as string[])?.length > 0 && <p className="text-xs text-text-secondary">{(o.notes as string[]).join(" ")}</p>}
           </div>
         ))}
         {opportunities.length === 0 && <p className="text-sm text-text-secondary">Select a company and run the search.</p>}

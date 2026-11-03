@@ -15,7 +15,7 @@ function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void 
         <button
           key={fmt}
           onClick={() => onDownload(fmt)}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
+          className="input-v2 px-3 py-1.5 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
         >
           {fmt}
         </button>
@@ -76,7 +76,7 @@ function ReportsContent() {
             setCompanyId(e.target.value ? Number(e.target.value) : "");
             setFinancialYearId("");
           }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">Select a company…</option>
           {companies.map((c) => (
@@ -88,7 +88,7 @@ function ReportsContent() {
         <select
           value={financialYearId}
           onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
           disabled={!companyId}
         >
           <option value="">Select a financial year…</option>
@@ -102,24 +102,24 @@ function ReportsContent() {
 
       {companyId && financialYearId && (
         <>
-          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3">
+          <div className="card-v2 p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium text-navy">Financial Overview Report</h2>
               <DownloadButtons onDownload={downloadFinancialOverview} />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-secondary">
               Income/expense overview, period-by-period comparison, payment status, and outstanding invoices.
             </p>
           </div>
 
           {comparison && (
-            <div className="bg-white rounded-lg border border-slate-200">
-              <div className="px-5 py-3 border-b border-slate-200">
+            <div className="card-v2">
+              <div className="px-5 py-3 border-b border-border-subtle">
                 <h2 className="text-sm font-medium text-navy">Period comparison — financial year {comparison.financial_year}</h2>
               </div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-slate-500 border-b border-slate-200">
+                  <tr className="text-left text-text-secondary border-b border-border-subtle">
                     <th className="px-5 py-2 font-medium">Period</th>
                     <th className="px-5 py-2 font-medium">Sales (net)</th>
                     <th className="px-5 py-2 font-medium">Purchases (net)</th>
@@ -142,9 +142,9 @@ function ReportsContent() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3">
+          <div className="card-v2 p-5 space-y-3">
             <h2 className="text-sm font-medium text-navy">VAT Return Reports</h2>
-            <p className="text-xs text-slate-500">Open a period&apos;s VAT return from the VAT Returns or Tax Calendar page to download its report.</p>
+            <p className="text-xs text-text-secondary">Open a period&apos;s VAT return from the VAT Returns or Tax Calendar page to download its report.</p>
           </div>
         </>
       )}

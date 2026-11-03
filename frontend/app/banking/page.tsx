@@ -73,7 +73,7 @@ function BankingContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Banking</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         Live bank API access is not connected. Import bank statement files (CAMT.053/054, MT940, or CSV) to bring
         transactions in -- nothing here ever reads or stores online-banking login credentials.
       </p>
@@ -84,7 +84,7 @@ function BankingContent() {
       <select
         value={companyId}
         onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="input-v2 px-3 py-2 text-sm"
       >
         <option value="">Select a company</option>
         {companies.map((c) => (
@@ -95,24 +95,24 @@ function BankingContent() {
       </select>
 
       {companyId && (
-        <form onSubmit={handleCreateAccount} className="bg-white rounded-lg border border-slate-200 p-4 flex items-end gap-3">
+        <form onSubmit={handleCreateAccount} className="card-v2 p-4 flex items-end gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-500">IBAN</label>
+            <label className="text-xs text-text-secondary">IBAN</label>
             <input
               required
               value={iban}
               onChange={(e) => setIban(e.target.value)}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input-v2 px-3 py-2 text-sm"
               placeholder="NL91ABNA0417164300"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-slate-500">Account name</label>
+            <label className="text-xs text-text-secondary">Account name</label>
             <input
               required
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input-v2 px-3 py-2 text-sm"
               placeholder="Main business account"
             />
           </div>
@@ -122,10 +122,10 @@ function BankingContent() {
         </form>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
+            <tr className="text-left text-text-secondary border-b border-border-subtle">
               <th className="px-5 py-2 font-medium">IBAN</th>
               <th className="px-5 py-2 font-medium">Account name</th>
               <th className="px-5 py-2 font-medium">Status</th>
@@ -143,13 +143,13 @@ function BankingContent() {
               >
                 <td className="px-5 py-2.5 font-mono text-xs">{a.iban}</td>
                 <td className="px-5 py-2.5">{a.account_name}</td>
-                <td className="px-5 py-2.5 text-xs text-slate-500">{a.consent_status}</td>
+                <td className="px-5 py-2.5 text-xs text-text-secondary">{a.consent_status}</td>
                 <td className="px-5 py-2.5 text-navy text-xs">Select</td>
               </tr>
             ))}
             {accounts.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-4 text-slate-500">
+                <td colSpan={4} className="px-5 py-4 text-text-secondary">
                   No bank accounts yet.
                 </td>
               </tr>
@@ -159,15 +159,15 @@ function BankingContent() {
       </div>
 
       {selectedAccountId && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
+        <div className="card-v2 p-4 space-y-4">
           <h2 className="font-medium text-navy">Import a statement file</h2>
           <form onSubmit={handleImport} className="flex items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-500">Format</label>
+              <label className="text-xs text-text-secondary">Format</label>
               <select
                 value={sourceFormat}
                 onChange={(e) => setSourceFormat(e.target.value as BankSourceFormat)}
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="input-v2 px-3 py-2 text-sm"
               >
                 {SOURCE_FORMATS.map((f) => (
                   <option key={f} value={f}>
@@ -177,7 +177,7 @@ function BankingContent() {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-500">File</label>
+              <label className="text-xs text-text-secondary">File</label>
               <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
             </div>
             <button type="submit" disabled={!file} className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
@@ -188,7 +188,7 @@ function BankingContent() {
           <h3 className="font-medium text-navy text-sm">Import history</h3>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-2 py-2 font-medium">File</th>
                 <th className="px-2 py-2 font-medium">Format</th>
                 <th className="px-2 py-2 font-medium">Imported</th>
@@ -205,12 +205,12 @@ function BankingContent() {
                   <td className="px-2 py-2">{b.transaction_count}</td>
                   <td className="px-2 py-2">{b.duplicate_count}</td>
                   <td className="px-2 py-2">{b.error_count > 0 ? <span className="text-error">{b.error_count}</span> : 0}</td>
-                  <td className="px-2 py-2 text-xs text-slate-500">{new Date(b.imported_at).toLocaleString()}</td>
+                  <td className="px-2 py-2 text-xs text-text-secondary">{new Date(b.imported_at).toLocaleString()}</td>
                 </tr>
               ))}
               {batches.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-2 py-3 text-slate-500">
+                  <td colSpan={6} className="px-2 py-3 text-text-secondary">
                     No imports yet for this account.
                   </td>
                 </tr>

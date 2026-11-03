@@ -66,7 +66,7 @@ function DocumentsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-navy">Documents</h1>
-        <label className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors cursor-pointer">
+        <label className="btn-primary-v2 px-4 py-2 text-sm cursor-pointer">
           {uploading ? "Uploading…" : "Upload document"}
           <input
             type="file"
@@ -84,7 +84,7 @@ function DocumentsContent() {
         <select
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">All companies</option>
           {companies.map((c) => (
@@ -101,7 +101,7 @@ function DocumentsContent() {
               className={`rounded-full px-3 py-1 ${
                 statusFilter === f.value
                   ? "bg-navy text-white"
-                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
               }`}
             >
               {f.label}
@@ -110,9 +110,9 @@ function DocumentsContent() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
+      <div className="card-v2 divide-y divide-slate-100">
         {documents.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">
+          <p className="px-5 py-4 text-sm text-text-secondary">
             {companyId ? "No documents yet for this company." : "Select a company and upload a document to get started."}
           </p>
         ) : (
@@ -124,7 +124,7 @@ function DocumentsContent() {
             >
               <div>
                 <p className="font-medium text-navy">{doc.original_filename}</p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-text-secondary">
                   {doc.document_type ?? "Unclassified"} ·{" "}
                   {new Date(doc.created_at).toLocaleString()}
                   {doc.is_duplicate && <span className="text-error"> · duplicate</span>}

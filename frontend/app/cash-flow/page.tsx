@@ -39,10 +39,10 @@ function CashFlowContent() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-navy">Cash Flow</h1>
         <div className="flex items-center gap-2 text-sm">
-          <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}>
+          <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}>
             Forecast
           </button>
-          <button onClick={() => setTab("statement")} className={`rounded-full px-3 py-1 ${tab === "statement" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}>
+          <button onClick={() => setTab("statement")} className={`rounded-full px-3 py-1 ${tab === "statement" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}>
             Statement (actual)
           </button>
         </div>
@@ -60,7 +60,7 @@ function CashFlowContent() {
               setStatement(null);
             }
           }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">Select a company</option>
           {companies.map((c) => (
@@ -71,12 +71,12 @@ function CashFlowContent() {
         </select>
         {tab === "statement" && (
           <>
-            <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
               <option value="MONTHLY">Monthly</option>
               <option value="QUARTERLY">Quarterly</option>
               <option value="ANNUAL">Annual</option>
             </select>
-            <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
           </>
         )}
       </div>
@@ -84,26 +84,26 @@ function CashFlowContent() {
       {tab === "statement" && statement && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">Operating activities (net)</p>
+            <div className="card-v2 p-4">
+              <p className="text-xs text-text-secondary">Operating activities (net)</p>
               <p className="text-xl font-semibold text-navy font-mono">{statement.operating_activities.net}</p>
-              <p className="text-xs text-slate-400">Receipts {statement.operating_activities.receipts} / Payments {statement.operating_activities.payments}</p>
+              <p className="text-xs text-text-secondary">Receipts {statement.operating_activities.receipts} / Payments {statement.operating_activities.payments}</p>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">Investing activities (net)</p>
+            <div className="card-v2 p-4">
+              <p className="text-xs text-text-secondary">Investing activities (net)</p>
               <p className="text-xl font-semibold text-navy font-mono">{statement.investing_activities.net}</p>
-              <p className="text-xs text-slate-400">{statement.investing_activities.note}</p>
+              <p className="text-xs text-text-secondary">{statement.investing_activities.note}</p>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">Financing activities (net)</p>
+            <div className="card-v2 p-4">
+              <p className="text-xs text-text-secondary">Financing activities (net)</p>
               <p className="text-xl font-semibold text-navy font-mono">{statement.financing_activities.net}</p>
-              <p className="text-xs text-slate-400">{statement.financing_activities.note}</p>
+              <p className="text-xs text-text-secondary">{statement.financing_activities.note}</p>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="card-v2 p-4">
             <p className="text-sm font-medium text-navy">Net change in cash: <span className="font-mono">{statement.net_change_in_cash}</span></p>
           </div>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="card-v2 p-4">
             <h2 className="font-medium text-navy mb-2">Accrual vs cash reconciliation</h2>
             <p className="text-sm">Net profit (accrual): <span className="font-mono">{statement.accrual_vs_cash_reconciliation.net_profit_accrual}</span></p>
             <p className="text-sm">+ Depreciation addback: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.depreciation_addback}</span></p>
@@ -119,13 +119,13 @@ function CashFlowContent() {
       {tab === "forecast" && forecast && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">Actual -- net bank movement to date</p>
+            <div className="card-v2 p-4">
+              <p className="text-xs text-text-secondary">Actual -- net bank movement to date</p>
               <p className="text-2xl font-semibold text-navy font-mono">{forecast.net_bank_transaction_movement}</p>
               <p className="text-xs text-amber-600 mt-1">{forecast.net_bank_transaction_movement_disclaimer}</p>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">Confirmed -- outstanding invoices</p>
+            <div className="card-v2 p-4">
+              <p className="text-xs text-text-secondary">Confirmed -- outstanding invoices</p>
               <p className="text-sm">
                 {forecast.outstanding_sales_invoice_count} sales / {forecast.outstanding_purchase_invoice_count} purchase
               </p>
@@ -133,14 +133,14 @@ function CashFlowContent() {
                 +{forecast.expected_incoming_total} / -{forecast.expected_outgoing_total}
               </p>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">AI-estimated -- recurring expenses</p>
+            <div className="card-v2 p-4">
+              <p className="text-xs text-text-secondary">AI-estimated -- recurring expenses</p>
               <p className="text-sm font-mono">{forecast.recurring_expenses_monthly_equivalent} / month</p>
-              <p className="text-xs text-slate-400">{forecast.recurring_pattern_count} pattern(s) detected</p>
+              <p className="text-xs text-text-secondary">{forecast.recurring_pattern_count} pattern(s) detected</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="card-v2 p-4">
             <p className="text-sm font-medium text-navy">Forecast VAT position</p>
             <p className="text-sm font-mono mt-1">
               Payable: {forecast.forecast_vat_payable} · Refundable: {forecast.forecast_vat_refundable}
@@ -148,14 +148,14 @@ function CashFlowContent() {
             <p className="text-xs text-amber-600 mt-1">{forecast.forecast_vat_disclaimer}</p>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="card-v2 overflow-hidden">
             <div className="p-4 pb-0 flex items-center justify-between">
               <h2 className="font-medium text-navy">Monthly projection</h2>
               <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">Estimate, not a confirmed balance</span>
             </div>
             <table className="w-full text-sm mt-2">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
+                <tr className="text-left text-text-secondary border-b border-border-subtle">
                   <th className="px-4 py-2 font-medium">Month</th>
                   <th className="px-4 py-2 font-medium">Expected incoming</th>
                   <th className="px-4 py-2 font-medium">Expected outgoing</th>
@@ -173,7 +173,7 @@ function CashFlowContent() {
                 ))}
               </tbody>
             </table>
-            <p className="text-xs text-slate-400 p-4 pt-2">{forecast.monthly_projection_disclaimer}</p>
+            <p className="text-xs text-text-secondary p-4 pt-2">{forecast.monthly_projection_disclaimer}</p>
           </div>
         </>
       )}

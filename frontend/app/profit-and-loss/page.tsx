@@ -49,14 +49,14 @@ function PnlContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Profit &amp; Loss</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         All figures are accrual-basis actuals from the ledger, never an estimate. Revenue and cost-of-sales categories
         are only split out when transactions have been tagged with that category.
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -64,13 +64,13 @@ function PnlContent() {
             </option>
           ))}
         </select>
-        <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
           <option value="ANNUAL">Annual</option>
         </select>
-        <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-        <select value={compare} onChange={(e) => setCompare(e.target.value as typeof compare)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+        <select value={compare} onChange={(e) => setCompare(e.target.value as typeof compare)} className="input-v2 px-3 py-2 text-sm">
           <option value="">No comparison</option>
           <option value="previous">vs previous period</option>
           <option value="year_on_year">vs same period last year</option>
@@ -81,7 +81,7 @@ function PnlContent() {
               <a
                 key={fmt}
                 href={api.pnlReportUrl(Number(companyId), periodType, referenceDate, fmt)}
-                className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50"
+                className="input-v2 px-2 py-1 hover:bg-slate-50"
               >
                 Export {fmt.toUpperCase()}
               </a>
@@ -91,10 +91,10 @@ function PnlContent() {
       </div>
 
       {report && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="card-v2 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-4 py-2 font-medium">Line</th>
                 <th className="px-4 py-2 font-medium text-right">Current</th>
                 {comparisonKey && <th className="px-4 py-2 font-medium text-right">{compare === "previous" ? "Previous period" : "Same period last year"}</th>}
@@ -109,7 +109,7 @@ function PnlContent() {
                   <tr key={line.key} className={`border-b border-slate-100 last:border-0 ${line.highlight ? "bg-slate-50 font-medium" : ""}`}>
                     <td className="px-4 py-2.5">{line.label}</td>
                     <td className="px-4 py-2.5 text-right font-mono">{report.current[line.key]}</td>
-                    {comparisonKey && <td className="px-4 py-2.5 text-right font-mono text-slate-500">{comparison?.previous}</td>}
+                    {comparisonKey && <td className="px-4 py-2.5 text-right font-mono text-text-secondary">{comparison?.previous}</td>}
                     {comparisonKey && <td className="px-4 py-2.5 text-right font-mono">{comparison?.change}</td>}
                     {comparisonKey && (
                       <td className={`px-4 py-2.5 text-right font-mono ${comparison?.change_pct && Number(comparison.change_pct) < 0 ? "text-error" : "text-green-700"}`}>
@@ -121,7 +121,7 @@ function PnlContent() {
               })}
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 p-4 pt-2">{report.current.tax_expense_note}</p>
+          <p className="text-xs text-text-secondary p-4 pt-2">{report.current.tax_expense_note}</p>
         </div>
       )}
     </div>

@@ -44,7 +44,7 @@ function BatchesContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">All companies</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -57,7 +57,7 @@ function BatchesContent() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600"}`}
+              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600"}`}
             >
               {c === "all" ? "All" : c}
             </button>
@@ -65,13 +65,13 @@ function BatchesContent() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         {batches.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No batches yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">No batches yet.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-5 py-2 font-medium">Uploaded</th>
                 <th className="px-5 py-2 font-medium">Category</th>
                 <th className="px-5 py-2 font-medium">Total</th>

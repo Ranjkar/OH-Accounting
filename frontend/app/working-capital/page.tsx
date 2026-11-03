@@ -42,7 +42,7 @@ function WorkingCapitalContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -50,7 +50,7 @@ function WorkingCapitalContent() {
             </option>
           ))}
         </select>
-        <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
       </div>
 
       {companyId && (
@@ -64,25 +64,25 @@ function WorkingCapitalContent() {
                     {a.counterparty_name} -- invoice #{a.transaction_id} ({a.days_overdue} days overdue)
                   </span>
                   <span className="font-mono">{a.remaining_balance}</span>
-                  <span className="text-xs text-slate-500">{a.alert_reason}</span>
+                  <span className="text-xs text-text-secondary">{a.alert_reason}</span>
                 </div>
               ))}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Customer payment behavior</h2>
-              {customerBehavior.length === 0 && <p className="text-sm text-slate-500">No fully-settled invoices yet.</p>}
+              {customerBehavior.length === 0 && <p className="text-sm text-text-secondary">No fully-settled invoices yet.</p>}
               {customerBehavior.map((c) => (
                 <p key={c.counterparty_name} className="text-sm">
                   {c.counterparty_name}: <span className="font-mono">{c.average_days_to_pay}</span> days avg ({c.invoices_settled} invoices)
                 </p>
               ))}
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Supplier payment trends</h2>
-              {supplierTrends.length === 0 && <p className="text-sm text-slate-500">No fully-settled purchase invoices yet.</p>}
+              {supplierTrends.length === 0 && <p className="text-sm text-text-secondary">No fully-settled purchase invoices yet.</p>}
               {supplierTrends.map((s) => (
                 <p key={s.counterparty_name} className="text-sm">
                   {s.counterparty_name}: <span className="font-mono">{s.average_days_to_pay}</span> days avg ({s.invoices_settled} invoices)
@@ -91,11 +91,11 @@ function WorkingCapitalContent() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="card-v2 p-4">
             <h2 className="font-medium text-navy mb-2">Working capital trend (6 months)</h2>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
+                <tr className="text-left text-text-secondary border-b border-border-subtle">
                   <th className="py-1">Month end</th>
                   <th className="py-1">AR</th>
                   <th className="py-1">AP</th>
@@ -116,7 +116,7 @@ function WorkingCapitalContent() {
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Cash conversion cycle</h2>
               {ccc && (
                 <>
@@ -127,7 +127,7 @@ function WorkingCapitalContent() {
                 </>
               )}
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Customer concentration</h2>
               {customerConcentration?.top_customers?.map((c: JsonReport) => (
                 <p key={c.counterparty_name} className="text-sm">
@@ -136,7 +136,7 @@ function WorkingCapitalContent() {
               ))}
               {customerConcentration?.missing_data && <p className="text-xs text-amber-600">{customerConcentration.missing_data}</p>}
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="card-v2 p-4">
               <h2 className="font-medium text-navy mb-2">Supplier dependency</h2>
               {supplierDependency?.top_expense_categories?.map((c: JsonReport) => (
                 <p key={c.category} className="text-sm">

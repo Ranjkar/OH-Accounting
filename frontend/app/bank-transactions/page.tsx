@@ -66,7 +66,7 @@ function BankTransactionsContent() {
         <select
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">All companies</option>
           {companies.map((c) => (
@@ -81,7 +81,7 @@ function BankTransactionsContent() {
               key={f.value}
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
               }`}
             >
               {f.label}
@@ -91,10 +91,10 @@ function BankTransactionsContent() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="col-span-2 card-v2 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-4 py-2 font-medium">Date</th>
                 <th className="px-4 py-2 font-medium">Amount</th>
                 <th className="px-4 py-2 font-medium">Counterparty</th>
@@ -108,13 +108,13 @@ function BankTransactionsContent() {
                   <td className="px-4 py-2.5">{t.booking_date}</td>
                   <td className={`px-4 py-2.5 font-mono ${Number(t.amount) < 0 ? "text-error" : "text-green-700"}`}>{t.amount}</td>
                   <td className="px-4 py-2.5">{t.counterparty_name ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{t.payment_reference ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-text-secondary">{t.payment_reference ?? "—"}</td>
                   <td className="px-4 py-2.5 text-xs">{t.reconciliation_status}</td>
                 </tr>
               ))}
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-4 text-slate-500">
+                  <td colSpan={5} className="px-4 py-4 text-text-secondary">
                     No bank transactions match these filters.
                   </td>
                 </tr>
@@ -123,7 +123,7 @@ function BankTransactionsContent() {
           </table>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="card-v2 p-4">
           {detail ? (
             <div className="space-y-3 text-sm">
               <h3 className="font-medium text-navy">Transaction #{detail.id}</h3>
@@ -132,22 +132,22 @@ function BankTransactionsContent() {
               <p>Counterparty: {detail.counterparty_name ?? "—"}</p>
               <p>IBAN: {detail.counterparty_iban ?? "—"}</p>
               <h4 className="font-medium text-navy mt-3">Candidate matches</h4>
-              {detail.matches.length === 0 && <p className="text-slate-500">No matches found.</p>}
+              {detail.matches.length === 0 && <p className="text-text-secondary">No matches found.</p>}
               {detail.matches.map((m) => (
-                <div key={m.id} className="rounded-md border border-slate-200 p-2">
+                <div key={m.id} className="rounded-md border border-border-subtle p-2">
                   <p>Invoice #{m.accounting_transaction_id} · {m.confidence_level} ({m.confidence_score})</p>
-                  <p className="text-xs text-slate-500">Allocated: {m.allocated_amount} · Status: {m.status}</p>
+                  <p className="text-xs text-text-secondary">Allocated: {m.allocated_amount} · Status: {m.status}</p>
                 </div>
               ))}
               {detail.reconciliation_status !== "EXCLUDED" && (
-                <button onClick={() => exclude(detail.id)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs">
+                <button onClick={() => exclude(detail.id)} className="input-v2 px-3 py-1.5 text-xs">
                   Exclude from reconciliation
                 </button>
               )}
-              <p className="text-xs text-slate-400">Go to Reconciliation to approve/reject/reverse matches.</p>
+              <p className="text-xs text-text-secondary">Go to Reconciliation to approve/reject/reverse matches.</p>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Select a transaction to see details.</p>
+            <p className="text-sm text-text-secondary">Select a transaction to see details.</p>
           )}
         </div>
       </div>

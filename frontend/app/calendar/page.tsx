@@ -52,13 +52,13 @@ function TaxCalendarContent() {
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => setView("list")}
-            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}
+            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}
           >
             List
           </button>
           <button
             onClick={() => setView("calendar")}
-            className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}
+            className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}
           >
             Calendar
           </button>
@@ -71,7 +71,7 @@ function TaxCalendarContent() {
         <select
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">All companies</option>
           {companies.map((c) => (
@@ -86,7 +86,7 @@ function TaxCalendarContent() {
               key={f.value}
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
               }`}
             >
               {f.label}
@@ -96,12 +96,12 @@ function TaxCalendarContent() {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-slate-500">No VAT periods match these filters.</p>
+        <p className="text-sm text-text-secondary">No VAT periods match these filters.</p>
       ) : view === "list" ? (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="card-v2 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-5 py-2 font-medium">Company</th>
                 <th className="px-5 py-2 font-medium">Period</th>
                 <th className="px-5 py-2 font-medium">Frequency</th>
@@ -141,14 +141,14 @@ function TaxCalendarContent() {
       ) : (
         <div className="space-y-4">
           {[...byMonth.entries()].sort().map(([month, monthEntries]) => (
-            <div key={month} className="bg-white rounded-lg border border-slate-200">
-              <div className="px-5 py-3 border-b border-slate-200 font-medium text-navy">{month}</div>
+            <div key={month} className="card-v2">
+              <div className="px-5 py-3 border-b border-border-subtle font-medium text-navy">{month}</div>
               <div className="divide-y divide-slate-100">
                 {monthEntries.map((e) => (
                   <div key={e.vat_period_id} className="px-5 py-3 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-navy">{e.company_name}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-text-secondary">
                         {e.financial_year} {e.period_label} · due {e.filing_deadline}
                       </p>
                     </div>

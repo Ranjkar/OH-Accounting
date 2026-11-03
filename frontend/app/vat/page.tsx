@@ -45,7 +45,7 @@ function VatContent() {
       <select
         value={companyId}
         onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="input-v2 px-3 py-2 text-sm"
       >
         <option value="">Select a company</option>
         {companies.map((c) => (
@@ -56,13 +56,13 @@ function VatContent() {
       </select>
 
       {financialYears.map((fy) => (
-        <div key={fy.id} className="bg-white rounded-lg border border-slate-200">
-          <div className="px-5 py-3 border-b border-slate-200">
+        <div key={fy.id} className="card-v2">
+          <div className="px-5 py-3 border-b border-border-subtle">
             <h2 className="text-sm font-medium text-navy">Financial year {fy.year}</h2>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
+              <tr className="text-left text-text-secondary border-b border-border-subtle">
                 <th className="px-5 py-2 font-medium">Period</th>
                 <th className="px-5 py-2 font-medium">Filing deadline</th>
                 <th className="px-5 py-2 font-medium">VAT due (5a)</th>
@@ -89,7 +89,7 @@ function VatContent() {
                     <td className="px-5 py-2.5">{vr?.box_5a_vat ?? "—"}</td>
                     <td className="px-5 py-2.5">{vr?.box_5b_vat ?? "—"}</td>
                     <td className="px-5 py-2.5 font-medium">{vr?.net_payable ?? "—"}</td>
-                    <td className="px-5 py-2.5 text-xs uppercase text-slate-500">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
+                    <td className="px-5 py-2.5 text-xs uppercase text-text-secondary">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
                   </tr>
                 );
               })}

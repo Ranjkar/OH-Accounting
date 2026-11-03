@@ -35,7 +35,7 @@ export default function LoginPage() {
       >
         <div>
           <h1 className="text-xl font-semibold text-navy">OnHolland Accounting</h1>
-          <p className="text-sm text-slate-500 mt-1">Sign in to your account</p>
+          <p className="text-sm text-text-secondary mt-1">Sign in to your account</p>
         </div>
 
         {error && (
@@ -49,7 +49,7 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+            className="w-full input-v2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
           />
         </div>
         <div className="space-y-1">
@@ -59,14 +59,14 @@ export default function LoginPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+            className="w-full input-v2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-navy text-white py-2 text-sm font-medium hover:bg-navy-light transition-colors disabled:opacity-50"
+          className="btn-primary-v2 w-full py-2 text-sm disabled:opacity-50"
         >
           {submitting ? "Signing in…" : "Sign in"}
         </button>

@@ -10,8 +10,8 @@ import { api, AutomationCentreSummary, Company } from "@/lib/api";
 function Tile({ label, value, href, tone }: { label: string; value: number; href: string; tone?: "warn" | "crit" }) {
   const toneClass = tone === "crit" ? "text-error" : tone === "warn" ? "text-amber-600" : "text-navy";
   return (
-    <Link href={href} className="bg-white rounded-lg border border-slate-200 p-4 hover:border-navy transition-colors">
-      <p className="text-xs text-slate-500">{label}</p>
+    <Link href={href} className="card-v2 p-4 hover:border-navy transition-colors">
+      <p className="text-xs text-text-secondary">{label}</p>
       <p className={`text-3xl font-semibold ${toneClass}`}>{value}</p>
     </Link>
   );
@@ -50,7 +50,7 @@ function AutomationContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Automation Centre</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         Everything here is advisory. Suggestions, detections, and anomalies always wait for an accountant to review,
         approve, or correct them -- nothing is posted, paid, or filed automatically.
       </p>
@@ -64,7 +64,7 @@ function AutomationContent() {
           setCompanyId(e.target.value ? Number(e.target.value) : "");
           if (!e.target.value) setSummary(null);
         }}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="input-v2 px-3 py-2 text-sm"
       >
         <option value="">Select a company</option>
         {companies.map((c) => (
@@ -95,7 +95,7 @@ function AutomationContent() {
                   return `Recurring-pattern detection re-run -- ${patterns.length} pattern(s) found.`;
                 })
               }
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm"
+              className="input-v2 px-4 py-2 text-sm"
             >
               Run recurring-pattern detection
             </button>
@@ -106,7 +106,7 @@ function AutomationContent() {
                   return `Anomaly detection re-run -- ${flags.length} flag(s) found.`;
                 })
               }
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm"
+              className="input-v2 px-4 py-2 text-sm"
             >
               Run anomaly detection
             </button>
@@ -117,7 +117,7 @@ function AutomationContent() {
                   return `Applied rules to ${result.rules_applied} of ${result.transactions_checked} transaction(s).`;
                 })
               }
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm"
+              className="input-v2 px-4 py-2 text-sm"
             >
               Apply categorization rules
             </button>

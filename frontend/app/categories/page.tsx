@@ -77,7 +77,7 @@ function CategoriesContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-navy">Expense Categories</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-secondary">
         Rules are company-specific -- a rule created for one company is never applied to another. AI suggestions are
         advisory only and always require accountant confirmation before being applied.
       </p>
@@ -87,7 +87,7 @@ function CategoriesContent() {
       <select
         value={companyId}
         onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="input-v2 px-3 py-2 text-sm"
       >
         <option value="">Select a company</option>
         {companies.map((c) => (
@@ -99,10 +99,10 @@ function CategoriesContent() {
 
       {companyId && (
         <>
-          <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+          <div className="card-v2 p-4 space-y-3">
             <h2 className="font-medium text-navy">Rules</h2>
             <form onSubmit={createRule} className="flex items-end gap-3">
-              <select value={ruleType} onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+              <select value={ruleType} onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="input-v2 px-2 py-2 text-sm">
                 <option value="SUPPLIER_NAME">Supplier name contains</option>
                 <option value="IBAN">IBAN equals</option>
                 <option value="DESCRIPTION_PATTERN">Description matches pattern</option>
@@ -112,9 +112,9 @@ function CategoriesContent() {
                 value={matchValue}
                 onChange={(e) => setMatchValue(e.target.value)}
                 placeholder="match value"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="input-v2 px-3 py-2 text-sm"
               />
-              <select value={ruleCategory} onChange={(e) => setRuleCategory(e.target.value)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+              <select value={ruleCategory} onChange={(e) => setRuleCategory(e.target.value)} className="input-v2 px-2 py-2 text-sm">
                 {EXPENSE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -129,25 +129,25 @@ function CategoriesContent() {
               <tbody>
                 {rules.map((r) => (
                   <tr key={r.id} className="border-t border-slate-100">
-                    <td className="py-1.5 text-xs text-slate-500">{r.rule_type}</td>
+                    <td className="py-1.5 text-xs text-text-secondary">{r.rule_type}</td>
                     <td className="py-1.5">{r.match_value}</td>
                     <td className="py-1.5 font-medium">{r.category}</td>
                   </tr>
                 ))}
                 {rules.length === 0 && (
                   <tr>
-                    <td className="py-2 text-slate-500">No rules yet for this company.</td>
+                    <td className="py-2 text-text-secondary">No rules yet for this company.</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="card-v2 overflow-hidden">
             <h2 className="font-medium text-navy p-4 pb-0">Purchase transactions</h2>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
+                <tr className="text-left text-text-secondary border-b border-border-subtle">
                   <th className="px-4 py-2 font-medium">Invoice</th>
                   <th className="px-4 py-2 font-medium">Counterparty</th>
                   <th className="px-4 py-2 font-medium">Amount</th>
@@ -164,7 +164,7 @@ function CategoriesContent() {
                     <td className="px-4 py-2.5 font-mono">{t.net_amount}</td>
                     <td className="px-4 py-2.5">
                       {suggestions[t.id] ? (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-text-secondary">
                           {suggestions[t.id].suggested_category} ({Math.round(suggestions[t.id].confidence * 100)}%)
                           {suggestions[t.id].requires_accountant_review && " · review"}
                         </span>
@@ -178,7 +178,7 @@ function CategoriesContent() {
                       <select
                         value={chosenCategory[t.id] ?? ""}
                         onChange={(e) => setChosenCategory((prev) => ({ ...prev, [t.id]: e.target.value }))}
-                        className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        className="input-v2 px-2 py-1 text-xs"
                       >
                         <option value="">—</option>
                         {EXPENSE_CATEGORIES.map((c) => (
@@ -201,7 +201,7 @@ function CategoriesContent() {
                 ))}
                 {uncategorized.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-4 text-slate-500">
+                    <td colSpan={6} className="px-4 py-4 text-text-secondary">
                       No purchase transactions to categorize.
                     </td>
                   </tr>

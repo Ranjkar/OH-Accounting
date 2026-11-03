@@ -9,8 +9,8 @@ import { api, Company, JsonReport } from "@/lib/api";
 
 function Tile({ label, value, href, suffix }: { label: string; value: string; href: string; suffix?: string }) {
   return (
-    <Link href={href} className="bg-white rounded-lg border border-slate-200 p-4 hover:border-navy transition-colors">
-      <p className="text-xs text-slate-500">{label}</p>
+    <Link href={href} className="card-v2 p-4 hover:border-navy transition-colors">
+      <p className="text-xs text-text-secondary">{label}</p>
       <p className="text-2xl font-semibold text-navy font-mono">
         {value}
         {suffix}
@@ -49,10 +49,10 @@ function FinancialOverviewContent() {
       {portfolio && (
         <div className="space-y-2">
           <h2 className="text-lg font-medium text-navy">Portfolio ({portfolio.portfolio.length} companies)</h2>
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="card-v2 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
+                <tr className="text-left text-text-secondary border-b border-border-subtle">
                   <th className="px-4 py-2 font-medium">Company</th>
                   <th className="px-4 py-2 font-medium">Revenue (month)</th>
                   <th className="px-4 py-2 font-medium">Net profit (month)</th>
@@ -83,7 +83,7 @@ function FinancialOverviewContent() {
         <select
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
           <option value="">Select a company</option>
           {companies.map((c) => (

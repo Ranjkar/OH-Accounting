@@ -52,7 +52,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
     }
   }
 
-  if (!vatReturn || !reconciliation) return <p className="text-slate-500">Loading…</p>;
+  if (!vatReturn || !reconciliation) return <p className="text-text-secondary">Loading…</p>;
 
   const stepIndex = STATUS_STEPS.indexOf(vatReturn.status);
 
@@ -65,7 +65,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           </button>
           <h1 className="text-xl font-semibold text-navy mt-1">VAT Return — {vatReturn.rules_version}</h1>
         </div>
-        <span className="text-xs uppercase font-medium text-slate-500">{vatReturn.status.replaceAll("_", " ")}</span>
+        <span className="text-xs uppercase font-medium text-text-secondary">{vatReturn.status.replaceAll("_", " ")}</span>
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
@@ -75,7 +75,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           <span
             key={step}
             className={`rounded-full px-3 py-1 ${
-              i <= stepIndex ? "bg-navy text-white" : "bg-slate-100 text-slate-500"
+              i <= stepIndex ? "bg-navy text-white" : "bg-slate-100 text-text-secondary"
             }`}
           >
             {step.replaceAll("_", " ")}
@@ -84,22 +84,22 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Sales (net)</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Sales (net)</p>
           <p className="text-lg font-semibold text-navy mt-1">{reconciliation.sales_total_net}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Purchases (net)</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Purchases (net)</p>
           <p className="text-lg font-semibold text-navy mt-1">{reconciliation.purchases_total_net}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Net VAT payable (5a − 5b)</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">Net VAT payable (5a − 5b)</p>
           <p className="text-lg font-semibold text-navy mt-1">{vatReturn.net_payable}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle flex items-center justify-between">
           <h2 className="text-sm font-medium text-navy">Declaration preview</h2>
           <div className="flex gap-2">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
@@ -111,7 +111,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
                     .downloadReport(token, api.vatReturnReportUrl(vatReturn.id, fmt), `vat-return-${vatReturn.id}.${fmt}`)
                     .catch((e) => setError(e instanceof Error ? e.message : "Download failed"))
                 }
-                className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
+                className="input-v2 px-3 py-1 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
               >
                 {fmt}
               </button>
@@ -120,7 +120,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
+            <tr className="text-left text-text-secondary border-b border-border-subtle">
               <th className="px-5 py-2 font-medium">Box</th>
               <th className="px-5 py-2 font-medium">Description</th>
               <th className="px-5 py-2 font-medium">Net</th>
@@ -158,7 +158,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
         </table>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3">
+      <div className="card-v2 p-5 space-y-3">
         <h2 className="text-sm font-medium text-navy">Reconciliation checks</h2>
         {reconciliation.pending_documents.length === 0 &&
         reconciliation.duplicate_documents.length === 0 &&
@@ -197,13 +197,13 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
             <>
               <button
                 onClick={() => handleAction(() => api.recalculateVatReturn(token!, vatReturn.id))}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
+                className="input-v2 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
               >
                 Recalculate
               </button>
               <button
                 onClick={() => handleAction(() => api.submitVatReturnForApproval(token!, vatReturn.id))}
-                className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+                className="btn-primary-v2 px-4 py-2 text-sm"
               >
                 Submit for approval
               </button>
@@ -218,12 +218,12 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           ) : vatReturn.status === "approved" ? (
             <button
               onClick={() => handleAction(() => api.lockVatReturn(token!, vatReturn.id))}
-              className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+              className="btn-primary-v2 px-4 py-2 text-sm"
             >
               Lock period
             </button>
           ) : (
-            <p className="text-sm text-slate-500">This period is locked.</p>
+            <p className="text-sm text-text-secondary">This period is locked.</p>
           )}
         </div>
       )}

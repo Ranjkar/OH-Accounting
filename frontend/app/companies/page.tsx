@@ -51,7 +51,7 @@ function CompaniesContent() {
         <h1 className="text-2xl font-semibold text-navy">Companies</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+          className="btn-primary-v2 px-4 py-2 text-sm"
         >
           {showForm ? "Cancel" : "New company"}
         </button>
@@ -60,14 +60,14 @@ function CompaniesContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 max-w-lg">
+        <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4 max-w-lg">
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Company name</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="w-full input-v2 px-3 py-2 text-sm"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -76,7 +76,7 @@ function CompaniesContent() {
               <input
                 value={kvk}
                 onChange={(e) => setKvk(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full input-v2 px-3 py-2 text-sm"
               />
             </div>
             <div className="space-y-1">
@@ -84,7 +84,7 @@ function CompaniesContent() {
               <input
                 value={vat}
                 onChange={(e) => setVat(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full input-v2 px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -93,7 +93,7 @@ function CompaniesContent() {
             <select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as VatFrequency)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="w-full input-v2 px-3 py-2 text-sm"
             >
               <option value="monthly">Monthly</option>
               <option value="quarterly">Quarterly</option>
@@ -102,16 +102,16 @@ function CompaniesContent() {
           </div>
           <button
             type="submit"
-            className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+            className="btn-primary-v2 px-4 py-2 text-sm"
           >
             Create company
           </button>
         </form>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
+      <div className="card-v2 divide-y divide-slate-100">
         {companies.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No companies yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">No companies yet.</p>
         ) : (
           companies.map((c) => (
             <Link
@@ -121,7 +121,7 @@ function CompaniesContent() {
             >
               <div>
                 <p className="font-medium text-navy">{c.name}</p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-text-secondary">
                   {c.kvk_number ? `KVK ${c.kvk_number}` : "No KVK number"} ·{" "}
                   {c.vat_frequency}
                 </p>
