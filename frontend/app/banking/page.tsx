@@ -158,7 +158,7 @@ function BankingContent() {
       {error && <GlassErrorState message={error} />}
       {message && <div className="rounded-lg bg-green-500/10 border border-green-300/50 text-green-700 text-sm px-4 py-3">{message}</div>}
 
-      <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>

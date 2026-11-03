@@ -79,7 +79,7 @@ function VatContent() {
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
