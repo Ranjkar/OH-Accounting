@@ -67,7 +67,7 @@ export default function GlassModal({ open, onClose, title, children, footer }: G
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="glass-panel relative w-full max-w-lg max-h-[85vh] overflow-y-auto"
+        className="glass-panel-elevated relative w-full max-w-lg max-h-[85vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/40 sticky top-0 bg-inherit">
           <h2 className="text-card-heading">{title}</h2>

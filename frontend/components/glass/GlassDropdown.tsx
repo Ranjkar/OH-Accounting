@@ -82,7 +82,7 @@ export default function GlassDropdown({ label, children, align = "right" }: Glas
         <div
           ref={menuRef}
           role="menu"
-          className={`absolute z-40 mt-2 min-w-[12rem] glass-panel p-1.5 ${align === "right" ? "right-0" : "left-0"}`}
+          className={`absolute z-40 mt-2 min-w-[12rem] glass-panel-elevated p-1.5 ${align === "right" ? "right-0" : "left-0"}`}
         >
           {
             // `close` only reads triggerRef.current inside its own body,

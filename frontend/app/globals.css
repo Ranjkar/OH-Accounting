@@ -234,6 +234,34 @@ body {
   box-shadow: var(--glass-shadow);
 }
 
+/* Phase 11.1: explicit depth hierarchy (1. app background, 2. primary
+   glass panels/.glass-panel, 3. elevated cards, 4. interactive controls,
+   5. floating dialogs/popovers). Dialogs and popovers sit furthest above
+   the background and should read as the most prominent surface -- more
+   opaque (--glass-surface-strong, 0.94 vs 0.86) and a deeper shadow than
+   a regular card, not the same flat glass-panel treatment. */
+.glass-panel-elevated {
+  background: var(--glass-surface-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 16px 48px -12px rgba(13, 10, 44, 0.4), 0 2px 8px rgba(13, 10, 44, 0.08);
+}
+
+/* Fallback for browsers without backdrop-filter support (explicitly
+   required): an opaque surface instead of a half-transparent one that
+   would otherwise sit directly on the busy gradient background with no
+   blur to separate it -- readability over visual effect. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-panel, .glass-panel-dark, .glass-panel-elevated, .card-v2, .input-v2, .btn-secondary-v2 {
+    background: var(--surface-card);
+  }
+  .glass-panel-dark {
+    background: #15112e;
+  }
+}
+
 .glass-panel-dark {
   background: var(--glass-dark-surface);
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
