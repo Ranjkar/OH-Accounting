@@ -105,6 +105,57 @@ def test_dga_position_endpoint(client, db_session):
     assert response.json()["salary_check"]["compliant"] is False
 
 
+def test_dga_position_auto_fills_highest_employee_salary(client, db_session):
+    admin = _create_user(db_session)
+    headers = _login(client, "admin@acme.nl")
+    company_id = _setup_company(client, headers)
+    client.post(
+        "/api/v1/employees",
+        json={
+            "company_id": company_id, "employee_number": "E001", "full_name": "Senior Engineer",
+            "employment_start_date": "2025-01-01", "employment_type": "PERMANENT",
+            "salary_basis": "MONTHLY", "monthly_salary": "6000.00",
+        },
+        headers=headers,
+    )
+
+    response = client.get(
+        "/api/v1/tax-centre/dga-position", params={"company_id": company_id, "proposed_dga_salary": "40000"}, headers=headers,
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["highest_employee_salary_auto_filled"] is True
+    # 6000/month annualized = 72,000, higher than the flat norm amount -- must become the required minimum.
+    assert body["salary_check"]["required_minimum"] == "72000.00"
+    assert "note_on_highest_employee_salary" in body["salary_check"]
+
+
+def test_dga_position_explicit_highest_employee_salary_overrides_auto_fill(client, db_session):
+    admin = _create_user(db_session)
+    headers = _login(client, "admin@acme.nl")
+    company_id = _setup_company(client, headers)
+    client.post(
+        "/api/v1/employees",
+        json={
+            "company_id": company_id, "employee_number": "E001", "full_name": "Senior Engineer",
+            "employment_start_date": "2025-01-01", "employment_type": "PERMANENT",
+            "salary_basis": "MONTHLY", "monthly_salary": "6000.00",
+        },
+        headers=headers,
+    )
+
+    response = client.get(
+        "/api/v1/tax-centre/dga-position",
+        params={"company_id": company_id, "proposed_dga_salary": "80000", "highest_employee_salary": "65000"},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["highest_employee_salary_auto_filled"] is False
+    # Overridden to 65,000 -- must win over both the norm amount and the (ignored) auto-fill value of 72,000.
+    assert body["salary_check"]["required_minimum"] == "65000"
+
+
 def test_tax_optimization_endpoint_returns_catalogue(client, db_session):
     admin = _create_user(db_session)
     headers = _login(client, "admin@acme.nl")

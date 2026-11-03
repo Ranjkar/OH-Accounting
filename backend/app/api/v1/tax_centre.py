@@ -11,7 +11,8 @@ from app.core.deps import get_current_user, require_company_access
 from app.models.accounting import VatReturn
 from app.db.session import get_db
 from app.models.company import Company
-from app.models.enums import LegalFormCode, VatReturnStatus
+from app.models.employee import Employee
+from app.models.enums import LegalFormCode, SalaryBasis, VatReturnStatus
 from app.models.legal_form import CompanyLegalForm, Partner
 from app.models.user import User
 
@@ -114,6 +115,26 @@ def corporate_tax_estimate(company_id: int, annual_taxable_profit: Decimal, db: 
     return to_json_safe(entity_tax.estimate_bv_corporate_tax(annual_taxable_profit))
 
 
+def _highest_non_dga_employee_annual_salary(db: Session, company_id: int) -> Decimal | None:
+    """Annualizes each non-DGA employee's pay (monthly_salary * 12, or
+    hourly_rate * contracted_hours_per_week * 52 for hourly staff -- an
+    approximation, since actual hours worked can differ from contracted
+    hours) and returns the highest figure, or None if no comparable
+    employee data is on file. Never includes an employee flagged is_dga."""
+    employees = (
+        db.query(Employee)
+        .filter(Employee.company_id == company_id, Employee.is_dga.is_(False), Employee.employment_end_date.is_(None))
+        .all()
+    )
+    annual_salaries = []
+    for employee in employees:
+        if employee.salary_basis == SalaryBasis.monthly and employee.monthly_salary:
+            annual_salaries.append(employee.monthly_salary * 12)
+        elif employee.salary_basis == SalaryBasis.hourly and employee.hourly_rate and employee.contracted_hours_per_week:
+            annual_salaries.append(employee.hourly_rate * employee.contracted_hours_per_week * 52)
+    return max(annual_salaries) if annual_salaries else None
+
+
 @router.get("/dga-position")
 def dga_position(
     company_id: int, proposed_dga_salary: Decimal, dividend_declared: Decimal = Decimal("0"),
@@ -121,7 +142,20 @@ def dga_position(
     db: Session = Depends(get_db), user: User = Depends(get_current_user),
 ):
     _get_company_or_404(db, user, company_id)
-    return to_json_safe(entity_tax.estimate_dga_position(proposed_dga_salary, comparable_role_salary, highest_employee_salary, dividend_declared))
+    auto_filled = False
+    if highest_employee_salary is None:
+        highest_employee_salary = _highest_non_dga_employee_annual_salary(db, company_id)
+        auto_filled = highest_employee_salary is not None
+    result = entity_tax.estimate_dga_position(proposed_dga_salary, comparable_role_salary, highest_employee_salary, dividend_declared)
+    result["highest_employee_salary_auto_filled"] = auto_filled
+    if auto_filled:
+        result["salary_check"]["note_on_highest_employee_salary"] = (
+            "highest_employee_salary was auto-filled from this company's highest-paid non-DGA, currently-employed "
+            "employee record (annualized from monthly_salary, or hourly_rate x contracted_hours_per_week x 52 for "
+            "hourly staff) -- pass the query parameter explicitly to override if that employee is not actually "
+            "comparable, or if the underlying data is stale."
+        )
+    return to_json_safe(result)
 
 
 @router.get("/tax-optimization")
