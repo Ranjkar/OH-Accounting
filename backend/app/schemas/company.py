@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
@@ -53,6 +53,8 @@ class FinancialYearOut(BaseModel):
     year: int
     start_date: date
     end_date: date
+    is_locked: bool
+    locked_at: datetime | None
     vat_periods: list[VatPeriodOut] = []
 
     model_config = ConfigDict(from_attributes=True)

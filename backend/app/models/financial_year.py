@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -8,6 +8,11 @@ from app.models.enums import VatPeriodStatus
 
 
 class FinancialYear(Base):
+    """Locking a financial year blocks new ledger postings and corrections
+    dated within it (see ledger_service.py) -- it never retroactively edits
+    or removes transactions already posted. Unlocking is a deliberate,
+    audit-logged action (see app/api/v1/companies.py), never automatic."""
+
     __tablename__ = "financial_years"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -15,6 +20,9 @@ class FinancialYear(Base):
     year: Mapped[int] = mapped_column(Integer)
     start_date: Mapped[date] = mapped_column(Date)
     end_date: Mapped[date] = mapped_column(Date)
+    is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    locked_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

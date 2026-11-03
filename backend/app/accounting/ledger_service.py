@@ -37,6 +37,24 @@ def is_postable(document_type: DocumentType | None) -> bool:
     return document_type in TRANSACTION_TYPE_BY_DOCUMENT_TYPE
 
 
+def _ensure_financial_year_open(db: Session, financial_year_id: int) -> FinancialYear:
+    """The single choke point every ledger-posting path (approved documents,
+    manual entries, and corrections, which route through create_manual_entry)
+    must pass through. A locked financial year never accepts a new or
+    corrected transaction dated within it -- an administrator must explicitly
+    unlock it first (an audit-logged action), which is the control against
+    silently backdating entries into a period whose reports have already
+    gone out."""
+    financial_year = db.get(FinancialYear, financial_year_id)
+    if financial_year is None:
+        raise LedgerPostingError(f"Financial year {financial_year_id} not found")
+    if financial_year.is_locked:
+        raise LedgerPostingError(
+            f"Financial year {financial_year.year} is locked -- unlock it first before posting or correcting transactions dated within it"
+        )
+    return financial_year
+
+
 def _to_decimal(value) -> Decimal:
     if value is None:
         return Decimal("0")
@@ -72,7 +90,7 @@ def post_document_to_ledger(
         raise LedgerPostingError(
             "Document has no financial year assigned; assign one before approving so it can be posted"
         )
-    financial_year = db.get(FinancialYear, document.financial_year_id)
+    financial_year = _ensure_financial_year_open(db, document.financial_year_id)
     company: Company = document.company
     fields = document.fields
 
@@ -201,6 +219,7 @@ def create_manual_entry(
     created_by_user_id: int,
     counterparty_iban: str | None = None,
 ) -> AccountingTransaction:
+    _ensure_financial_year_open(db, financial_year_id)
     transaction = AccountingTransaction(
         tenant_id=tenant_id,
         company_id=company.id,

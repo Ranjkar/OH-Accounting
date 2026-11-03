@@ -187,3 +187,30 @@ def test_bank_statement_and_other_are_not_postable():
     assert ledger_service.is_postable(DocumentType.bank_statement) is False
     assert ledger_service.is_postable(DocumentType.other) is False
     assert ledger_service.is_postable(DocumentType.purchase_invoice) is True
+
+
+def test_posting_to_a_locked_financial_year_is_blocked(db_session):
+    tenant, company, fy, user = _setup(db_session)
+    fy.is_locked = True
+    db_session.commit()
+    document = _make_document(
+        db_session, tenant, company, fy, user, DocumentType.purchase_invoice,
+        {"invoice_number": "INV-5", "invoice_date": date(2026, 2, 1), "net_amount": 10.0, "vat_rate": 21.0, "vat_amount": 2.1, "gross_amount": 12.1},
+    )
+    with pytest.raises(ledger_service.LedgerPostingError):
+        ledger_service.post_document_to_ledger(db_session, document, user.id)
+
+
+def test_manual_entry_in_a_locked_financial_year_is_blocked(db_session):
+    tenant, company, fy, user = _setup(db_session)
+    fy.is_locked = True
+    db_session.commit()
+    with pytest.raises(ledger_service.LedgerPostingError):
+        ledger_service.create_manual_entry(
+            db_session, tenant_id=tenant.id, company=company, financial_year_id=fy.id,
+            ledger_side=LedgerSide.sales, invoice_date=date(2026, 2, 1), due_date=None,
+            currency="EUR", fx_rate_to_eur=None, counterparty_name=None, counterparty_vat_number=None,
+            accounting_classification=None,
+            line_items=[{"net_amount": "100.00", "vat_rate": "21", "vat_amount": "21.00", "vat_treatment": VatTreatment.domestic_standard}],
+            created_by_user_id=user.id,
+        )

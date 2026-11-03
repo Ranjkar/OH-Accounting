@@ -1,7 +1,9 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, require_company_access, require_editor
+from app.core.deps import get_current_user, require_admin, require_company_access, require_editor
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
 from app.models.company import Company
@@ -165,3 +167,56 @@ def list_financial_years(
         .order_by(FinancialYear.year)
         .all()
     )
+
+
+def _get_financial_year_or_404(db: Session, user: User, company_id: int, financial_year_id: int) -> FinancialYear:
+    require_company_access(company_id, user, db)
+    financial_year = db.get(FinancialYear, financial_year_id)
+    if financial_year is None or financial_year.company_id != company_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Financial year not found")
+    return financial_year
+
+
+@router.post("/{company_id}/financial-years/{financial_year_id}/lock", response_model=FinancialYearOut)
+def lock_financial_year(
+    company_id: int, financial_year_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)
+):
+    """Locking blocks any new or corrected ledger transaction dated within
+    this financial year (see ledger_service._ensure_financial_year_open) --
+    it never touches transactions already posted."""
+    financial_year = _get_financial_year_or_404(db, user, company_id, financial_year_id)
+    if financial_year.is_locked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Financial year is already locked")
+    financial_year.is_locked = True
+    financial_year.locked_at = datetime.now(timezone.utc)
+    financial_year.locked_by_user_id = user.id
+    db.add(AuditLog(
+        tenant_id=user.tenant_id, user_id=user.id, action="lock", entity_type="financial_year",
+        entity_id=financial_year.id, after={"year": financial_year.year, "is_locked": True},
+    ))
+    db.commit()
+    db.refresh(financial_year)
+    return financial_year
+
+
+@router.post("/{company_id}/financial-years/{financial_year_id}/unlock", response_model=FinancialYearOut)
+def unlock_financial_year(
+    company_id: int, financial_year_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)
+):
+    """Unlocking is deliberate and audit-logged -- never automatic. It does
+    not retroactively validate or re-check anything already posted; it only
+    re-opens the period to new postings and corrections."""
+    financial_year = _get_financial_year_or_404(db, user, company_id, financial_year_id)
+    if not financial_year.is_locked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Financial year is not locked")
+    financial_year.is_locked = False
+    db.add(AuditLog(
+        tenant_id=user.tenant_id, user_id=user.id, action="unlock", entity_type="financial_year",
+        entity_id=financial_year.id, before={"locked_by_user_id": financial_year.locked_by_user_id, "locked_at": str(financial_year.locked_at)},
+        after={"year": financial_year.year, "is_locked": False},
+    ))
+    financial_year.locked_at = None
+    financial_year.locked_by_user_id = None
+    db.commit()
+    db.refresh(financial_year)
+    return financial_year

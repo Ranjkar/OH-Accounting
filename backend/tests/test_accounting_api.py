@@ -299,3 +299,76 @@ def test_vat_return_approve_requires_ready_for_approval_state(client, db_session
 
     response = client.post(f"/api/v1/vat-returns/{vat_return['id']}/approve", headers=headers)
     assert response.status_code == 409
+
+
+def test_locking_financial_year_blocks_new_transactions_and_corrections(client, db_session):
+    _create_user(db_session)
+    headers = _login(client, "admin@acme.nl")
+    company_id, fy = _setup_company_with_fy(client, headers)
+
+    existing = client.post(
+        "/api/v1/transactions",
+        json={
+            "company_id": company_id, "financial_year_id": fy["id"], "ledger_side": "SALES", "invoice_date": "2026-02-01",
+            "line_items": [{"net_amount": "100.00", "vat_rate": "21", "vat_amount": "21.00", "vat_treatment": "DOMESTIC_STANDARD"}],
+        },
+        headers=headers,
+    ).json()
+
+    lock = client.post(f"/api/v1/companies/{company_id}/financial-years/{fy['id']}/lock", headers=headers)
+    assert lock.status_code == 200, lock.text
+    assert lock.json()["is_locked"] is True
+
+    double_lock = client.post(f"/api/v1/companies/{company_id}/financial-years/{fy['id']}/lock", headers=headers)
+    assert double_lock.status_code == 409
+
+    blocked_entry = client.post(
+        "/api/v1/transactions",
+        json={
+            "company_id": company_id, "financial_year_id": fy["id"], "ledger_side": "SALES", "invoice_date": "2026-03-01",
+            "line_items": [{"net_amount": "50.00", "vat_rate": "21", "vat_amount": "10.50", "vat_treatment": "DOMESTIC_STANDARD"}],
+        },
+        headers=headers,
+    )
+    assert blocked_entry.status_code == 409
+
+    blocked_correction = client.post(
+        f"/api/v1/transactions/{existing['id']}/corrections",
+        json={
+            "financial_year_id": fy["id"],
+            "line_items": [{"net_amount": "10.00", "vat_rate": "21", "vat_amount": "2.10", "vat_treatment": "DOMESTIC_STANDARD"}],
+        },
+        headers=headers,
+    )
+    assert blocked_correction.status_code == 409
+
+    unlock = client.post(f"/api/v1/companies/{company_id}/financial-years/{fy['id']}/unlock", headers=headers)
+    assert unlock.status_code == 200
+    assert unlock.json()["is_locked"] is False
+
+    now_allowed = client.post(
+        "/api/v1/transactions",
+        json={
+            "company_id": company_id, "financial_year_id": fy["id"], "ledger_side": "SALES", "invoice_date": "2026-03-01",
+            "line_items": [{"net_amount": "50.00", "vat_rate": "21", "vat_amount": "10.50", "vat_treatment": "DOMESTIC_STANDARD"}],
+        },
+        headers=headers,
+    )
+    assert now_allowed.status_code == 201
+
+
+def test_viewer_cannot_lock_financial_year(client, db_session):
+    admin = _create_user(db_session)
+    headers_admin = _login(client, "admin@acme.nl")
+    company_id, fy = _setup_company_with_fy(client, headers_admin)
+
+    viewer = User(tenant_id=admin.tenant_id, email="viewer@acme.nl", hashed_password=hash_password("secret123"), full_name="Viewer", role=UserRole.viewer)
+    db_session.add(viewer)
+    db_session.commit()
+    from app.models.user import user_companies
+    db_session.execute(user_companies.insert().values(user_id=viewer.id, company_id=company_id))
+    db_session.commit()
+    headers_viewer = _login(client, "viewer@acme.nl")
+
+    response = client.post(f"/api/v1/companies/{company_id}/financial-years/{fy['id']}/lock", headers=headers_viewer)
+    assert response.status_code == 403
