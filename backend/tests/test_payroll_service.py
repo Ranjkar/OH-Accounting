@@ -142,3 +142,36 @@ def test_add_payslip_tracks_cumulative_wage_across_periods_for_premium_cap(db_se
     # subject to premiums -- period 2's premiums must be much smaller than period 1's.
     assert premiums1 > premiums2
     assert premiums2 < premiums1 / 5
+
+
+def test_build_annual_statement_sums_non_voided_payslips_for_the_tax_year(db_session):
+    tenant, company, user, employee = _setup(db_session)
+    run1 = payroll_service.create_payroll_run(
+        db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+        period_year=2025, period_number=1, created_by_user_id=user.id, tax_year=2025,
+    )
+    payslip1 = payroll_service.add_payslip(db_session, run1, employee)
+    db_session.commit()
+    run2 = payroll_service.create_payroll_run(
+        db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+        period_year=2025, period_number=2, created_by_user_id=user.id, tax_year=2025,
+    )
+    payslip2 = payroll_service.add_payslip(db_session, run2, employee)
+    db_session.commit()
+    # Correct payslip2 -- the voided original must not be double-counted alongside its correction.
+    correction = payroll_service.correct_payslip(db_session, payslip2, reason="correction", bonus_amount=Decimal("100"))
+    db_session.commit()
+
+    statement = payroll_service.build_annual_statement(db_session, employee, 2025)
+
+    assert statement["number_of_payslips"] == 2  # payslip1 + correction, not the voided payslip2
+    assert statement["gross_salary"] == payslip1.gross_salary + correction.gross_salary
+    assert statement["net_salary"] == payslip1.net_salary + correction.net_salary
+    assert statement["requires_accountant_confirmation"] is True
+
+
+def test_build_annual_statement_empty_year_returns_zero_totals(db_session):
+    tenant, company, user, employee = _setup(db_session)
+    statement = payroll_service.build_annual_statement(db_session, employee, 2030)
+    assert statement["number_of_payslips"] == 0
+    assert statement["gross_salary"] == Decimal("0.00")

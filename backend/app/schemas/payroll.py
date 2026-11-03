@@ -58,6 +58,24 @@ class PayslipOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AnnualStatementOut(BaseModel):
+    employee_id: int
+    tax_year: int
+    number_of_payslips: int
+    gross_salary: Decimal
+    taxable_wage: Decimal
+    wage_tax_and_national_insurance: Decimal
+    general_tax_credit_applied: Decimal
+    labor_tax_credit_applied: Decimal
+    pension_deduction: Decimal
+    other_deductions: Decimal
+    net_salary: Decimal
+    employer_levy_zvw: Decimal
+    employer_costs_total: Decimal
+    requires_accountant_confirmation: bool
+    note: str
+
+
 class PayslipCorrectRequest(BaseModel):
     reason: str
     paid_hours: Decimal | None = None

@@ -9,8 +9,9 @@ from app.models.company import Company
 from app.models.employee import Employee
 from app.models.payroll import PayrollRun, Payslip
 from app.models.user import User
+from app.reporting.annual_statement_report import render_annual_statement_pdf
 from app.reporting.payslip_report import render_payslip_pdf
-from app.schemas.payroll import PayrollRunCreate, PayrollRunOut, PayslipCorrectRequest, PayslipCreate, PayslipOut
+from app.schemas.payroll import AnnualStatementOut, PayrollRunCreate, PayrollRunOut, PayslipCorrectRequest, PayslipCreate, PayslipOut
 
 router = APIRouter(tags=["payroll"])
 
@@ -37,6 +38,14 @@ def _get_payslip_or_404(db: Session, user: User, payslip_id: int) -> Payslip:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payslip not found")
     require_company_access(payslip.company_id, user, db)
     return payslip
+
+
+def _get_employee_or_404(db: Session, user: User, employee_id: int) -> Employee:
+    employee = db.get(Employee, employee_id)
+    if employee is None or employee.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+    require_company_access(employee.company_id, user, db)
+    return employee
 
 
 @router.post("/payroll-runs", response_model=PayrollRunOut, status_code=status.HTTP_201_CREATED)
@@ -128,6 +137,24 @@ def correct_payslip(payslip_id: int, payload: PayslipCorrectRequest, db: Session
     db.commit()
     db.refresh(correction)
     return correction
+
+
+@router.get("/employees/{employee_id}/annual-statement", response_model=AnnualStatementOut)
+def get_annual_statement(employee_id: int, tax_year: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    employee = _get_employee_or_404(db, user, employee_id)
+    return payroll_service.build_annual_statement(db, employee, tax_year)
+
+
+@router.get("/employees/{employee_id}/annual-statement/pdf")
+def get_annual_statement_pdf(employee_id: int, tax_year: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    employee = _get_employee_or_404(db, user, employee_id)
+    company = db.get(Company, employee.company_id)
+    statement = payroll_service.build_annual_statement(db, employee, tax_year)
+    content = render_annual_statement_pdf(company, employee, statement)
+    return Response(
+        content=content, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="annual-statement-{employee_id}-{tax_year}.pdf"'},
+    )
 
 
 @router.get("/payslips/{payslip_id}/pdf")

@@ -120,3 +120,28 @@ def test_viewer_cannot_create_payroll_run(client, db_session):
         headers=headers_viewer,
     )
     assert response.status_code == 403
+
+
+def test_annual_statement_api_json_and_pdf(client, db_session):
+    _create_user(db_session)
+    headers = _login(client, "admin@acme.nl")
+    company_id = _setup_company(client, headers)
+    employee_id = _create_employee(client, headers, company_id)
+
+    run_id = client.post(
+        "/api/v1/payroll-runs", json={"company_id": company_id, "period_type": "MONTHLY", "period_year": 2025, "period_number": 1, "tax_year": 2025},
+        headers=headers,
+    ).json()["id"]
+    client.post(f"/api/v1/payroll-runs/{run_id}/payslips", json={"employee_id": employee_id}, headers=headers)
+
+    statement = client.get(f"/api/v1/employees/{employee_id}/annual-statement?tax_year=2025", headers=headers)
+    assert statement.status_code == 200, statement.text
+    body = statement.json()
+    assert body["number_of_payslips"] == 1
+    assert body["gross_salary"] == "4000.00"
+    assert body["requires_accountant_confirmation"] is True
+
+    pdf = client.get(f"/api/v1/employees/{employee_id}/annual-statement/pdf?tax_year=2025", headers=headers)
+    assert pdf.status_code == 200, pdf.text
+    assert pdf.headers["content-type"] == "application/pdf"
+    assert pdf.content[:4] == b"%PDF"

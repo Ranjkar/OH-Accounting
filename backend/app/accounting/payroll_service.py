@@ -98,6 +98,45 @@ def mark_paid(db: Session, run: PayrollRun) -> None:
     db.flush()
 
 
+def build_annual_statement(db: Session, employee: Employee, tax_year: int) -> dict:
+    """Jaaropgaaf: sums every non-voided payslip issued to this employee under
+    payroll runs for the given tax_year. This is a deterministic aggregation of
+    figures already calculated and stored on each Payslip -- it never
+    recomputes or re-derives tax, it only totals what was actually withheld."""
+    payslips = (
+        db.query(Payslip)
+        .join(PayrollRun, Payslip.payroll_run_id == PayrollRun.id)
+        .filter(
+            Payslip.employee_id == employee.id,
+            Payslip.voided.is_(False),
+            PayrollRun.tax_year == tax_year,
+        )
+        .order_by(PayrollRun.period_number)
+        .all()
+    )
+
+    zero = Decimal("0.00")
+    totals = {
+        "gross_salary": zero, "taxable_wage": zero, "wage_tax_and_national_insurance": zero,
+        "general_tax_credit_applied": zero, "labor_tax_credit_applied": zero, "pension_deduction": zero,
+        "other_deductions": zero, "net_salary": zero, "employer_levy_zvw": zero, "employer_costs_total": zero,
+    }
+    for payslip in payslips:
+        for field in totals:
+            totals[field] += getattr(payslip, field)
+
+    return {
+        "employee_id": employee.id, "tax_year": tax_year, "number_of_payslips": len(payslips),
+        **totals,
+        "requires_accountant_confirmation": True,
+        "note": (
+            "This annual statement is a sum of figures already calculated and stored on this "
+            "employee's payslips for the tax year -- it does not independently verify completeness "
+            "(e.g. that a payslip exists for every period the employee was employed this year)."
+        ),
+    }
+
+
 def correct_payslip(db: Session, original: Payslip, *, reason: str, **override_kwargs) -> Payslip:
     """Void the original (keeping it as a permanent audit record) and
     create a new Payslip for the same employee/run with corrected inputs."""
