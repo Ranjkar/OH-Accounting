@@ -13,21 +13,22 @@ import GlassStatCard from "@/components/glass/GlassStatCard";
 import GlassTable from "@/components/glass/GlassTable";
 import GlassLoadingState, { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
+import { useCompany } from "@/lib/company-context";
 import {
   api,
   AnomalyFlag,
   AssistantResponse,
   AutomationCentreSummary,
   CashFlowForecast,
-  Company,
   JsonReport,
   TaxCalendarEntry,
 } from "@/lib/api";
 
 function AiIntelligenceContent() {
   const { token } = useAuth();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [companyId, setCompanyId] = useState<number | "">("");
+  const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const companyId = selectedCompanyId ?? "";
+  const setCompanyId = (id: number | "") => setSelectedCompanyId(id === "" ? null : id);
   const [insights, setInsights] = useState<AssistantResponse | null>(null);
   const [anomalies, setAnomalies] = useState<AnomalyFlag[]>([]);
   const [automation, setAutomation] = useState<AutomationCentreSummary | null>(null);
@@ -36,10 +37,6 @@ function AiIntelligenceContent() {
   const [taxCalendar, setTaxCalendar] = useState<TaxCalendarEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (token) api.listCompanies(token).then(setCompanies).catch((e) => setError(e.message));
-  }, [token]);
 
   useEffect(() => {
     if (!token || !companyId) return;

@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import GlassSidebar, { useMobileNav } from "@/components/glass/GlassSidebar";
 import GlassNavSearch from "@/components/glass/GlassNavSearch";
+import CompanySwitcher from "@/components/glass/CompanySwitcher";
 import { IconMenu, IconPlus, IconBell } from "@/components/glass/icons";
 
 export default function Shell({ children }: { children: ReactNode }) {
@@ -30,6 +31,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                 Welcome back{user ? `, ${user.full_name.split(" ")[0]}` : ""}
               </span>
             </div>
+            <CompanySwitcher />
           </div>
 
           <div className="hidden md:flex items-center flex-1 max-w-sm">
