@@ -153,6 +153,7 @@ function CashFlowContent() {
               <h2 className="font-medium text-navy">Monthly projection</h2>
               <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">Estimate, not a confirmed balance</span>
             </div>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm mt-2">
               <thead>
                 <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -173,6 +174,7 @@ function CashFlowContent() {
                 ))}
               </tbody>
             </table>
+            </div>
             <p className="text-xs text-text-secondary p-4 pt-2">{forecast.monthly_projection_disclaimer}</p>
           </div>
         </>

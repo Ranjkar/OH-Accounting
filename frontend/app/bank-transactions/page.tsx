@@ -93,6 +93,7 @@ function BankTransactionsContent() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="col-span-2 card-v2 overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -122,6 +123,7 @@ function BankTransactionsContent() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="card-v2 p-4">

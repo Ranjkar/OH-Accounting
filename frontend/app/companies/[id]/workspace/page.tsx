@@ -98,6 +98,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                 <p className="font-medium text-navy text-sm">{p.label}</p>
                 <span className="text-xs text-text-secondary">Filing deadline {p.filing_deadline}</span>
               </div>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <tbody>
                   {p.rows.map((row) => (
@@ -113,6 +114,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           ))}
         </div>
@@ -178,6 +180,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
         {workspace.vat_returns.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">No VAT returns computed yet.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <tbody>
               {workspace.vat_returns.map((vr) => (
@@ -193,6 +196,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

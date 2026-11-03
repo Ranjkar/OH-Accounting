@@ -121,6 +121,7 @@ function ScenariosContent() {
       )}
 
       <div className="card-v2 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -154,6 +155,7 @@ function ScenariosContent() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -170,6 +172,7 @@ function ScenariosContent() {
       {comparison && (
         <div className="card-v2 p-4">
           <h2 className="font-medium text-navy mb-2">Comparison</h2>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -188,6 +191,7 @@ function ScenariosContent() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

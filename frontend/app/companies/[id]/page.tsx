@@ -259,6 +259,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
             <div className="px-5 py-4 border-b border-border-subtle">
               <h2 className="font-medium text-navy">Financial year {fy.year}</h2>
             </div>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -285,6 +286,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         ))}
       </div>

@@ -119,6 +119,7 @@ function ReportsContent() {
               <div className="px-5 py-3 border-b border-border-subtle">
                 <h2 className="text-sm font-medium text-navy">Period comparison — financial year {comparison.financial_year}</h2>
               </div>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -141,6 +142,7 @@ function ReportsContent() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 

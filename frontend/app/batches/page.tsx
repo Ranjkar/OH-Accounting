@@ -69,6 +69,7 @@ function BatchesContent() {
         {batches.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">No batches yet.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -101,6 +102,7 @@ function BatchesContent() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

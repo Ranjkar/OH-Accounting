@@ -111,6 +111,7 @@ function LoonheffingenContent() {
             {runs.length === 0 ? (
               <GlassEmptyState title="No payroll runs yet" description="Create one from Payroll Runs & Payslips first." icon={<IconTax size={28} />} />
             ) : (
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-text-secondary border-b border-white/40">
@@ -136,6 +137,7 @@ function LoonheffingenContent() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </GlassPanel>
 

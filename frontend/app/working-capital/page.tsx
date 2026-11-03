@@ -93,6 +93,7 @@ function WorkingCapitalContent() {
 
           <div className="card-v2 p-4">
             <h2 className="font-medium text-navy mb-2">Working capital trend (6 months)</h2>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -113,6 +114,7 @@ function WorkingCapitalContent() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

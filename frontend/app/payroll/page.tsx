@@ -133,6 +133,7 @@ function PayrollContent() {
 
       <div className="grid grid-cols-2 gap-6">
         <div className="card-v2 overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -163,6 +164,7 @@ function PayrollContent() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="card-v2 p-4">

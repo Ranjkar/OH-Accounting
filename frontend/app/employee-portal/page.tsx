@@ -75,6 +75,7 @@ function PayslipsTab() {
 
   return (
     <GlassPanel title="My Payslips">
+      <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-text-secondary border-b border-white/40">
@@ -101,6 +102,7 @@ function PayslipsTab() {
           ))}
         </tbody>
       </table>
+      </div>
     </GlassPanel>
   );
 }

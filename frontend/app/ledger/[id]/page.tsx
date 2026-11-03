@@ -102,6 +102,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-navy">Line items</h2>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -130,6 +131,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="card-v2">
@@ -137,6 +139,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           <h2 className="text-sm font-medium text-navy">Payments</h2>
         </div>
         {transaction.payments.length > 0 && (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <tbody>
               {transaction.payments.map((p) => (
@@ -148,6 +151,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
               ))}
             </tbody>
           </table>
+          </div>
         )}
         {canEdit && (
           <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-slate-100">

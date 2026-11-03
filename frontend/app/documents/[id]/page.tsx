@@ -263,6 +263,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
           {doc.line_items.length > 0 && (
             <div className="card-v2 p-4">
               <h2 className="text-sm font-medium text-navy mb-2">Line items</h2>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -285,6 +286,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 

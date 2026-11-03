@@ -319,6 +319,7 @@ function LedgerContent() {
         {transactions.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">No transactions yet.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -355,6 +356,7 @@ function LedgerContent() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

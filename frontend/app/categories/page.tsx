@@ -125,6 +125,7 @@ function CategoriesContent() {
                 Add rule
               </button>
             </form>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 {rules.map((r) => (
@@ -141,10 +142,12 @@ function CategoriesContent() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
           <div className="card-v2 overflow-hidden">
             <h2 className="font-medium text-navy p-4 pb-0">Purchase transactions</h2>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -208,6 +211,7 @@ function CategoriesContent() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

@@ -107,6 +107,7 @@ function ForecastsContent() {
           <div className="card-v2 p-4">
             <h2 className="font-medium text-navy mb-2">Cash flow forecast (Phase 6 engine, reused)</h2>
             <p className="text-xs text-amber-600">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm mt-2">
               <thead>
                 <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -127,6 +128,7 @@ function ForecastsContent() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

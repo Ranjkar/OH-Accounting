@@ -118,6 +118,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
             ))}
           </div>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -156,6 +157,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="card-v2 p-5 space-y-3">

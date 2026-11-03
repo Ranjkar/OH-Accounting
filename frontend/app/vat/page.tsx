@@ -94,6 +94,7 @@ function VatContent() {
           title={`Financial year ${fy.year}`}
           actions={<LockControl companyId={Number(companyId)} fy={fy} onChange={(updated) => setFinancialYears((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))} />}
         >
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-white/40">
@@ -129,6 +130,7 @@ function VatContent() {
               })}
             </tbody>
           </table>
+          </div>
         </GlassPanel>
       ))}
     </div>

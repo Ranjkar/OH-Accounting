@@ -152,6 +152,7 @@ function BalanceSheetContent() {
               Add
             </button>
           </form>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <tbody>
               {items.map((item) => (
@@ -169,6 +170,7 @@ function BalanceSheetContent() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

@@ -92,6 +92,7 @@ function PnlContent() {
 
       {report && (
         <div className="card-v2 overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border-subtle">
@@ -121,6 +122,7 @@ function PnlContent() {
               })}
             </tbody>
           </table>
+          </div>
           <p className="text-xs text-text-secondary p-4 pt-2">{report.current.tax_expense_note}</p>
         </div>
       )}
