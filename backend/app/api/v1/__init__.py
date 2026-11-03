@@ -14,6 +14,7 @@ from app.api.v1 import (
     financial_reports,
     forecasts,
     legal_forms,
+    loonheffingen,
     payroll,
     reports,
     tax_calendar,
@@ -43,4 +44,5 @@ router.include_router(forecasts.router)
 router.include_router(legal_forms.router)
 router.include_router(employees.router)
 router.include_router(payroll.router)
+router.include_router(loonheffingen.router)
 router.include_router(tax_centre.router)

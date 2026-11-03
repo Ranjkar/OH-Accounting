@@ -326,3 +326,14 @@ class TaxCentreItemStatus(str, enum.Enum):
     filed = "FILED"
     paid = "PAID"
     overdue = "OVERDUE"
+
+
+class LoonheffingenDeclarationStatus(str, enum.Enum):
+    draft = "DRAFT"
+    validation = "VALIDATION"
+    accountant_review = "ACCOUNTANT_REVIEW"
+    approved = "APPROVED"
+    ready_for_submission = "READY_FOR_SUBMISSION"
+    submitted = "SUBMITTED"
+    accepted = "ACCEPTED"
+    rejected = "REJECTED"

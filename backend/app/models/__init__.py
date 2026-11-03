@@ -19,6 +19,7 @@ from app.models.document import (
 from app.models.employee import Employee
 from app.models.financial_year import FinancialYear, VatPeriod
 from app.models.legal_form import CompanyLegalForm, LegalFormDefinition, Partner, Shareholder
+from app.models.loonheffingen import LoonheffingenDeclaration
 from app.models.note import AccountantNote
 from app.models.payroll import PayrollRun, Payslip
 from app.models.recurring import RecurringPattern
@@ -52,6 +53,7 @@ __all__ = [
     "ExtractedInvoiceFields",
     "FinancialYear",
     "LegalFormDefinition",
+    "LoonheffingenDeclaration",
     "ManualBalanceSheetItem",
     "Partner",
     "Payment",
