@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     # Symmetric encryption key (Fernet) for BSN-at-rest. Never used for
     # anything else, never logged, never sent to the AI assistant.
     bsn_encryption_key: str = INSECURE_DEFAULT_BSN_ENCRYPTION_KEY
+    # Comma-separated OLDER keys, newest-last-used-first: still accepted for
+    # decryption during a rotation (see app.core.crypto, MultiFernet), never
+    # used to encrypt new values. Empty until a rotation is in progress.
+    # See docs/encryption-key-rotation.md for the full procedure.
+    bsn_encryption_key_previous: str = ""
 
     class Config:
         env_file = ".env"
