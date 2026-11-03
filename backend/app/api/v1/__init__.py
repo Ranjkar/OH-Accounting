@@ -10,6 +10,7 @@ from app.api.v1 import (
     companies,
     dashboard,
     documents,
+    employee_self_service,
     employees,
     financial_reports,
     forecasts,
@@ -43,6 +44,7 @@ router.include_router(budgets.router)
 router.include_router(forecasts.router)
 router.include_router(legal_forms.router)
 router.include_router(employees.router)
+router.include_router(employee_self_service.router)
 router.include_router(payroll.router)
 router.include_router(loonheffingen.router)
 router.include_router(tax_centre.router)

@@ -50,6 +50,17 @@ class EmployeeOut(BaseModel):
     created_at: datetime
 
 
+class EmployeeInviteRequest(BaseModel):
+    email: str
+    password: str
+
+
+class EmployeeInviteOut(BaseModel):
+    employee_id: int
+    linked_user_id: int
+    email: str
+
+
 class TimesheetEntryCreate(BaseModel):
     employee_id: int
     entry_date: date

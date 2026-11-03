@@ -4,14 +4,18 @@ from sqlalchemy.orm import Session
 from app.accounting import hours_service
 from app.api.v1._json_safe import to_json_safe
 from app.core.crypto import decrypt_bsn, encrypt_bsn, mask_bsn
-from app.core.deps import get_current_user, require_company_access, require_editor
+from app.core.deps import get_current_user, require_admin, require_company_access, require_editor
+from app.core.security import hash_password
 from app.db.session import get_db
 from app.models.company import Company
 from app.models.employee import Employee
+from app.models.enums import UserRole
 from app.models.timesheet import EmployeeTimesheetEntry, EntrepreneurHoursEntry
 from app.models.user import User
 from app.schemas.employee import (
     EmployeeCreate,
+    EmployeeInviteOut,
+    EmployeeInviteRequest,
     EmployeeOut,
     EntrepreneurHoursEntryCreate,
     EntrepreneurHoursEntryOut,
@@ -91,6 +95,31 @@ def get_employee(employee_id: int, db: Session = Depends(get_db), user: User = D
     record, never exposed to a plain viewer or customer role."""
     employee = _get_employee_or_404(db, user, employee_id)
     return _employee_out(employee)
+
+
+@router.post("/employees/{employee_id}/invite-self-service", response_model=EmployeeInviteOut, status_code=status.HTTP_201_CREATED)
+def invite_employee_self_service(employee_id: int, payload: EmployeeInviteRequest, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    """Admin-only. Creates a new User with role=employee and links it to
+    this Employee via linked_user_id. This user is deliberately never added
+    to user_companies -- require_company_access rejects it from every
+    company-wide endpoint, and the only data it can reach is through the
+    self-service router, scoped to this one employee_id via
+    app.core.deps.get_current_employee."""
+    employee = _get_employee_or_404(db, user, employee_id)
+    if employee.linked_user_id is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This employee is already linked to a self-service account")
+    if db.query(User).filter(User.email == payload.email).first() is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A user with this email already exists")
+
+    new_user = User(
+        tenant_id=employee.tenant_id, email=payload.email, hashed_password=hash_password(payload.password),
+        full_name=employee.full_name, role=UserRole.employee,
+    )
+    db.add(new_user)
+    db.flush()
+    employee.linked_user_id = new_user.id
+    db.commit()
+    return EmployeeInviteOut(employee_id=employee.id, linked_user_id=new_user.id, email=new_user.email)
 
 
 # ---- Employee timesheets ----

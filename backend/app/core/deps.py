@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.db.session import get_db
+from app.models.employee import Employee
 from app.models.enums import UserRole
 from app.models.user import User
 
@@ -63,6 +64,19 @@ def require_editor_or_owner(user: User = Depends(get_current_user)) -> User:
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin, accountant, or business-owner role required"
         )
     return user
+
+
+def get_current_employee(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Resolves the Employee record this logged-in user is allowed to act
+    as themselves -- never any other employee's record. An 'employee'-role
+    user is deliberately never added to user_companies, so
+    require_company_access already rejects them from every company-wide
+    endpoint; this is the only way such a user reaches employee data, and
+    it is always scoped to their own linked_user_id."""
+    employee = db.query(Employee).filter(Employee.linked_user_id == user.id).first()
+    if employee is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account is not linked to an employee record")
+    return employee
 
 
 def require_company_access(company_id: int, user: User, db: Session) -> None:

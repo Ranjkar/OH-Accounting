@@ -6,6 +6,7 @@ class UserRole(str, enum.Enum):
     accountant = "accountant"
     viewer = "viewer"
     customer = "customer"
+    employee = "employee"
 
 
 class VatFrequency(str, enum.Enum):
