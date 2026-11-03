@@ -245,3 +245,84 @@ class ScenarioType(str, enum.Enum):
     optimistic = "OPTIMISTIC"
     conservative = "CONSERVATIVE"
     custom = "CUSTOM"
+
+
+class LegalFormCode(str, enum.Enum):
+    eenmanszaak = "EENMANSZAAK"
+    vof = "VOF"
+    maatschap = "MAATSCHAP"
+    cv = "CV"
+    bv = "BV"
+    nv = "NV"
+    cooperatie = "COOPERATIE"
+    owm = "OWM"
+    stichting = "STICHTING"
+    vereniging = "VERENIGING"
+    vve = "VVE"
+    rederij = "REDERIJ"
+    other = "OTHER"
+
+
+class LiabilityType(str, enum.Enum):
+    unlimited_personal = "UNLIMITED_PERSONAL"
+    limited = "LIMITED"
+    shared_unlimited = "SHARED_UNLIMITED"
+    mixed = "MIXED"
+
+
+class PartnerType(str, enum.Enum):
+    general = "GENERAL"
+    limited = "LIMITED"
+
+
+class EmploymentType(str, enum.Enum):
+    permanent = "PERMANENT"
+    fixed_term = "FIXED_TERM"
+    zero_hours = "ZERO_HOURS"
+    on_call = "ON_CALL"
+
+
+class SalaryBasis(str, enum.Enum):
+    monthly = "MONTHLY"
+    hourly = "HOURLY"
+
+
+class PayrollPeriodType(str, enum.Enum):
+    monthly = "MONTHLY"
+    four_weekly = "FOUR_WEEKLY"
+
+
+class PayrollRunStatus(str, enum.Enum):
+    draft = "DRAFT"
+    approved = "APPROVED"
+    paid = "PAID"
+    corrected = "CORRECTED"
+
+
+class TimesheetEntryType(str, enum.Enum):
+    worked = "WORKED"
+    holiday = "HOLIDAY"
+    sick = "SICK"
+    absence = "ABSENCE"
+
+
+class TimesheetStatus(str, enum.Enum):
+    draft = "DRAFT"
+    submitted = "SUBMITTED"
+    approved = "APPROVED"
+    rejected = "REJECTED"
+
+
+class TaxOpportunityRisk(str, enum.Enum):
+    low = "LOW"
+    medium = "MEDIUM"
+    high = "HIGH"
+
+
+class TaxCentreItemStatus(str, enum.Enum):
+    prepared = "PREPARED"
+    under_review = "UNDER_REVIEW"
+    approved = "APPROVED"
+    filed = "FILED"
+    paid = "PAID"
+    overdue = "OVERDUE"

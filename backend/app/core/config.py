@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 logger = logging.getLogger(__name__)
 
 INSECURE_DEFAULT_JWT_SECRET = "dev-secret-change-in-production"
+INSECURE_DEFAULT_BSN_ENCRYPTION_KEY = "lKDqZ0RFLmPlasPurAMcQxGNT6KlIu5X3cT41UC8ei4="
 
 
 class Settings(BaseSettings):
@@ -32,6 +33,10 @@ class Settings(BaseSettings):
     rate_limit_login_per_minute: int = 10
     rate_limit_upload_per_minute: int = 30
 
+    # Symmetric encryption key (Fernet) for BSN-at-rest. Never used for
+    # anything else, never logged, never sent to the AI assistant.
+    bsn_encryption_key: str = INSECURE_DEFAULT_BSN_ENCRYPTION_KEY
+
     class Config:
         env_file = ".env"
 
@@ -42,4 +47,11 @@ if settings.jwt_secret == INSECURE_DEFAULT_JWT_SECRET:
     logger.warning(
         "JWT_SECRET is still the insecure placeholder value. Set a strong, randomly generated "
         "JWT_SECRET in the environment before this is reachable from anywhere but localhost."
+    )
+
+if settings.bsn_encryption_key == INSECURE_DEFAULT_BSN_ENCRYPTION_KEY:
+    logger.warning(
+        "BSN_ENCRYPTION_KEY is still the insecure placeholder value. Set a strong, randomly "
+        "generated Fernet key (cryptography.fernet.Fernet.generate_key()) in the environment "
+        "before any real employee BSN is ever stored."
     )

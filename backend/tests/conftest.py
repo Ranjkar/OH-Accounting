@@ -12,8 +12,14 @@ from app.core import rate_limit
 from app.core.config import settings
 from app.db.session import Base, get_db
 from app.main import app
+from app.models.legal_form import LegalFormDefinition
+from app.models.legal_form_seed_data import LEGAL_FORM_SEED_ROWS
 from app.services import ai_assistant_provider, ai_provider, ocr_provider
 from tests.fakes import FakeAIProvider, FakeAssistantProvider, FakeOCRProvider
+
+# Reference/lookup tables that are seed data, not per-test user data -- never
+# wiped between tests, same rows the Phase 9 migration seeds in the real database.
+_REFERENCE_TABLES = {"legal_form_definitions"}
 
 
 @pytest.fixture(autouse=True)
@@ -29,6 +35,8 @@ TEST_DATABASE_URL = settings.database_url.rsplit("/", 1)[0] + "/onholland_accoun
 def engine():
     engine = create_engine(TEST_DATABASE_URL)
     Base.metadata.create_all(engine)
+    with engine.begin() as conn:
+        conn.execute(LegalFormDefinition.__table__.insert(), LEGAL_FORM_SEED_ROWS)
     yield engine
     Base.metadata.drop_all(engine)
     engine.dispose()
@@ -47,7 +55,8 @@ def test_session_local(engine):
 def db_session(engine, test_session_local):
     session = test_session_local()
     for table in reversed(Base.metadata.sorted_tables):
-        session.execute(table.delete())
+        if table.name not in _REFERENCE_TABLES:
+            session.execute(table.delete())
     session.commit()
     yield session
     session.close()

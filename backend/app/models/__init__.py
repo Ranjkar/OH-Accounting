@@ -16,11 +16,15 @@ from app.models.document import (
     ExtractedInvoiceFields,
     UploadBatch,
 )
+from app.models.employee import Employee
 from app.models.financial_year import FinancialYear, VatPeriod
+from app.models.legal_form import CompanyLegalForm, LegalFormDefinition, Partner, Shareholder
 from app.models.note import AccountantNote
+from app.models.payroll import PayrollRun, Payslip
 from app.models.recurring import RecurringPattern
 from app.models.scenario import Scenario
 from app.models.tenant import Tenant
+from app.models.timesheet import EmployeeTimesheetEntry, EntrepreneurHoursEntry
 from app.models.user import User, user_companies
 
 __all__ = [
@@ -35,19 +39,28 @@ __all__ = [
     "BankTransaction",
     "CategorizationRule",
     "Company",
+    "CompanyLegalForm",
     "Customer",
     "Document",
     "DocumentExtraction",
     "DocumentLineItem",
     "DocumentProcessingAttempt",
     "DocumentValidationResult",
+    "Employee",
+    "EmployeeTimesheetEntry",
+    "EntrepreneurHoursEntry",
     "ExtractedInvoiceFields",
     "FinancialYear",
+    "LegalFormDefinition",
     "ManualBalanceSheetItem",
+    "Partner",
     "Payment",
     "PaymentMatch",
+    "PayrollRun",
+    "Payslip",
     "RecurringPattern",
     "Scenario",
+    "Shareholder",
     "TransactionLineItem",
     "UploadBatch",
     "VatPeriod",
