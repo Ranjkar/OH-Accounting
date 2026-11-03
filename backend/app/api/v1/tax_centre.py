@@ -15,8 +15,17 @@ from app.models.company import Company
 from app.models.employee import Employee
 from app.models.enums import LegalFormCode, SalaryBasis, VatReturnStatus
 from app.models.legal_form import CompanyLegalForm, Partner
+from app.models.loonheffingen import LoonheffingenDeclaration
 from app.models.payroll import PayrollRun, Payslip
 from app.models.user import User
+
+# The exact status vocabulary the government-integration readiness view uses,
+# documented here once so every reader of /overview sees the full chain, not
+# just whichever status this company happens to be at.
+GOVERNMENT_INTEGRATION_STATUSES = [
+    "NOT_CONFIGURED", "CONFIGURATION_REQUIRED", "READY_FOR_VALIDATION",
+    "READY_FOR_SUBMISSION", "SUBMITTED", "ACCEPTED", "REJECTED", "ERROR",
+]
 
 router = APIRouter(prefix="/tax-centre", tags=["tax-centre"])
 
@@ -71,6 +80,26 @@ def tax_centre_overview(company_id: int, as_of_date: date | None = None, db: Ses
         for r in vat_returns
     ]
 
+    payroll_tax_declarations = (
+        db.query(LoonheffingenDeclaration)
+        .join(PayrollRun, LoonheffingenDeclaration.payroll_run_id == PayrollRun.id)
+        .filter(PayrollRun.company_id == company.id)
+        .order_by(PayrollRun.period_year.desc(), PayrollRun.period_number.desc())
+        .all()
+    )
+    payroll_tax_rows = [
+        {
+            "category": "LOONHEFFINGEN",
+            "declaration_id": d.id,
+            "payroll_run_id": d.payroll_run_id,
+            "status": d.status.value,
+            "total_payable": d.total_payable,
+            "submission_reference": d.submission_reference,
+            "government_response_reference": d.government_response_reference,
+        }
+        for d in payroll_tax_declarations
+    ]
+
     return to_json_safe(
         {
             "company_id": company.id,
@@ -83,8 +112,20 @@ def tax_centre_overview(company_id: int, as_of_date: date | None = None, db: Ses
             "oss": {"status": "NOT_TRACKED", "note": "OSS (One Stop Shop, for EU distance sales) is not yet a separate tracked declaration -- the underlying transactions are visible in the VAT overview (box 3c)."},
             "income_tax": {"status": "NOT_FILED", "note": "Use /tax-centre/income-tax-estimate for an estimate -- no filing integration exists."},
             "corporate_income_tax": {"status": "NOT_FILED", "note": "Use /tax-centre/corporate-tax-estimate for an estimate -- no filing integration exists."},
-            "payroll_tax": {"status": "NOT_FILED", "note": "See the Loonheffingen module -- no filing integration exists."},
-            "sbr_digipoort_integration_status": "NOT_CONNECTED -- architecture-only, see docs/sbr-digipoort-integration.md. No submission is ever claimed as filed without a real, authorised, verified connection.",
+            "payroll_tax": payroll_tax_rows if payroll_tax_rows else {"status": "NOT_FILED", "note": "No loonheffingen declaration has been created yet -- see POST /payroll-runs/{id}/loonheffingen-declaration."},
+            "sbr_digipoort_integration_status": "NOT_CONFIGURED -- architecture-only, see docs/sbr-digipoort-integration.md. No submission is ever claimed as filed without a real, authorised, verified connection.",
+            "government_integration": {
+                "status": "NOT_CONFIGURED",
+                "possible_statuses": GOVERNMENT_INTEGRATION_STATUSES,
+                "note": (
+                    "This system has no SBR/Digipoort connector, certificate, or credential configured anywhere -- "
+                    "'NOT_CONFIGURED' is the honest status for every company, not a placeholder that will silently "
+                    "change once declarations exist. Loonheffingen declarations above track their own accountant-"
+                    "review/submission workflow independently of this field; submitting one records only what a "
+                    "user explicitly told this system happened outside it (see loonheffingen_service.py), never an "
+                    "automatic transmission."
+                ),
+            },
         }
     )
 
