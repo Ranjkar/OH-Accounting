@@ -106,7 +106,7 @@ function PayrollContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -117,8 +117,8 @@ function PayrollContent() {
 
       {companyId && (
         <form onSubmit={createRun} className="card-v2 p-4 flex items-end gap-3">
-          <input type="number" value={periodYear} onChange={(e) => setPeriodYear(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm w-24" />
-          <select value={periodNumber} onChange={(e) => setPeriodNumber(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm">
+          <input aria-label="Period year" type="number" value={periodYear} onChange={(e) => setPeriodYear(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm w-24" />
+          <select aria-label="Period month" value={periodNumber} onChange={(e) => setPeriodNumber(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm">
             {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
               <option key={m} value={m}>
                 Month {m}
@@ -173,7 +173,7 @@ function PayrollContent() {
               </h3>
               {selectedRun.status === "DRAFT" && (
                 <div className="flex items-end gap-2">
-                  <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-2 py-1.5 text-xs">
+                  <select aria-label="Employee" value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-2 py-1.5 text-xs">
                     <option value="">Employee</option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
@@ -181,7 +181,7 @@ function PayrollContent() {
                       </option>
                     ))}
                   </select>
-                  <input value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder="Bonus" className="input-v2 px-2 py-1.5 text-xs w-20" />
+                  <input aria-label="Bonus" value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder="Bonus" className="input-v2 px-2 py-1.5 text-xs w-20" />
                   <label className="flex items-center gap-1 text-xs">
                     <input type="checkbox" checked={payHolidayAllowance} onChange={(e) => setPayHolidayAllowance(e.target.checked)} /> Holiday allowance
                   </label>

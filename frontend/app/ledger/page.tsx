@@ -135,8 +135,9 @@ function LedgerContent() {
         <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Company</label>
+              <label htmlFor="ledger-form-company" className="text-xs font-medium text-text-secondary">Company</label>
               <select
+                id="ledger-form-company"
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
@@ -150,8 +151,9 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Financial year</label>
+              <label htmlFor="ledger-form-fy" className="text-xs font-medium text-text-secondary">Financial year</label>
               <select
+                id="ledger-form-fy"
                 value={financialYearId}
                 onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
@@ -165,8 +167,9 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Ledger side</label>
+              <label htmlFor="ledger-form-side" className="text-xs font-medium text-text-secondary">Ledger side</label>
               <select
+                id="ledger-form-side"
                 value={ledgerSide}
                 onChange={(e) => setLedgerSide(e.target.value as LedgerSide)}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
@@ -176,8 +179,9 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Counterparty</label>
+              <label htmlFor="ledger-form-counterparty" className="text-xs font-medium text-text-secondary">Counterparty</label>
               <input
+                id="ledger-form-counterparty"
                 value={counterpartyName}
                 onChange={(e) => setCounterpartyName(e.target.value)}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
@@ -187,8 +191,9 @@ function LedgerContent() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Invoice date</label>
+              <label htmlFor="ledger-form-invoice-date" className="text-xs font-medium text-text-secondary">Invoice date</label>
               <input
+                id="ledger-form-invoice-date"
                 type="date"
                 required
                 value={invoiceDate}
@@ -197,8 +202,9 @@ function LedgerContent() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Due date</label>
+              <label htmlFor="ledger-form-due-date" className="text-xs font-medium text-text-secondary">Due date</label>
               <input
+                id="ledger-form-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
@@ -282,6 +288,7 @@ function LedgerContent() {
 
       <div className="flex items-center gap-4">
         <select
+          aria-label="Filter by company"
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"

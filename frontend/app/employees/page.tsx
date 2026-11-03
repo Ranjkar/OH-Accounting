@@ -63,7 +63,7 @@ function EmployeesContent() {
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -76,18 +76,18 @@ function EmployeesContent() {
         <form onSubmit={createEmployee} className="card-v2 p-4 space-y-3">
           <h2 className="font-medium text-text-primary">Add employee</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input required value={employeeNumber} onChange={(e) => setEmployeeNumber(e.target.value)} placeholder="Employee number" className="input-v2 px-3 py-2 text-sm" />
-            <input required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className="input-v2 px-3 py-2 text-sm" />
-            <input value={bsn} onChange={(e) => setBsn(e.target.value)} placeholder="BSN (optional)" className="input-v2 px-3 py-2 text-sm" />
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-            <select value={salaryBasis} onChange={(e) => setSalaryBasis(e.target.value as "MONTHLY" | "HOURLY")} className="input-v2 px-3 py-2 text-sm">
+            <input aria-label="Employee number" required value={employeeNumber} onChange={(e) => setEmployeeNumber(e.target.value)} placeholder="Employee number" className="input-v2 px-3 py-2 text-sm" />
+            <input aria-label="Full name" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className="input-v2 px-3 py-2 text-sm" />
+            <input aria-label="BSN (optional)" value={bsn} onChange={(e) => setBsn(e.target.value)} placeholder="BSN (optional)" className="input-v2 px-3 py-2 text-sm" />
+            <input aria-label="Employment start date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <select aria-label="Salary basis" value={salaryBasis} onChange={(e) => setSalaryBasis(e.target.value as "MONTHLY" | "HOURLY")} className="input-v2 px-3 py-2 text-sm">
               <option value="MONTHLY">Monthly salary</option>
               <option value="HOURLY">Hourly rate</option>
             </select>
             {salaryBasis === "MONTHLY" ? (
-              <input required value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder="Monthly salary (EUR)" className="input-v2 px-3 py-2 text-sm" />
+              <input aria-label="Monthly salary (EUR)" required value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder="Monthly salary (EUR)" className="input-v2 px-3 py-2 text-sm" />
             ) : (
-              <input required value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder="Hourly rate (EUR)" className="input-v2 px-3 py-2 text-sm" />
+              <input aria-label="Hourly rate (EUR)" required value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder="Hourly rate (EUR)" className="input-v2 px-3 py-2 text-sm" />
             )}
           </div>
           <label className="flex items-center gap-2 text-sm">

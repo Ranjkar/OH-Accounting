@@ -40,7 +40,7 @@ function ManagementReportsContent() {
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -55,12 +55,12 @@ function ManagementReportsContent() {
             <h2 className="font-medium text-navy">Profit &amp; Loss / monthly management pack, quarterly review, annual summary</h2>
             <p className="text-xs text-text-secondary">Choose a period width -- monthly for a management pack, quarterly for a review, annual for a summary.</p>
             <div className="flex items-center gap-3">
-              <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
+              <select aria-label="Period type" value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
                 <option value="MONTHLY">Monthly</option>
                 <option value="QUARTERLY">Quarterly</option>
                 <option value="ANNUAL">Annual</option>
               </select>
-              <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+              <input aria-label="Reference date" type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
               {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
                 <a key={fmt} href={api.pnlReportUrl(Number(companyId), periodType, referenceDate, fmt)} className="input-v2 px-3 py-1.5 text-sm">
                   P&amp;L {fmt.toUpperCase()}

@@ -63,7 +63,7 @@ function TaxCentreContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -78,7 +78,7 @@ function TaxCentreContent() {
 
           {!overview.current_legal_form && (
             <form onSubmit={setForm} className="card-v2 p-4 flex items-end gap-3">
-              <select value={legalForm} onChange={(e) => setLegalForm(e.target.value)} className="input-v2 px-3 py-2 text-sm">
+              <select aria-label="Legal form" value={legalForm} onChange={(e) => setLegalForm(e.target.value)} className="input-v2 px-3 py-2 text-sm">
                 {LEGAL_FORMS.map((f) => (
                   <option key={f} value={f}>
                     {f}
@@ -124,7 +124,7 @@ function TaxCentreContent() {
             <div className="card-v2 p-4 space-y-3">
               <h2 className="font-medium text-text-primary">Income tax estimate</h2>
               <div className="flex items-end gap-3">
-                <input value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder="Annual profit" className="input-v2 px-3 py-2 text-sm w-40" />
+                <input aria-label="Annual profit" value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder="Annual profit" className="input-v2 px-3 py-2 text-sm w-40" />
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={hoursCriterionMet} onChange={(e) => setHoursCriterionMet(e.target.checked)} /> 1,225-hour criterion met
                 </label>
