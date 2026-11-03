@@ -28,46 +28,52 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-navy">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl shadow-xl p-8 w-full max-w-sm space-y-5"
-      >
-        <div>
-          <h1 className="text-xl font-semibold text-navy">OnHolland Accounting</h1>
-          <p className="text-sm text-text-secondary mt-1">Sign in to your account</p>
+    <div className="flex-1 flex items-center justify-center p-4 min-h-screen app-shell-v2">
+      <form onSubmit={handleSubmit} className="glass-panel p-8 w-full max-w-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl hero-gradient-v2 flex items-center justify-center text-base font-bold text-white flex-shrink-0">O</div>
+          <div>
+            <h1 className="text-lg font-semibold text-text-primary">OnHolland Accounting</h1>
+            <p className="text-sm text-text-secondary">Sign in to your account</p>
+          </div>
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>
+          <div className="rounded-lg bg-red-500/10 border border-red-300/50 text-red-700 text-sm px-3 py-2" role="alert">
+            {error}
+          </div>
         )}
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Email</label>
+        <div className="space-y-1.5">
+          <label htmlFor="login-email" className="text-sm font-medium text-text-primary">
+            Email
+          </label>
           <input
+            id="login-email"
             type="email"
             required
+            autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full input-v2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+            className="w-full input-v2 px-3 py-2 text-sm"
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+        <div className="space-y-1.5">
+          <label htmlFor="login-password" className="text-sm font-medium text-text-primary">
+            Password
+          </label>
           <input
+            id="login-password"
             type="password"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full input-v2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+            className="w-full input-v2 px-3 py-2 text-sm"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="btn-primary-v2 w-full py-2 text-sm disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="btn-primary-v2 w-full py-2 text-sm disabled:opacity-50">
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
