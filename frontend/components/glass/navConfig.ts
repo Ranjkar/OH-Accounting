@@ -41,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Financial Overview", href: "/financial-overview" },
       { label: "AI Intelligence Dashboard", href: "/ai-intelligence" },
       { label: "AI Assistant", href: "/assistant" },
+      { label: "Review & Approval Centre", href: "/review-centre" },
     ],
   },
   {
