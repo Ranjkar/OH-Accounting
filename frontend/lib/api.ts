@@ -449,8 +449,8 @@ export interface AssistantResponse {
 
 // ---- Phase 6: banking, reconciliation, automation ----
 
-export type BankSourceFormat = "CAMT053" | "CAMT054" | "MT940" | "CSV";
-export type BankConsentStatus = "NOT_CONNECTED" | "FILE_IMPORT_ONLY" | "CONNECTED";
+export type BankSourceFormat = "CAMT053" | "CAMT054" | "MT940" | "CSV" | "OPEN_BANKING";
+export type BankConsentStatus = "NOT_CONNECTED" | "PENDING" | "CONNECTED" | "EXPIRED" | "ERROR" | "REVOKED";
 export type ReconciliationStatus =
   | "IMPORTED"
   | "UNMATCHED"
@@ -473,7 +473,22 @@ export interface BankAccount {
   account_name: string;
   currency: string;
   consent_status: BankConsentStatus;
+  provider_name: string | null;
+  consent_granted_at: string | null;
+  consent_expires_at: string | null;
+  last_synced_at: string | null;
+  last_sync_error: string | null;
   created_at: string;
+}
+
+export interface KvkLookupResult {
+  kvk_number: string;
+  name: string;
+  legal_form: string | null;
+  trade_names: string[];
+  address: string | null;
+  sbi_activity: string | null;
+  is_test_data: boolean;
 }
 
 export interface BankImportBatch {
@@ -994,6 +1009,28 @@ export const api = {
   },
   listImportBatches: (token: string, bankAccountId: number) =>
     request<BankImportBatch[]>(`/bank-accounts/${bankAccountId}/import-batches`, { token }),
+
+  // ---- Phase 12: Open Banking (sandbox stub provider only, see docs/open-banking.md) ----
+  connectOpenBanking: (token: string, bankAccountId: number, redirectUri: string) =>
+    request<{ authorization_url: string; provider: string }>(`/bank-accounts/${bankAccountId}/open-banking/connect`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ redirect_uri: redirectUri }),
+    }),
+  completeOpenBanking: (token: string, bankAccountId: number, callbackParams: Record<string, unknown> = {}) =>
+    request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/callback`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ callback_params: callbackParams }),
+    }),
+  syncOpenBanking: (token: string, bankAccountId: number) =>
+    request<BankImportBatch>(`/bank-accounts/${bankAccountId}/open-banking/sync`, { method: "POST", token }),
+  disconnectOpenBanking: (token: string, bankAccountId: number) =>
+    request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/disconnect`, { method: "POST", token }),
+
+  // ---- Phase 12: KVK lookup (real sandbox, see docs/government-integrations.md) ----
+  lookupKvk: (token: string, kvkNumber: string) =>
+    request<KvkLookupResult>(`/kvk/lookup/${encodeURIComponent(kvkNumber)}`, { token }),
   listBankTransactions: (
     token: string,
     filters: { company_id?: number; bank_account_id?: number; reconciliation_status?: ReconciliationStatus } = {}

@@ -29,6 +29,8 @@ function BankingContent() {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [authorizationUrl, setAuthorizationUrl] = useState<string | null>(null);
+  const [obBusy, setObBusy] = useState(false);
 
   useEffect(() => {
     if (token) api.listCompanies(token).then(setCompanies).catch((e) => setError(e.message));
@@ -58,6 +60,76 @@ function BankingContent() {
       api.listBankAccounts(token, Number(companyId)).then(setAccounts);
     } catch (e) {
       setError((e as Error).message);
+    }
+  }
+
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) ?? null;
+
+  async function refreshSelectedAccount() {
+    if (!token || !companyId) return;
+    const refreshed = await api.listBankAccounts(token, Number(companyId));
+    setAccounts(refreshed);
+  }
+
+  async function handleConnectOpenBanking() {
+    if (!token || !selectedAccountId) return;
+    setError(null);
+    setObBusy(true);
+    try {
+      const { authorization_url } = await api.connectOpenBanking(token, selectedAccountId, window.location.href);
+      setAuthorizationUrl(authorization_url);
+      await refreshSelectedAccount();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setObBusy(false);
+    }
+  }
+
+  async function handleCompleteOpenBanking() {
+    if (!token || !selectedAccountId) return;
+    setError(null);
+    setObBusy(true);
+    try {
+      await api.completeOpenBanking(token, selectedAccountId);
+      setAuthorizationUrl(null);
+      setMessage("Sandbox consent completed -- connection is now CONNECTED.");
+      await refreshSelectedAccount();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setObBusy(false);
+    }
+  }
+
+  async function handleSyncOpenBanking() {
+    if (!token || !selectedAccountId) return;
+    setError(null);
+    setObBusy(true);
+    try {
+      const batch = await api.syncOpenBanking(token, selectedAccountId);
+      setMessage(`Synced ${batch.transaction_count} transaction(s), ${batch.duplicate_count} duplicate(s) skipped.`);
+      await refreshSelectedAccount();
+      api.listImportBatches(token, selectedAccountId).then(setBatches);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setObBusy(false);
+    }
+  }
+
+  async function handleDisconnectOpenBanking() {
+    if (!token || !selectedAccountId) return;
+    setError(null);
+    setObBusy(true);
+    try {
+      await api.disconnectOpenBanking(token, selectedAccountId);
+      setAuthorizationUrl(null);
+      await refreshSelectedAccount();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setObBusy(false);
     }
   }
 
@@ -132,6 +204,56 @@ function BankingContent() {
           rowKey={(a) => a.id}
         />
       </GlassPanel>
+
+      {selectedAccount && (
+        <GlassCard className="space-y-3">
+          <h2 className="font-medium text-text-primary flex items-center gap-2">
+            <IconBank size={16} className="text-brand-purple-500" /> Open Banking connection (sandbox stub provider)
+          </h2>
+          <p className="text-xs text-text-secondary">
+            No authorised AISP agreement exists for this project yet -- see docs/open-banking.md. This connects to a stub
+            provider for development; manual file import above always works regardless of connection status.
+          </p>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-text-secondary">Status:</span>
+            <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-brand-purple-500/10 text-brand-purple-700 border border-brand-purple-300/50">
+              {selectedAccount.consent_status.replace(/_/g, " ")}
+            </span>
+            {selectedAccount.provider_name && <span className="text-text-secondary text-xs">via {selectedAccount.provider_name}</span>}
+          </div>
+          {selectedAccount.last_synced_at && (
+            <p className="text-xs text-text-secondary">Last synced: {new Date(selectedAccount.last_synced_at).toLocaleString()}</p>
+          )}
+          {selectedAccount.last_sync_error && <p className="text-xs value-negative">Last sync error: {selectedAccount.last_sync_error}</p>}
+          {authorizationUrl && (
+            <p className="text-xs text-text-secondary break-all">
+              Sandbox authorization URL (no real bank redirect for a stub provider): {authorizationUrl}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {selectedAccount.consent_status === "NOT_CONNECTED" && (
+              <GlassButton onClick={handleConnectOpenBanking} loading={obBusy}>
+                Connect
+              </GlassButton>
+            )}
+            {selectedAccount.consent_status === "PENDING" && (
+              <GlassButton onClick={handleCompleteOpenBanking} loading={obBusy}>
+                Complete sandbox consent
+              </GlassButton>
+            )}
+            {selectedAccount.consent_status === "CONNECTED" && (
+              <GlassButton onClick={handleSyncOpenBanking} loading={obBusy}>
+                Sync now
+              </GlassButton>
+            )}
+            {(selectedAccount.consent_status === "CONNECTED" || selectedAccount.consent_status === "PENDING") && (
+              <GlassButton variant="outline" onClick={handleDisconnectOpenBanking} loading={obBusy}>
+                Disconnect
+              </GlassButton>
+            )}
+          </div>
+        </GlassCard>
+      )}
 
       {selectedAccountId && (
         <GlassCard className="space-y-4">

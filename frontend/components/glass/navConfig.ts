@@ -99,6 +99,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Tax Optimisation", href: "/tax-optimization" },
       { label: "Legal Structure", href: "/legal-structure" },
       { label: "Compliance Calendar", href: "/calendar" },
+      { label: "Government Integration Centre", href: "/government" },
     ],
   },
   {
