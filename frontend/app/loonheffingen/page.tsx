@@ -120,7 +120,14 @@ function LoonheffingenContent() {
                 </thead>
                 <tbody>
                   {runs.map((run) => (
-                    <tr key={run.id} onClick={() => selectRun(run)} className={`border-b border-white/30 last:border-0 cursor-pointer hover:bg-white/40 ${selectedRun?.id === run.id ? "bg-white/50" : ""}`}>
+                    <tr
+                      key={run.id}
+                      onClick={() => selectRun(run)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRun(run); } }}
+                      tabIndex={0}
+                      role="button"
+                      className={`border-b border-white/30 last:border-0 cursor-pointer hover:bg-white/40 ${selectedRun?.id === run.id ? "bg-white/50" : ""}`}
+                    >
                       <td className="px-4 py-2.5">
                         {run.period_type} {run.period_number}/{run.period_year}
                       </td>

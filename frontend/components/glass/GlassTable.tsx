@@ -41,6 +41,9 @@ export default function GlassTable<T>({ columns, rows, rowKey, onRowClick, empty
             <tr
               key={rowKey(row)}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
+              onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick ? "button" : undefined}
               className={`border-b border-white/30 last:border-0 ${onRowClick ? "cursor-pointer hover:bg-white/40" : ""}`}
             >
               {columns.map((c) => (
@@ -59,6 +62,9 @@ export default function GlassTable<T>({ columns, rows, rowKey, onRowClick, empty
           <div
             key={rowKey(row)}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
+            onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
+            tabIndex={onRowClick ? 0 : undefined}
+            role={onRowClick ? "button" : undefined}
             className={`px-4 py-3 space-y-1 ${onRowClick ? "cursor-pointer active:bg-white/40" : ""}`}
           >
             {columns.map((c) => (

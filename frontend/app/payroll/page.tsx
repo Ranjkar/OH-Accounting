@@ -142,7 +142,14 @@ function PayrollContent() {
             </thead>
             <tbody>
               {runs.map((run) => (
-                <tr key={run.id} className="border-b border-border-subtle last:border-0 hover:bg-surface-page cursor-pointer" onClick={() => viewRun(run)}>
+                <tr
+                  key={run.id}
+                  className="border-b border-border-subtle last:border-0 hover:bg-surface-page cursor-pointer"
+                  onClick={() => viewRun(run)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); viewRun(run); } }}
+                  tabIndex={0}
+                  role="button"
+                >
                   <td className="px-4 py-2.5">{run.period_type} {run.period_number}/{run.period_year}</td>
                   <td className="px-4 py-2.5">{run.status}</td>
                 </tr>
