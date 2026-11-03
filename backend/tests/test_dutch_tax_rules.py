@@ -117,6 +117,70 @@ def test_arbeidskorting_zero_income():
     assert tax.arbeidskorting(Decimal("0"), rules) == Decimal("0")
 
 
+def test_special_remuneration_rate_picks_correct_bracket():
+    rules = tax.get_rule_set(2025)
+    # Reference points straight from the official "Witte tabel bijzondere beloning
+    # Nederland, Standaard (uitgave januari 2025)" PDF (jonger dan AOW-leeftijd, met
+    # loonheffingskorting: standaardtarief + verrekeningspercentage combined). The
+    # combined rate is deliberately non-monotonic at low incomes -- e.g. 20,000 sits in
+    # the 13,144 bracket (35.82% - 30.03% = 5.79%), well below the 0-11,050 rate of
+    # 35.82% -- this is the real table's behavior, not a bug.
+    assert tax.special_remuneration_rate(Decimal("0"), rules) == Decimal("0.3582")
+    assert tax.special_remuneration_rate(Decimal("20000"), rules) == Decimal("0.0579")
+    assert tax.special_remuneration_rate(Decimal("30000"), rules) == Decimal("0.3990")
+    assert tax.special_remuneration_rate(Decimal("100000"), rules) == Decimal("0.5601")
+    assert tax.special_remuneration_rate(Decimal("200000"), rules) == Decimal("0.4950")
+
+
+def test_special_remuneration_tax_matches_official_worked_example():
+    """Reference case: EUR 2,560 holiday allowance at an annual wage level in the
+    EUR 28,407-36,661 bracket -> 35.82% + 4.08% = 39.90% combined rate, EUR 1,021.44
+    withheld. This specific combination is independently cited by a third-party source
+    (MKB Servicedesk) as well as derivable directly from the official PDF table."""
+    rules = tax.get_rule_set(2025)
+    result = tax.calculate_special_remuneration_tax(Decimal("2560"), Decimal("30000"), rules)
+    assert result == Decimal("1021.44")
+
+
+def test_employer_premiums_use_low_rates_for_permanent_small_employer():
+    rules = tax.get_rule_set(2025)
+    result = tax.employer_social_insurance_premiums(
+        Decimal("4000"), Decimal("0"), has_permanent_contract=True, is_small_employer=True, rules=rules,
+    )
+    assert result["awf_rate_used"] == rules.awf_low_rate
+    assert result["aof_rate_used"] == rules.aof_low_rate
+    assert result["premium_base"] == Decimal("4000")
+    assert result["zvw_premium"] == (Decimal("4000") * rules.zvw_employer_rate).quantize(Decimal("0.01"))
+
+
+def test_employer_premiums_use_high_rates_for_flexible_large_employer():
+    rules = tax.get_rule_set(2025)
+    result = tax.employer_social_insurance_premiums(
+        Decimal("4000"), Decimal("0"), has_permanent_contract=False, is_small_employer=False, rules=rules,
+    )
+    assert result["awf_rate_used"] == rules.awf_high_rate
+    assert result["aof_rate_used"] == rules.aof_high_rate
+
+
+def test_employer_premiums_respect_annual_cap():
+    rules = tax.get_rule_set(2025)
+    # Already earned EUR 74,000 this year; cap is EUR 75,864 -- only EUR 1,864 of
+    # this period's EUR 4,000 gross wage should be subject to premiums.
+    result = tax.employer_social_insurance_premiums(
+        Decimal("4000"), Decimal("74000"), has_permanent_contract=True, is_small_employer=True, rules=rules,
+    )
+    assert result["premium_base"] == Decimal("1864")
+
+
+def test_employer_premiums_zero_once_cap_fully_reached():
+    rules = tax.get_rule_set(2025)
+    result = tax.employer_social_insurance_premiums(
+        Decimal("4000"), Decimal("80000"), has_permanent_contract=True, is_small_employer=True, rules=rules,
+    )
+    assert result["premium_base"] == Decimal("0")
+    assert result["total_employer_premiums"] == Decimal("0.00")
+
+
 def test_unknown_tax_year_raises_rather_than_falling_back():
     import pytest
 

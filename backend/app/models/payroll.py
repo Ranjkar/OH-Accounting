@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -73,7 +73,10 @@ class Payslip(Base):
     voided: Mapped[bool] = mapped_column(Boolean, default=False)
     void_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
-    calculation_notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    # Text, not a bounded VARCHAR -- Phase 10's calculation notes are deliberately
+    # detailed (every employer-premium rate used, every simplification stated) and
+    # must never be silently truncated, which would hide a compliance caveat.
+    calculation_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     payroll_run: Mapped["PayrollRun"] = relationship(back_populates="payslips")

@@ -132,3 +132,95 @@ def test_expense_reimbursement_added_back_untaxed():
     # Reimbursement doesn't change taxable gross, only adds straight to net.
     assert with_reimbursement["gross_salary"] == without["gross_salary"]
     assert with_reimbursement["net_salary"] == without["net_salary"] + Decimal("50")
+
+
+# ---- Phase 10: special remuneration taxed separately from regular wage ----
+
+
+def test_holiday_allowance_taxed_as_special_remuneration_not_blended_into_regular_wage():
+    from app.accounting import dutch_tax_rules as tax
+
+    result = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=True, holiday_allowance_pct=Decimal("8.00"),
+    )
+    rules = tax.get_rule_set()
+    expected_special_tax = tax.calculate_special_remuneration_tax(result["special_remuneration"], result["annualized_regular_wage"], rules)
+    assert result["special_remuneration_tax"] == expected_special_tax
+    assert result["special_remuneration"] == Decimal("320.00")
+    # The regular-wage tax must be computed on regular wage ALONE (annualized_regular_wage
+    # excludes the holiday allowance), not on gross_salary including it.
+    assert result["annualized_regular_wage"] == Decimal("4000.00") * 12
+
+
+def test_bonus_and_holiday_allowance_both_count_as_special_remuneration():
+    result = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=True, holiday_allowance_pct=Decimal("8.00"),
+        bonus_amount=Decimal("1000"),
+    )
+    assert result["special_remuneration"] == Decimal("1320.00")
+
+
+def test_wage_tax_total_is_sum_of_regular_and_special():
+    result = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=True, holiday_allowance_pct=Decimal("8.00"),
+        bonus_amount=Decimal("500"),
+    )
+    assert result["wage_tax_and_national_insurance"] == result["regular_wage_tax"] + result["special_remuneration_tax"]
+
+
+# ---- Phase 10: employer social insurance premiums ----
+
+
+def test_employer_premiums_present_for_permanent_small_employer():
+    result = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+        has_permanent_contract=True, is_small_employer=True,
+    )
+    assert result["employer_premium_awf"] > 0
+    assert result["employer_premium_aof"] > 0
+    assert result["employer_premium_whk"] > 0
+    assert result["employer_levy_zvw"] > 0
+    assert result["employer_premiums_total"] == (
+        result["employer_premium_awf"] + result["employer_premium_aof"] + result["employer_premium_whk"] + result["employer_levy_zvw"]
+    )
+    assert result["employer_costs_total"] == result["gross_salary"] + result["employer_premiums_total"]
+
+
+def test_flexible_contract_has_higher_awf_premium_than_permanent():
+    permanent = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+        has_permanent_contract=True,
+    )
+    flexible = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+        has_permanent_contract=False,
+    )
+    assert flexible["employer_premium_awf"] > permanent["employer_premium_awf"]
+
+
+def test_employer_premiums_respect_cumulative_annual_cap():
+    near_cap = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+        cumulative_wage_this_year_before_this_period=Decimal("74000"),
+    )
+    well_under_cap = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+        cumulative_wage_this_year_before_this_period=Decimal("0"),
+    )
+    assert near_cap["employer_premiums_total"] < well_under_cap["employer_premiums_total"]
