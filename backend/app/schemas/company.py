@@ -1,9 +1,9 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
-from app.models.enums import VatAccountingBasis, VatFrequency, VatPeriodStatus
+from app.models.enums import CompanyInvitationStatus, UserRole, VatAccountingBasis, VatFrequency, VatPeriodStatus
 
 
 class CompanyCreate(BaseModel):
@@ -58,3 +58,37 @@ class FinancialYearOut(BaseModel):
     vat_periods: list[VatPeriodOut] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyInvitationCreate(BaseModel):
+    invited_email: EmailStr
+    intended_role: UserRole = UserRole.accountant
+
+
+class CompanyInvitationOut(BaseModel):
+    id: int
+    company_id: int
+    invited_email: str
+    intended_role: UserRole
+    status: CompanyInvitationStatus
+    created_at: datetime
+    expires_at: datetime
+    accepted_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyInvitationCreateResult(BaseModel):
+    invitation: CompanyInvitationOut
+    raw_token: str
+
+
+class AcceptInvitationRequest(BaseModel):
+    token: str
+
+
+class CompanyAccessOut(BaseModel):
+    user_id: int
+    email: str
+    full_name: str
+    role: UserRole

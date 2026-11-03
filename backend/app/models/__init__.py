@@ -6,6 +6,7 @@ from app.models.banking import BankAccount, BankImportBatch, BankTransaction, Pa
 from app.models.budget import Budget, BudgetLine
 from app.models.categorization import CategorizationRule
 from app.models.company import Company
+from app.models.company_invitation import CompanyInvitation
 from app.models.customer import Customer
 from app.models.document import (
     Document,
@@ -41,6 +42,7 @@ __all__ = [
     "BankTransaction",
     "CategorizationRule",
     "Company",
+    "CompanyInvitation",
     "CompanyLegalForm",
     "Customer",
     "Document",

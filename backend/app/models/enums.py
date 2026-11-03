@@ -9,6 +9,13 @@ class UserRole(str, enum.Enum):
     employee = "employee"
 
 
+class CompanyInvitationStatus(str, enum.Enum):
+    pending = "PENDING"
+    accepted = "ACCEPTED"
+    revoked = "REVOKED"
+    expired = "EXPIRED"
+
+
 class VatFrequency(str, enum.Enum):
     monthly = "monthly"
     quarterly = "quarterly"

@@ -199,6 +199,26 @@ export interface Company {
   input_vat_pro_rata_percentage: string | null;
 }
 
+export type CompanyInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+
+export interface CompanyAccess {
+  user_id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+}
+
+export interface CompanyInvitation {
+  id: number;
+  company_id: number;
+  invited_email: string;
+  intended_role: UserRole;
+  status: CompanyInvitationStatus;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+}
+
 export interface VatPeriod {
   id: number;
   label: string;
@@ -710,6 +730,21 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getCompany: (token: string, id: number) => request<Company>(`/companies/${id}`, { token }),
+  listCompanyAccess: (token: string, companyId: number) => request<CompanyAccess[]>(`/companies/${companyId}/access`, { token }),
+  revokeCompanyAccess: (token: string, companyId: number, userId: number) =>
+    request<void>(`/companies/${companyId}/access/${userId}/revoke`, { method: "POST", token }),
+  listCompanyInvitations: (token: string, companyId: number) =>
+    request<CompanyInvitation[]>(`/companies/${companyId}/invitations`, { token }),
+  createCompanyInvitation: (token: string, companyId: number, invitedEmail: string, intendedRole: UserRole = "accountant") =>
+    request<{ invitation: CompanyInvitation; raw_token: string }>(`/companies/${companyId}/invitations`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ invited_email: invitedEmail, intended_role: intendedRole }),
+    }),
+  revokeCompanyInvitation: (token: string, companyId: number, invitationId: number) =>
+    request<CompanyInvitation>(`/companies/${companyId}/invitations/${invitationId}/revoke`, { method: "POST", token }),
+  acceptCompanyInvitation: (token: string, invitationToken: string) =>
+    request<CompanyAccess>("/companies/invitations/accept", { method: "POST", token, body: JSON.stringify({ token: invitationToken }) }),
   listFinancialYears: (token: string, companyId: number) =>
     request<FinancialYear[]>(`/companies/${companyId}/financial-years`, { token }),
   createFinancialYear: (token: string, companyId: number, year: number) =>

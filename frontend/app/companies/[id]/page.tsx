@@ -6,11 +6,125 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/lib/auth-context";
-import { api, Company, FinancialYear, VatAccountingBasis } from "@/lib/api";
+import { api, ApiError, Company, CompanyAccess, CompanyInvitation, FinancialYear, VatAccountingBasis } from "@/lib/api";
+
+function TeamAccessSection({ companyId }: { companyId: number }) {
+  const { token } = useAuth();
+  const [access, setAccess] = useState<CompanyAccess[]>([]);
+  const [invitations, setInvitations] = useState<CompanyInvitation[]>([]);
+  const [invitedEmail, setInvitedEmail] = useState("");
+  const [lastToken, setLastToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function refresh() {
+    if (!token) return;
+    api.listCompanyAccess(token, companyId).then(setAccess).catch((e) => setError(e.message));
+    api.listCompanyInvitations(token, companyId).then(setInvitations).catch((e) => setError(e.message));
+  }
+
+  useEffect(refresh, [token, companyId]);
+
+  async function handleInvite(e: FormEvent) {
+    e.preventDefault();
+    if (!token || !invitedEmail.trim()) return;
+    setError(null);
+    try {
+      const { raw_token } = await api.createCompanyInvitation(token, companyId, invitedEmail);
+      setLastToken(raw_token);
+      setInvitedEmail("");
+      refresh();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to create invitation");
+    }
+  }
+
+  async function handleRevokeAccess(userId: number) {
+    if (!token) return;
+    try {
+      await api.revokeCompanyAccess(token, companyId, userId);
+      refresh();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to revoke access");
+    }
+  }
+
+  async function handleRevokeInvitation(invitationId: number) {
+    if (!token) return;
+    try {
+      await api.revokeCompanyInvitation(token, companyId, invitationId);
+      refresh();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to revoke invitation");
+    }
+  }
+
+  const pendingInvitations = invitations.filter((i) => i.status === "PENDING");
+
+  return (
+    <div className="card-v2 p-5 space-y-4">
+      <h2 className="text-sm font-medium text-navy">Team access</h2>
+      <p className="text-xs text-text-secondary">
+        Invite an accountant or other team member to access this company. No email provider is configured, so the invitation
+        link below must be shared with them yourself (e.g. by email or chat) -- it is never sent automatically.
+      </p>
+      {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
+
+      <form onSubmit={handleInvite} className="flex items-end gap-3">
+        <div className="space-y-1 flex-1 max-w-sm">
+          <label htmlFor="invite-email" className="text-xs font-medium text-text-secondary">Invite by email</label>
+          <input
+            id="invite-email"
+            type="email"
+            required
+            value={invitedEmail}
+            onChange={(e) => setInvitedEmail(e.target.value)}
+            placeholder="accountant@firm.nl"
+            className="w-full input-v2 px-3 py-2 text-sm"
+          />
+        </div>
+        <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">Send invitation</button>
+      </form>
+
+      {lastToken && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 text-xs px-3 py-2 space-y-1">
+          <p className="font-medium text-pending">Invitation created -- share this link with the invited person:</p>
+          <p className="font-mono break-all">{`${typeof window !== "undefined" ? window.location.origin : ""}/invitations/accept?token=${lastToken}`}</p>
+        </div>
+      )}
+
+      <div>
+        <h3 className="text-xs font-medium text-text-secondary mb-2">People with access</h3>
+        <ul className="divide-y divide-slate-100 text-sm">
+          {access.map((a) => (
+            <li key={a.user_id} className="flex items-center justify-between py-2">
+              <span>{a.full_name} <span className="text-text-secondary">({a.email}, {a.role})</span></span>
+              <button onClick={() => handleRevokeAccess(a.user_id)} className="text-xs text-error hover:underline">Revoke</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {pendingInvitations.length > 0 && (
+        <div>
+          <h3 className="text-xs font-medium text-text-secondary mb-2">Pending invitations</h3>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {pendingInvitations.map((i) => (
+              <li key={i.id} className="flex items-center justify-between py-2">
+                <span>{i.invited_email} <span className="text-text-secondary">({i.intended_role}, expires {new Date(i.expires_at).toLocaleDateString()})</span></span>
+                <button onClick={() => handleRevokeInvitation(i.id)} className="text-xs text-error hover:underline">Revoke</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CompanyDetailContent({ companyId }: { companyId: number }) {
   const { token, user } = useAuth();
   const canEdit = user?.role === "admin";
+  const canManageAccess = user?.role === "admin" || user?.role === "customer";
   const [company, setCompany] = useState<Company | null>(null);
   const [years, setYears] = useState<FinancialYear[]>([]);
   const [newYear, setNewYear] = useState(new Date().getFullYear());
@@ -118,6 +232,8 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
           </div>
         </div>
       </div>
+
+      {canManageAccess && <TeamAccessSection companyId={companyId} />}
 
       <form onSubmit={handleAddYear} className="flex items-end gap-3">
         <div className="space-y-1">
