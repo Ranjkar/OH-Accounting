@@ -94,15 +94,29 @@ def calculate_payslip(
     # ---- Regular wage: annualize/divide approximation of the periodic table ----
     regular_wage = _q(base_pay + overtime_amount)
     annualized_regular_wage = regular_wage * periods_per_year
-    annual_gross_tax = tax.calculate_box1_tax(annualized_regular_wage, rules)
-    annual_general_credit = tax.algemene_heffingskorting(annualized_regular_wage, rules)
-    annual_labor_credit = tax.arbeidskorting(annualized_regular_wage, rules)
+
+    # Pension premium is withheld pre-tax in NL: it reduces the wage base for
+    # loonbelasting/premies volksverzekeringen before that base is annualized.
+    # No AOW-franchise (threshold) is modelled -- the percentage is taken on
+    # the full base pay, which is stated below rather than hidden.
+    pension_deduction = _q(base_pay * pension_deduction_pct / 100)
+    taxable_regular_wage = max(regular_wage - pension_deduction, ZERO)
+    annualized_taxable_regular_wage = taxable_regular_wage * periods_per_year
+    annual_gross_tax = tax.calculate_box1_tax(annualized_taxable_regular_wage, rules)
+    annual_general_credit = tax.algemene_heffingskorting(annualized_taxable_regular_wage, rules)
+    annual_labor_credit = tax.arbeidskorting(annualized_taxable_regular_wage, rules)
     annual_withholding = max(annual_gross_tax - annual_general_credit - annual_labor_credit, ZERO)
     regular_wage_tax = _q(annual_withholding / periods_per_year)
+    if pension_deduction > 0:
+        notes.append(
+            "Pension premium is deducted pre-tax: the regular-wage tax base is the annualized regular wage minus "
+            "the pension deduction. No AOW-franchise (threshold below which no pension premium is due) is applied "
+            "-- the configured percentage is taken on the full base pay."
+        )
 
     # ---- Special remuneration: exact official tabel bijzondere beloningen rate, taxed separately ----
     special_remuneration = _q(holiday_allowance + bonus_amount)
-    special_remuneration_tax = tax.calculate_special_remuneration_tax(special_remuneration, annualized_regular_wage, rules)
+    special_remuneration_tax = tax.calculate_special_remuneration_tax(special_remuneration, annualized_taxable_regular_wage, rules)
     if special_remuneration > 0:
         notes.append(
             "Special remuneration (holiday allowance/bonus) is taxed using the exact official 'tabel bijzondere "
@@ -115,8 +129,6 @@ def calculate_payslip(
     gross_salary = _q(regular_wage + special_remuneration)
     total_employee_withholding = _q(regular_wage_tax + special_remuneration_tax)
 
-    pension_deduction = _q(base_pay * pension_deduction_pct / 100)
-
     net_salary = _q(gross_salary - total_employee_withholding - pension_deduction - other_deductions + expense_reimbursement)
 
     employer = tax.employer_social_insurance_premiums(
@@ -124,6 +136,12 @@ def calculate_payslip(
         has_permanent_contract=has_permanent_contract, is_small_employer=is_small_employer, rules=rules,
     )
     employer_costs_total = _q(gross_salary + employer["total_employer_premiums"])
+    if pension_deduction > 0:
+        notes.append(
+            "Employer social insurance premiums are calculated on the full gross salary, not reduced by the "
+            "pension deduction -- in practice premieloon is also reduced by an employee pension contribution, "
+            "which is not yet modelled here."
+        )
 
     notes.append(
         "Regular-wage withholding is approximated by annualizing this period's gross pay through the same box-1 "
@@ -152,6 +170,7 @@ def calculate_payslip(
         "gross_salary": gross_salary,
         "taxable_wage": gross_salary,
         "annualized_regular_wage": annualized_regular_wage,
+        "annualized_taxable_regular_wage": annualized_taxable_regular_wage,
         "annual_general_tax_credit": annual_general_credit,
         "annual_labor_tax_credit": annual_labor_credit,
         "regular_wage_tax": regular_wage_tax,

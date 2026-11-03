@@ -103,6 +103,9 @@ def test_higher_gross_salary_means_higher_period_withholding():
 
 
 def test_pension_deduction_reduces_net_salary():
+    """Pension is withheld pre-tax (see test_pension_deduction_reduces_tax_base_not_just_net_salary),
+    so net salary drops by less than the raw pension_deduction amount -- the tax saved on the
+    now-smaller wage base partially offsets it. Net salary must still strictly decrease."""
     without = payroll_engine.calculate_payslip(
         period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
         monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
@@ -114,7 +117,9 @@ def test_pension_deduction_reduces_net_salary():
         pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"), pension_deduction_pct=Decimal("5"),
     )
     assert with_pension["pension_deduction"] == Decimal("200.00")
-    assert with_pension["net_salary"] == without["net_salary"] - Decimal("200.00")
+    tax_saved = without["regular_wage_tax"] - with_pension["regular_wage_tax"]
+    assert tax_saved > 0
+    assert with_pension["net_salary"] == without["net_salary"] - Decimal("200.00") + tax_saved
 
 
 def test_expense_reimbursement_added_back_untaxed():
@@ -224,3 +229,25 @@ def test_employer_premiums_respect_cumulative_annual_cap():
         cumulative_wage_this_year_before_this_period=Decimal("0"),
     )
     assert near_cap["employer_premiums_total"] < well_under_cap["employer_premiums_total"]
+
+
+def test_pension_deduction_reduces_tax_base_not_just_net_salary():
+    """Pension premium is withheld pre-tax in NL -- it must lower the wage base
+    that regular_wage_tax is computed on, not just be subtracted from net_salary
+    after tax is already calculated on the full gross wage."""
+    no_pension = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+    )
+    with_pension = payroll_engine.calculate_payslip(
+        period_type=PayrollPeriodType.monthly, salary_basis=SalaryBasis.monthly,
+        monthly_salary=Decimal("4000"), hourly_rate=None, paid_hours=None,
+        pay_holiday_allowance_this_period=False, holiday_allowance_pct=Decimal("8.00"),
+        pension_deduction_pct=Decimal("5.00"),
+    )
+    assert with_pension["pension_deduction"] == Decimal("200.00")
+    assert with_pension["annualized_taxable_regular_wage"] == no_pension["annualized_taxable_regular_wage"] - Decimal("200.00") * 12
+    assert with_pension["regular_wage_tax"] < no_pension["regular_wage_tax"]
+    # gross_salary itself is unaffected -- pension is a deduction from net, computed on a reduced tax base.
+    assert with_pension["gross_salary"] == no_pension["gross_salary"]
