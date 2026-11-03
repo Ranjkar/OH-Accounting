@@ -7,6 +7,7 @@ import httpx
 import pytest
 
 from app.core.security import hash_password
+from app.models.company import Company
 from app.models.enums import UserRole
 from app.models.tenant import Tenant
 from app.models.user import User
@@ -68,3 +69,44 @@ def test_kvk_lookup_unknown_number_returns_404(client, db_session):
     headers = _login(client)
     response = client.get("/api/v1/kvk/lookup/00000000", headers=headers)
     assert response.status_code == 404
+
+
+@skip_if_unreachable
+def test_verify_company_against_real_sandbox_record(client, db_session):
+    user = _create_user(db_session)
+    kvk_provider.reset_provider_cache()
+    real_name = kvk_provider.get_kvk_provider().lookup_basisprofiel("90003942").name
+    company = Company(tenant_id=user.tenant_id, name=real_name, kvk_number="90003942")
+    db_session.add(company)
+    db_session.commit()
+
+    headers = _login(client)
+    response = client.get(f"/api/v1/kvk/verify/{company.id}", headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["name_matches"] is True
+    assert body["kvk_number"] == "90003942"
+
+
+@skip_if_unreachable
+def test_verify_company_flags_a_name_mismatch(client, db_session):
+    user = _create_user(db_session)
+    company = Company(tenant_id=user.tenant_id, name="Totally Unrelated Name Ltd", kvk_number="90003942")
+    db_session.add(company)
+    db_session.commit()
+
+    headers = _login(client)
+    response = client.get(f"/api/v1/kvk/verify/{company.id}", headers=headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["name_matches"] is False
+
+
+def test_verify_company_without_kvk_number_is_a_client_error(client, db_session):
+    user = _create_user(db_session)
+    company = Company(tenant_id=user.tenant_id, name="No KVK Yet B.V.", kvk_number=None)
+    db_session.add(company)
+    db_session.commit()
+
+    headers = _login(client)
+    response = client.get(f"/api/v1/kvk/verify/{company.id}", headers=headers)
+    assert response.status_code == 400

@@ -11,7 +11,41 @@ import { GlassInput } from "@/components/glass/GlassInput";
 import GlassTable from "@/components/glass/GlassTable";
 import { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
-import { api, Company, KvkLookupResult } from "@/lib/api";
+import { api, ApiError, Company, KvkLookupResult } from "@/lib/api";
+
+function VerifyCompanyButton({ companyId }: { companyId: number }) {
+  const { token } = useAuth();
+  const [result, setResult] = useState<{ name_matches: boolean; kvk_name: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleVerify() {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api.verifyCompanyKvk(token, companyId);
+      setResult({ name_matches: r.name_matches, kvk_name: r.kvk_name });
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Verification failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (result) {
+    return (
+      <span className={`text-xs ${result.name_matches ? "text-green-700" : "text-amber-700"}`}>
+        {result.name_matches ? "Matches KVK record" : `Mismatch -- KVK has "${result.kvk_name}"`}
+      </span>
+    );
+  }
+  return (
+    <button onClick={handleVerify} disabled={busy} className="text-xs text-brand-purple-600 hover:underline disabled:opacity-50">
+      {busy ? "Checking…" : error ?? "Verify against KVK"}
+    </button>
+  );
+}
 
 type IntegrationStatus = "SANDBOX VERIFIED" | "BLOCKED BY EXTERNAL REQUIREMENT";
 
@@ -134,6 +168,11 @@ function GovernmentContent() {
                 ) : (
                   <span className="text-xs text-amber-700">No KVK number on file</span>
                 ),
+            },
+            {
+              key: "verify",
+              header: "",
+              render: (c) => (c.kvk_number ? <VerifyCompanyButton companyId={c.id} /> : null),
             },
           ]}
           rows={companies}

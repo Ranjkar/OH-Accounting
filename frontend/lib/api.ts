@@ -1034,9 +1034,14 @@ export const api = {
   disconnectOpenBanking: (token: string, bankAccountId: number) =>
     request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/disconnect`, { method: "POST", token }),
 
-  // ---- Phase 12: KVK lookup (real sandbox, see docs/government-integrations.md) ----
+  // ---- Phase 12/13: KVK lookup + verification (real sandbox, see docs/government-integrations.md) ----
   lookupKvk: (token: string, kvkNumber: string) =>
     request<KvkLookupResult>(`/kvk/lookup/${encodeURIComponent(kvkNumber)}`, { token }),
+  verifyCompanyKvk: (token: string, companyId: number) =>
+    request<{ company_id: number; stored_name: string; kvk_name: string; kvk_number: string; name_matches: boolean; is_test_data: boolean; legal_form: string | null; address: string | null }>(
+      `/kvk/verify/${companyId}`,
+      { token }
+    ),
   listBankTransactions: (
     token: string,
     filters: { company_id?: number; bank_account_id?: number; reconciliation_status?: ReconciliationStatus } = {}
