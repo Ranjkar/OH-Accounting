@@ -21,6 +21,7 @@ from app.models.financial_year import FinancialYear, VatPeriod
 from app.models.legal_form import CompanyLegalForm, LegalFormDefinition, Partner, Shareholder
 from app.models.loonheffingen import LoonheffingenDeclaration
 from app.models.note import AccountantNote
+from app.models.password_reset import PasswordResetToken
 from app.models.payroll import PayrollRun, Payslip
 from app.models.recurring import RecurringPattern
 from app.models.scenario import Scenario
@@ -56,6 +57,7 @@ __all__ = [
     "LoonheffingenDeclaration",
     "ManualBalanceSheetItem",
     "Partner",
+    "PasswordResetToken",
     "Payment",
     "PaymentMatch",
     "PayrollRun",

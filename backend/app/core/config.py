@@ -42,6 +42,18 @@ class Settings(BaseSettings):
     # See docs/encryption-key-rotation.md for the full procedure.
     bsn_encryption_key_previous: str = ""
 
+    # Phase 12: KVK (Chamber of Commerce) company lookup. Defaults to KVK's
+    # own published test sandbox + test key (see app.services.kvk_provider)
+    # when unset -- never silently defaults to production.
+    kvk_api_key: str | None = None
+    kvk_api_base_url: str | None = None
+
+    # Phase 12: how long a password-reset link stays valid, and how many
+    # consecutive failed logins trigger a temporary account lock.
+    password_reset_token_expire_minutes: int = 30
+    max_failed_login_attempts: int = 5
+    account_lockout_minutes: int = 15
+
     class Config:
         env_file = ".env"
 

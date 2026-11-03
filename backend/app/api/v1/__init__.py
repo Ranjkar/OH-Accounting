@@ -14,6 +14,7 @@ from app.api.v1 import (
     employees,
     financial_reports,
     forecasts,
+    kvk,
     legal_forms,
     loonheffingen,
     payroll,
@@ -48,3 +49,4 @@ router.include_router(employee_self_service.router)
 router.include_router(payroll.router)
 router.include_router(loonheffingen.router)
 router.include_router(tax_centre.router)
+router.include_router(kvk.router)

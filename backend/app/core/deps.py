@@ -17,12 +17,20 @@ def get_current_user(
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
     )
-    email = decode_access_token(token)
-    if email is None:
+    decoded = decode_access_token(token)
+    if decoded is None:
         raise credentials_error
+    email, token_version = decoded
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise credentials_error
+    # Revocation check: a token issued before the user's last logout/
+    # password-change (which bumps token_version) is rejected even though
+    # it's still cryptographically valid and unexpired.
+    if token_version != user.token_version:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session has been revoked, please sign in again")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been deactivated")
     return user
 
 

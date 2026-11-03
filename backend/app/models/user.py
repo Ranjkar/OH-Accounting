@@ -27,6 +27,19 @@ class User(Base):
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
+    # ---- Phase 12: session revocation + brute-force protection ----
+    # Bumped on logout/password change; embedded in every issued JWT as the
+    # "ver" claim and checked on every request (app.core.deps) -- the
+    # standard way to make a stateless JWT revocable without a server-side
+    # session store or Redis. Any token issued before the bump is rejected.
+    token_version: Mapped[int] = mapped_column(default=0)
+    failed_login_attempts: Mapped[int] = mapped_column(default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # GDPR account deactivation: blocks login, never deletes or touches any
+    # linked financial/employee/payroll record (those have their own
+    # statutory retention -- see docs/gdpr-data-governance.md).
+    is_active: Mapped[bool] = mapped_column(default=True)
+
     tenant: Mapped["Tenant"] = relationship(back_populates="users")
     companies: Mapped[list["Company"]] = relationship(
         secondary=user_companies, back_populates="users"
