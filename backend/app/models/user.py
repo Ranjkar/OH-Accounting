@@ -49,6 +49,15 @@ class User(Base):
     mfa_enabled: Mapped[bool] = mapped_column(default=False)
     mfa_secret_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
+    # ---- Phase 14: SaaS platform administration ----
+    # A privilege tier ABOVE tenant admin -- can see cross-tenant
+    # subscription/usage/system-health data (app.api.v1.admin) but never a
+    # customer's financial records. Deliberately has no self-service way
+    # to grant itself: only settable via direct DB/seed by an operator, the
+    # same "no API ever creates this" pattern as choosing not to expose a
+    # self-signup-to-admin path.
+    is_platform_admin: Mapped[bool] = mapped_column(default=False)
+
     tenant: Mapped["Tenant"] = relationship(back_populates="users")
     companies: Mapped[list["Company"]] = relationship(
         secondary=user_companies, back_populates="users"

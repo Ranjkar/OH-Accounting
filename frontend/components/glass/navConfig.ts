@@ -128,12 +128,22 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Companies", href: "/companies" },
       { label: "Management Reports", href: "/management-reports" },
       { label: "Reports", href: "/reports" },
+      { label: "Billing & Subscription", href: "/billing" },
       { label: "Settings", href: "/settings" },
       { label: "Users & Permissions", unavailable: "Not yet implemented -- roles exist but there is no self-service role management UI." },
       { label: "Audit Log", unavailable: "Audit entries are recorded on the backend but have no viewer UI yet." },
     ],
   },
 ];
+
+/** Only rendered for user.is_platform_admin (a tier above tenant admin --
+ * see app.models.user.User.is_platform_admin) -- GlassSidebar appends
+ * this itself rather than every tenant seeing an empty/403 group. */
+export const PLATFORM_ADMIN_NAV_GROUP: NavGroup = {
+  label: "Administration",
+  icon: IconSettings,
+  items: [{ label: "Platform Overview", href: "/admin" }],
+};
 
 /** An employee-role account (app.core.deps.get_current_employee on the
  * backend) is never added to user_companies -- every item above would

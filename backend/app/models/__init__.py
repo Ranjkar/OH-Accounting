@@ -26,6 +26,7 @@ from app.models.password_reset import PasswordResetToken
 from app.models.payroll import PayrollRun, Payslip
 from app.models.recurring import RecurringPattern
 from app.models.scenario import Scenario
+from app.models.subscription import BillingEvent, Plan, Subscription
 from app.models.tenant import Tenant
 from app.models.timesheet import EmployeeTimesheetEntry, EntrepreneurHoursEntry
 from app.models.user import User, user_companies
@@ -66,6 +67,9 @@ __all__ = [
     "Payslip",
     "RecurringPattern",
     "Scenario",
+    "BillingEvent",
+    "Plan",
+    "Subscription",
     "Shareholder",
     "TransactionLineItem",
     "UploadBatch",

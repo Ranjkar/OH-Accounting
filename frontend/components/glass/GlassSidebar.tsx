@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import GlassNavigationGroup from "./GlassNavigationGroup";
-import { EMPLOYEE_ROLE_NAV_GROUPS, NAV_GROUPS } from "./navConfig";
+import { EMPLOYEE_ROLE_NAV_GROUPS, NAV_GROUPS, PLATFORM_ADMIN_NAV_GROUP } from "./navConfig";
 import { IconCollapse, IconExpand, IconLogout, IconX } from "./icons";
 
 const OPEN_GROUPS_KEY = "onholland.nav.openGroups";
@@ -22,7 +22,8 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [hydrated, setHydrated] = useState(false);
 
-  const groups = user?.role === "employee" ? EMPLOYEE_ROLE_NAV_GROUPS : NAV_GROUPS;
+  const baseGroups = user?.role === "employee" ? EMPLOYEE_ROLE_NAV_GROUPS : NAV_GROUPS;
+  const groups = user?.is_platform_admin ? [...baseGroups, PLATFORM_ADMIN_NAV_GROUP] : baseGroups;
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 

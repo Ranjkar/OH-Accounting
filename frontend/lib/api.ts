@@ -186,6 +186,7 @@ export interface User {
   full_name: string;
   role: UserRole;
   mfa_enabled: boolean;
+  is_platform_admin: boolean;
 }
 
 export interface Company {
@@ -510,6 +511,35 @@ export interface KvkLookupResult {
   address: string | null;
   sbi_activity: string | null;
   is_test_data: boolean;
+}
+
+export type SubscriptionStatus = "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED";
+
+export interface Plan {
+  code: string;
+  name: string;
+  monthly_price_eur: string | null;
+  company_limit: number;
+  user_limit: number;
+}
+
+export interface Subscription {
+  plan: Plan;
+  status: SubscriptionStatus;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  canceled_at: string | null;
+  companies_used: number;
+  users_used: number;
+}
+
+export interface PlatformOverviewRow {
+  tenant_id: number;
+  tenant_name: string;
+  plan_code: string | null;
+  subscription_status: SubscriptionStatus | null;
+  companies_used: number;
+  users_used: number;
 }
 
 export interface BankImportBatch {
@@ -1077,6 +1107,18 @@ export const api = {
       `/kvk/verify/${companyId}`,
       { token }
     ),
+
+  // ---- Phase 14: subscription & billing (sandbox stub provider, see docs/subscription-billing.md) ----
+  listPlans: (token: string) => request<Plan[]>("/billing/plans", { token }),
+  getSubscription: (token: string) => request<Subscription>("/billing/subscription", { token }),
+  createCheckout: (token: string, planCode: string) =>
+    request<{ checkout_url: string; provider_session_id: string }>("/billing/checkout", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ plan_code: planCode }),
+    }),
+  cancelSubscription: (token: string) => request<Subscription>("/billing/cancel", { method: "POST", token }),
+  getPlatformOverview: (token: string) => request<{ tenants: PlatformOverviewRow[] }>("/billing/admin/overview", { token }),
   listBankTransactions: (
     token: string,
     filters: { company_id?: number; bank_account_id?: number; reconciliation_status?: ReconciliationStatus } = {}

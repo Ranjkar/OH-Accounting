@@ -6,6 +6,7 @@ from app.api.v1 import (
     automation,
     banking,
     batches,
+    billing,
     budgets,
     companies,
     dashboard,
@@ -50,3 +51,4 @@ router.include_router(payroll.router)
 router.include_router(loonheffingen.router)
 router.include_router(tax_centre.router)
 router.include_router(kvk.router)
+router.include_router(billing.router)

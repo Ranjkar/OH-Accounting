@@ -16,6 +16,13 @@ class CompanyInvitationStatus(str, enum.Enum):
     expired = "EXPIRED"
 
 
+class SubscriptionStatus(str, enum.Enum):
+    trialing = "TRIALING"
+    active = "ACTIVE"
+    past_due = "PAST_DUE"
+    canceled = "CANCELED"
+
+
 class VatFrequency(str, enum.Enum):
     monthly = "monthly"
     quarterly = "quarterly"

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.accounting import subscription_service
 from app.core.deps import get_current_user, require_admin, require_company_access, require_editor
 from app.core.security import generate_password_reset_token, hash_reset_token
 from app.db.session import get_db
@@ -62,6 +63,10 @@ def create_company(
 ):
     if user.role != UserRole.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    try:
+        subscription_service.enforce_company_limit(db, user.tenant_id)
+    except subscription_service.PlanLimitExceededError as exc:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=str(exc)) from exc
     company = Company(tenant_id=user.tenant_id, **payload.model_dump())
     db.add(company)
     db.commit()
