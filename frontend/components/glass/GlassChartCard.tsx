@@ -20,17 +20,26 @@ interface GlassChartCardProps {
 /** Dependency-free SVG line/bar chart with a hover tooltip. Deliberately
  * not pulling in a charting library (recharts/chart.js etc.) -- this is a
  * handful of data points per company per period, not a case that needs
- * one, and every extra KB here is one the brief asked us to avoid. */
+ * one, and every extra KB here is one the brief asked us to avoid.
+ *
+ * Accessibility: the SVG itself is decorative to a screen reader (an SVG
+ * line chart has no useful semantics to expose point-by-point) -- the
+ * actual data is also rendered as a visually-hidden table immediately
+ * after it, which is what a screen reader user gets instead. Each data
+ * point is also a real, keyboard-focusable element (not just a mouse
+ * hover target), so the same tooltip a mouse user sees is reachable by
+ * tabbing/arrow-keying through the chart. */
 export default function GlassChartCard({ title, subtitle, points, formatValue, actions, height = 220, kind = "line" }: GlassChartCardProps) {
   const gradientId = useId();
+  const tableId = useId();
   const [hover, setHover] = useState<number | null>(null);
   const fmt = formatValue ?? ((v: number) => v.toLocaleString("nl-NL", { maximumFractionDigits: 0 }));
 
   if (points.length === 0) {
     return (
       <div className="glass-panel p-5">
-        <h3 className="font-semibold text-text-primary">{title}</h3>
-        <p className="text-sm text-text-secondary mt-8 text-center">No data yet for this period.</p>
+        <h3 className="text-card-heading">{title}</h3>
+        <p className="text-secondary-v2 mt-8 text-center">No data yet for this period.</p>
       </div>
     );
   }
@@ -53,12 +62,28 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
   const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${height - padding} L ${coords[0].x} ${height - padding} Z`;
   const zeroY = padding + (height - padding * 2) * (1 - (0 - min) / span);
 
+  function onPointKeyDown(e: React.KeyboardEvent, i: number) {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setHover(Math.min(i + 1, points.length - 1));
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setHover(Math.max(i - 1, 0));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setHover(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setHover(points.length - 1);
+    }
+  }
+
   return (
     <div className="glass-panel p-5">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h3 className="font-semibold text-text-primary">{title}</h3>
-          {subtitle && <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>}
+          <h3 className="text-card-heading">{title}</h3>
+          {subtitle && <p className="text-helper-v2 mt-0.5">{subtitle}</p>}
         </div>
         {actions}
       </div>
@@ -67,7 +92,8 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
         className="w-full"
         style={{ height }}
         role="img"
-        aria-label={title}
+        aria-label={`${title} chart -- see the data table below for exact values`}
+        aria-describedby={tableId}
         onMouseLeave={() => setHover(null)}
       >
         <defs>
@@ -77,7 +103,7 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
           </linearGradient>
         </defs>
 
-        <line x1={padding} y1={zeroY} x2={width - padding} y2={zeroY} stroke="#e9e7f0" strokeWidth={1} strokeDasharray="4 4" />
+        <line x1={padding} y1={zeroY} x2={width - padding} y2={zeroY} stroke="#c7c4d6" strokeWidth={1} strokeDasharray="4 4" />
 
         {kind === "bar"
           ? coords.map((c, i) => {
@@ -95,13 +121,14 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
                   fill={c.value >= 0 ? "#7c3aed" : "#b91c1c"}
                   opacity={hover === null || hover === i ? 1 : 0.45}
                   onMouseEnter={() => setHover(i)}
+                  aria-hidden="true"
                 />
               );
             })
           : (
             <>
-              <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />
-              <path d={linePath} fill="none" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" aria-hidden="true" />
+              <path d={linePath} fill="none" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
               {coords.map((c, i) => (
                 <circle
                   key={i}
@@ -113,12 +140,15 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
                   strokeWidth={1.5}
                   onMouseEnter={() => setHover(i)}
                   style={{ transition: "r 100ms ease" }}
+                  aria-hidden="true"
                 />
               ))}
             </>
           )}
 
-        {/* invisible wide hit targets for touch/hover */}
+        {/* Real, keyboard-focusable hit targets -- one per data point, tab
+            order left-to-right, arrow keys move between points, matching
+            the visible mouse-hover tooltip behaviour. */}
         {coords.map((c, i) => (
           <rect
             key={`hit-${i}`}
@@ -127,19 +157,24 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
             width={stepX}
             height={height}
             fill="transparent"
+            tabIndex={0}
+            role="button"
+            aria-label={`${c.label}: ${fmt(c.value)}`}
             onMouseEnter={() => setHover(i)}
             onTouchStart={() => setHover(i)}
+            onFocus={() => setHover(i)}
+            onKeyDown={(e) => onPointKeyDown(e, i)}
           />
         ))}
 
         {hover !== null && (
-          <g>
+          <g aria-hidden="true">
             <line x1={coords[hover].x} y1={padding} x2={coords[hover].x} y2={height - padding} stroke="#a78bfa" strokeWidth={1} strokeDasharray="3 3" />
           </g>
         )}
       </svg>
 
-      <div className="flex justify-between text-[10px] text-text-secondary mt-1 px-1">
+      <div className="flex justify-between text-helper-v2 mt-1 px-1" aria-hidden="true">
         {points.map((p, i) => (
           <span key={i} className={i === hover ? "text-brand-purple-600 font-medium" : ""}>
             {p.label}
@@ -148,11 +183,32 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
       </div>
 
       {hover !== null && (
-        <div className="mt-2 inline-flex items-center gap-2 glass-panel px-3 py-1.5 text-xs" role="status">
-          <span className="text-text-secondary">{points[hover].label}</span>
-          <span className="font-semibold text-text-primary">{fmt(points[hover].value)}</span>
+        <div className="mt-2 inline-flex items-center gap-2 glass-panel px-3 py-1.5 text-sm" role="status" aria-live="polite">
+          <span className="text-secondary-v2">{points[hover].label}</span>
+          <span className="financial-value-sm">{fmt(points[hover].value)}</span>
         </div>
       )}
+
+      {/* Screen-reader-only data table: the actual accessible representation
+          of this chart's values, per "Provide textual summaries of important
+          values" -- never relies on the SVG being interpretable. */}
+      <table id={tableId} className="sr-only">
+        <caption>{title} -- exact values by period</caption>
+        <thead>
+          <tr>
+            <th scope="col">Period</th>
+            <th scope="col">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {points.map((p, i) => (
+            <tr key={i}>
+              <td>{p.label}</td>
+              <td>{fmt(p.value)}{p.value < 0 ? " (negative)" : ""}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
