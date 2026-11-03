@@ -50,7 +50,12 @@
   --semantic-success: #15803d;
 
   --text-primary: #0f0e17;
-  --text-secondary: #6b7280;
+  /* Phase 11.1: #6b7280 measured 3.57:1 on the frosted glass-surface card
+     background and 4.44:1 on input-v2's background -- both fail WCAG AA's
+     4.5:1 normal-text threshold (verified with scripts/contrast-check.py,
+     not assumed). #525866 passes everywhere this token is used: 5.26:1 on
+     glass-surface, 7.13:1 on plain white. */
+  --text-secondary: #525866;
   --text-on-dark: #f4f3f8;
   --text-on-dark-secondary: #c9c6dc;
 
@@ -79,6 +84,45 @@
   --glass-dark-surface: rgba(21, 17, 46, 0.6);
   --glass-dark-surface-strong: rgba(21, 17, 46, 0.78);
   --glass-dark-border: rgba(255, 255, 255, 0.12);
+
+  /* ---- Phase 11.1: semantic design tokens ----
+     One central, maintainable naming layer on top of the Phase 11
+     primitives above. New components should reach for these names
+     (bg-surface-glass, text-muted-foreground, border-border, etc.);
+     existing Phase 9/11 components keep working unchanged since the
+     primitives (--brand-purple-600, --glass-surface, ...) are untouched
+     -- this is additive, not a rename. */
+  --color-token-background: #0b0a1f;
+  --color-token-foreground: var(--text-on-dark);
+  --color-token-surface: var(--surface-page);
+  --color-token-surface-elevated: #ffffff;
+  --color-token-surface-glass: var(--glass-surface);
+  --color-token-surface-glass-hover: var(--glass-surface-strong);
+  --color-token-border: var(--glass-border);
+  --color-token-border-strong: rgba(15, 14, 23, 0.28);
+  --color-token-primary: var(--brand-purple-600);
+  --color-token-primary-hover: var(--brand-purple-700);
+  --color-token-secondary: var(--accent-indigo-600);
+  --color-token-accent: var(--accent-cyan-500);
+  --color-token-muted: rgba(15, 14, 23, 0.06);
+  --color-token-muted-foreground: var(--text-secondary);
+  --color-token-success: var(--semantic-success);
+  --color-token-warning: var(--semantic-warning);
+  --color-token-danger: var(--semantic-error);
+  --color-token-info: var(--accent-indigo-600);
+  --color-token-focus-ring: var(--brand-purple-500);
+  --color-token-disabled: rgba(15, 14, 23, 0.35);
+
+  /* Typography scale -- one definition per role, reused everywhere
+     instead of ad hoc text-2xl/text-sm sprinkled per component. */
+  --font-size-page-title: 1.5rem;      /* 24px */
+  --font-size-section-heading: 1.125rem; /* 18px */
+  --font-size-card-heading: 1rem;       /* 16px */
+  --font-size-body: 0.875rem;           /* 14px */
+  --font-size-secondary: 0.8125rem;     /* 13px */
+  --font-size-label: 0.75rem;           /* 12px */
+  --font-size-helper: 0.75rem;          /* 12px */
+  --font-size-financial: 0.9375rem;     /* 15px, tabular */
 }
 
 @theme inline {
@@ -117,6 +161,34 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Semantic tokens as Tailwind utilities: bg-surface-glass,
+     text-muted-foreground, border-border, bg-primary, text-success, etc.
+     --color-background/--color-foreground above intentionally stay
+     mapped to the plain white/--foreground legacy pair, not the dark
+     app-gradient tokens: `body` depends on them resolving to a plain
+     light page background (the gradient is applied by .app-shell-v2 on
+     Shell's wrapper div, not on body), so redefining them here would
+     have silently flipped that. Use bg-surface/text-surface-elevated
+     for the semantic "page surface" concept instead. */
+  --color-surface: var(--color-token-surface);
+  --color-surface-elevated: var(--color-token-surface-elevated);
+  --color-surface-glass: var(--color-token-surface-glass);
+  --color-surface-glass-hover: var(--color-token-surface-glass-hover);
+  --color-border: var(--color-token-border);
+  --color-border-strong: var(--color-token-border-strong);
+  --color-primary: var(--color-token-primary);
+  --color-primary-hover: var(--color-token-primary-hover);
+  --color-secondary: var(--color-token-secondary);
+  --color-accent: var(--color-token-accent);
+  --color-muted: var(--color-token-muted);
+  --color-muted-foreground: var(--color-token-muted-foreground);
+  --color-success: var(--color-token-success);
+  --color-warning: var(--color-token-warning);
+  --color-danger: var(--color-token-danger);
+  --color-info: var(--color-token-info);
+  --color-focus-ring: var(--color-token-focus-ring);
+  --color-disabled: var(--color-token-disabled);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -173,7 +245,12 @@ body {
 }
 
 .glass-hero {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.92) 0%, rgba(99, 102, 241, 0.92) 50%, rgba(34, 211, 238, 0.35) 100%);
+  /* Phase 11.1: the cyan end stop was previously 0.35 alpha, measured
+     4.19:1 for white text against it -- fails WCAG AA (needs 4.5:1) and
+     is exactly the "light text over bright cyan" case the brief warns
+     against. Reduced to 0.12: cyan now reads as a subtle accent tint,
+     not a dominant background, and white text over it measures 5.8:1. */
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.92) 0%, rgba(99, 102, 241, 0.92) 50%, rgba(34, 211, 238, 0.12) 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-card);
   box-shadow: var(--glass-shadow);
@@ -238,6 +315,19 @@ body {
   box-shadow: none;
 }
 
+/* Phase 11.1: the default focus ring (--brand-purple-500 outline) measures
+   only 1.35:1 against this button's own purple/indigo background --
+   effectively invisible (verified with scripts/contrast-check.py). Every
+   solid-colour control (primary/danger/success) gets a white ring instead,
+   which measures 5.7-6.3:1 against these backgrounds. */
+.btn-primary-v2:focus-visible,
+.btn-danger-v2:focus-visible,
+.btn-success-v2:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(15, 14, 23, 0.35);
+}
+
 .btn-secondary-v2 {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(8px);
@@ -249,6 +339,55 @@ body {
 }
 .btn-secondary-v2:hover {
   background: rgba(255, 255, 255, 0.85);
+}
+
+.btn-outline-v2 {
+  background: transparent;
+  color: var(--brand-purple-600);
+  border: 1.5px solid var(--brand-purple-400);
+  border-radius: 0.6rem;
+  font-weight: 500;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.btn-outline-v2:hover {
+  background: var(--brand-purple-50);
+  border-color: var(--brand-purple-600);
+}
+
+.btn-danger-v2 {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #ffffff;
+  border-radius: 0.6rem;
+  font-weight: 500;
+  box-shadow: 0 4px 14px -4px rgba(185, 28, 28, 0.5);
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+}
+.btn-danger-v2:hover { filter: brightness(1.08); }
+.btn-danger-v2:active { transform: translateY(1px); }
+.btn-danger-v2:disabled { opacity: 0.5; filter: none; box-shadow: none; }
+
+.btn-success-v2 {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #ffffff;
+  border-radius: 0.6rem;
+  font-weight: 500;
+  box-shadow: 0 4px 14px -4px rgba(21, 128, 61, 0.5);
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+}
+.btn-success-v2:hover { filter: brightness(1.08); }
+.btn-success-v2:active { transform: translateY(1px); }
+.btn-success-v2:disabled { opacity: 0.5; filter: none; box-shadow: none; }
+
+.btn-ghost-v2 {
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 0.6rem;
+  font-weight: 500;
+  transition: background 150ms ease, color 150ms ease;
+}
+.btn-ghost-v2:hover {
+  background: rgba(15, 14, 23, 0.06);
+  color: var(--text-primary);
 }
 
 .nav-rail-v2 {
@@ -289,10 +428,48 @@ body {
   background: rgba(255, 255, 255, 0.95);
 }
 
-/* ---- Semantic value colouring (financial figures) ---- */
+/* ---- Semantic value colouring (financial figures) ----
+   Never the sole indicator of status in this app: every place these are
+   used pairs the colour with an adjacent text label (a stat card's own
+   label, a trend's "▲"/"▼" + text, a badge's text) -- verified across
+   StatusBadge/TransactionBadges/DocumentStatusBadge/CalendarStatusBadge
+   and GlassStatCard, all of which already render a text label alongside
+   colour, not colour alone. */
 .value-positive { color: var(--semantic-success); }
 .value-negative { color: var(--semantic-error); }
 .value-warning { color: var(--semantic-warning); }
+
+/* ---- Typography scale (Phase 11.1) ----
+   One class per role. Replaces ad hoc text-2xl/text-sm/font-semibold
+   strings scattered per component with named roles that can be retuned
+   in one place. */
+.text-page-title { font-size: var(--font-size-page-title); font-weight: 600; line-height: 1.3; color: var(--text-primary); }
+.text-section-heading { font-size: var(--font-size-section-heading); font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.text-card-heading { font-size: var(--font-size-card-heading); font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.text-body-v2 { font-size: var(--font-size-body); line-height: 1.55; color: var(--text-primary); }
+.text-secondary-v2 { font-size: var(--font-size-secondary); line-height: 1.5; color: var(--text-secondary); }
+.text-label-v2 { font-size: var(--font-size-label); font-weight: 500; line-height: 1.3; color: var(--text-secondary); letter-spacing: 0.01em; }
+.text-helper-v2 { font-size: var(--font-size-helper); line-height: 1.4; color: var(--text-secondary); }
+
+/* Financial amounts: tabular numerals so columns of figures actually
+   align, consistent weight/size regardless of which component renders
+   them. */
+.financial-value {
+  font-size: var(--font-size-financial);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+.financial-value-sm {
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  color: var(--text-primary);
+}
+table, .financial-table { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
 /* ---- Scrollbar: subtle, not default chrome, inside dark nav/panels ---- */
 .glass-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
