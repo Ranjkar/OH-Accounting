@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.accounting import dutch_tax_rules as tax
@@ -21,6 +22,11 @@ class PayrollError(Exception):
 
 def create_payroll_run(db: Session, *, tenant_id: int, company_id: int, period_type, period_year: int,
                         period_number: int, created_by_user_id: int, tax_year: int | None = None) -> PayrollRun:
+    """Idempotency: a retried/double-clicked request for the same company
+    + period raises PayrollError (caught as 409 by the API layer) rather
+    than creating a second payroll run for the same period -- enforced by
+    the DB's own unique constraint (uq_payroll_run_period), not just a
+    check-then-insert that could race under concurrent requests."""
     tax_year = tax_year or tax.CURRENT_TAX_YEAR
     tax.get_rule_set(tax_year)  # raises if no rule set exists for this year -- fail fast, not silently
     run = PayrollRun(
@@ -28,7 +34,13 @@ def create_payroll_run(db: Session, *, tenant_id: int, company_id: int, period_t
         period_number=period_number, tax_year=tax_year, created_by_user_id=created_by_user_id,
     )
     db.add(run)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        db.rollback()
+        raise PayrollError(
+            f"A payroll run for {period_type.value} period {period_number}/{period_year} already exists for this company"
+        ) from exc
     return run
 
 

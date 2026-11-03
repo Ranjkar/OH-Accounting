@@ -175,3 +175,28 @@ def test_build_annual_statement_empty_year_returns_zero_totals(db_session):
     statement = payroll_service.build_annual_statement(db_session, employee, 2030)
     assert statement["number_of_payslips"] == 0
     assert statement["gross_salary"] == Decimal("0.00")
+
+
+def test_create_payroll_run_is_idempotent_against_duplicate_period(db_session):
+    """Phase 12: a retried/double-clicked request for the same period must
+    not create a second payroll run -- enforced by uq_payroll_run_period."""
+    tenant, company, user, employee = _setup(db_session)
+    payroll_service.create_payroll_run(
+        db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+        period_year=2025, period_number=5, created_by_user_id=user.id,
+    )
+    db_session.commit()
+
+    with pytest.raises(payroll_service.PayrollError):
+        payroll_service.create_payroll_run(
+            db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+            period_year=2025, period_number=5, created_by_user_id=user.id,
+        )
+
+    # A different period for the same company is still allowed.
+    other = payroll_service.create_payroll_run(
+        db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+        period_year=2025, period_number=6, created_by_user_id=user.id,
+    )
+    db_session.commit()
+    assert other.id is not None

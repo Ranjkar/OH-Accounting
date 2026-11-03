@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -12,9 +12,18 @@ class PayrollRun(Base):
     """One payroll period for a company. Approving a run never edits a
     Payslip in place afterward -- a correction creates a new Payslip linked
     via corrects_payslip_id, same immutable-correction pattern used
-    throughout this codebase."""
+    throughout this codebase.
+
+    Phase 12: unique on (company_id, period_type, period_year,
+    period_number) -- a double-click or retried request on "create
+    payroll run" must not silently create two runs (and therefore double
+    payroll) for the same period. Enforced at the DB level, not just in
+    application code, so it holds even under concurrent requests."""
 
     __tablename__ = "payroll_runs"
+    __table_args__ = (
+        UniqueConstraint("company_id", "period_type", "period_year", "period_number", name="uq_payroll_run_period"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))
