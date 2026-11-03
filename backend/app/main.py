@@ -2,8 +2,9 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.v1 import router as api_v1_router
 from app.db.session import SessionLocal
@@ -54,9 +55,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    """Defense-in-depth headers that make sense regardless of what sits in
+    front of this app. HTTPS itself (Strict-Transport-Security, TLS
+    termination) is a reverse-proxy/load-balancer concern, not set here --
+    see docs/production-deployment.md."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    return response
+
+
 app.include_router(api_v1_router, prefix="/api/v1")
 
 
 @app.get("/health")
 def health():
+    """Checks real DB connectivity, not just that the process is alive --
+    an orchestrator restarting on a DB outage is more useful than one that
+    keeps routing traffic to a process that can't actually serve requests."""
+    try:
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+        finally:
+            db.close()
+    except Exception as exc:
+        return Response(content=f'{{"status": "error", "detail": "{exc.__class__.__name__}"}}', status_code=503, media_type="application/json")
     return {"status": "ok"}
