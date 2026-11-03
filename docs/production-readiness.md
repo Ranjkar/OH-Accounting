@@ -15,7 +15,7 @@ Honest status, not a claim of full readiness.
 | Production compose | READY (config only) | Valid syntax, never deployed |
 | Backup/restore | READY (manual) | Verified twice (Phase 10, Phase 12) against disposable databases; no automated schedule |
 | Monitoring | PARTIAL | Structured logs + request correlation + `/ready`; no metrics backend, no alerting |
-| MFA | NOT IMPLEMENTED | Recommended for a future phase given BSN/financial data exposure |
+| MFA | IMPLEMENTED | Optional per-user TOTP (`docs/security.md`); verified end-to-end against a running server. No backup-code recovery path yet. |
 | SBR/Digipoort submission | BLOCKED BY EXTERNAL REQUIREMENT | No PKIoverheid/Logius test certificate obtained |
 | KVK lookup | SANDBOX VERIFIED | Real network call against KVK's published test sandbox |
 | Open Banking | BLOCKED BY EXTERNAL REQUIREMENT | No authorised provider agreement/credentials; DNB/EBA authorization not independently re-verified |

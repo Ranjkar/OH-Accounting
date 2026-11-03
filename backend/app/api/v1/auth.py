@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.deps import get_current_user
+from app.core.mfa_crypto import decrypt_mfa_secret, encrypt_mfa_secret
 from app.core.rate_limit import enforce as enforce_rate_limit
 from app.core.security import (
     create_access_token,
@@ -14,6 +15,7 @@ from app.core.security import (
     hash_reset_token,
     verify_password,
 )
+from app.core.totp import generate_secret, provisioning_uri, verify_code
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
 from app.models.employee import Employee
@@ -22,6 +24,9 @@ from app.models.timesheet import EmployeeTimesheetEntry
 from app.models.user import User
 from app.schemas.auth import (
     LoginRequest,
+    MfaDisableRequest,
+    MfaEnableRequest,
+    MfaSetupResponse,
     PasswordResetConfirm,
     PasswordResetRequest,
     TokenResponse,
@@ -71,8 +76,53 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
     user.locked_until = None
     db.commit()
 
+    if user.mfa_enabled:
+        if not payload.mfa_code:
+            return TokenResponse(mfa_required=True)
+        secret = decrypt_mfa_secret(user.mfa_secret_encrypted)
+        if not verify_code(secret, payload.mfa_code):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+
     token = create_access_token(subject=user.email, token_version=user.token_version)
     return TokenResponse(access_token=token)
+
+
+@router.post("/mfa/setup", response_model=MfaSetupResponse)
+def mfa_setup(user: User = Depends(get_current_user)):
+    """Generates a new secret and its provisioning URI but does not enable
+    MFA yet -- enrollment is only confirmed (and the secret persisted,
+    encrypted) once the user proves they can generate a valid code via
+    /mfa/enable. Calling this again before /mfa/enable simply issues a
+    fresh, unsaved secret."""
+    secret = generate_secret()
+    return MfaSetupResponse(secret=secret, provisioning_uri=provisioning_uri(secret, user.email))
+
+
+@router.post("/mfa/enable", status_code=status.HTTP_204_NO_CONTENT)
+def mfa_enable(payload: MfaEnableRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """`payload.secret` is the one just returned by /mfa/setup -- the
+    frontend round-trips it here alongside the code the user typed in from
+    their authenticator app, so the secret is only ever persisted once
+    proven working, never stored unconfirmed."""
+    if not verify_code(payload.secret, payload.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code -- check your authenticator app and try again")
+    user.mfa_secret_encrypted = encrypt_mfa_secret(payload.secret)
+    user.mfa_enabled = True
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="mfa_enabled", entity_type="user", entity_id=user.id))
+    db.commit()
+
+
+@router.post("/mfa/disable", status_code=status.HTTP_204_NO_CONTENT)
+def mfa_disable(payload: MfaDisableRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not user.mfa_enabled or user.mfa_secret_encrypted is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled")
+    secret = decrypt_mfa_secret(user.mfa_secret_encrypted)
+    if not verify_code(secret, payload.code):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
+    user.mfa_enabled = False
+    user.mfa_secret_encrypted = None
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="mfa_disabled", entity_type="user", entity_id=user.id))
+    db.commit()
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

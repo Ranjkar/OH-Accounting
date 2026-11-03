@@ -185,6 +185,7 @@ export interface User {
   email: string;
   full_name: string;
   role: UserRole;
+  mfa_enabled: boolean;
 }
 
 export interface Company {
@@ -687,12 +688,17 @@ export interface Scenario {
 }
 
 export const api = {
-  login: (email: string, password: string) =>
-    request<{ access_token: string }>("/auth/login", {
+  login: (email: string, password: string, mfaCode?: string) =>
+    request<{ access_token: string | null; mfa_required: boolean }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, mfa_code: mfaCode }),
     }),
   me: (token: string) => request<User>("/auth/me", { token }),
+  mfaSetup: (token: string) => request<{ secret: string; provisioning_uri: string }>("/auth/mfa/setup", { method: "POST", token }),
+  mfaEnable: (token: string, secret: string, code: string) =>
+    request<void>("/auth/mfa/enable", { method: "POST", token, body: JSON.stringify({ secret, code }) }),
+  mfaDisable: (token: string, code: string) =>
+    request<void>("/auth/mfa/disable", { method: "POST", token, body: JSON.stringify({ code }) }),
   listCompanies: (token: string) => request<Company[]>("/companies", { token }),
   createCompany: (
     token: string,

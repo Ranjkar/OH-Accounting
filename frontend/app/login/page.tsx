@@ -10,6 +10,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -18,8 +20,12 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.push("/");
+      const result = await login(email, password, mfaRequired ? mfaCode : undefined);
+      if (result.mfaRequired) {
+        setMfaRequired(true);
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {
@@ -66,15 +72,37 @@ export default function LoginPage() {
             id="login-password"
             type="password"
             required
+            disabled={mfaRequired}
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full input-v2 px-3 py-2 text-sm"
+            className="w-full input-v2 px-3 py-2 text-sm disabled:opacity-60"
           />
         </div>
 
+        {mfaRequired && (
+          <div className="space-y-1.5">
+            <label htmlFor="login-mfa-code" className="text-sm font-medium text-text-primary">
+              Authenticator code
+            </label>
+            <input
+              id="login-mfa-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              autoFocus
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              placeholder="6-digit code"
+              className="w-full input-v2 px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-text-secondary">This account has MFA enabled. Enter the current code from your authenticator app.</p>
+          </div>
+        )}
+
         <button type="submit" disabled={submitting} className="btn-primary-v2 w-full py-2 text-sm disabled:opacity-50">
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? "Signing in…" : mfaRequired ? "Verify code" : "Sign in"}
         </button>
       </form>
     </div>

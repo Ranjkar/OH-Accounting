@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, String, Table
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, LargeBinary, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -39,6 +39,15 @@ class User(Base):
     # linked financial/employee/payroll record (those have their own
     # statutory retention -- see docs/gdpr-data-governance.md).
     is_active: Mapped[bool] = mapped_column(default=True)
+
+    # ---- Phase 13: optional per-user TOTP MFA ----
+    # mfa_secret_encrypted is only set once enrollment is confirmed with a
+    # valid code (see app.api.v1.auth.mfa_enable); mfa_enabled gates whether
+    # login requires a code at all. No backup/recovery codes in this build --
+    # a lost device requires an operator to clear mfa_enabled directly, a
+    # documented limitation (see docs/security.md).
+    mfa_enabled: Mapped[bool] = mapped_column(default=False)
+    mfa_secret_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="users")
     companies: Mapped[list["Company"]] = relationship(

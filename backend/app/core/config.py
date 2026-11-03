@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 INSECURE_DEFAULT_JWT_SECRET = "dev-secret-change-in-production"
 INSECURE_DEFAULT_BSN_ENCRYPTION_KEY = "lKDqZ0RFLmPlasPurAMcQxGNT6KlIu5X3cT41UC8ei4="
 INSECURE_DEFAULT_OPEN_BANKING_KEY = "lFMlxrHVoe19oQjvmkuASRr2LnY3zeEVhA8ewJYBwd4="
+INSECURE_DEFAULT_MFA_SECRET_KEY = "JEOzBUqvIIQwzP6uIzI0T3AJrTAeh5Rfg-3KFUcoEfg="
 
 
 class Settings(BaseSettings):
@@ -60,6 +61,12 @@ class Settings(BaseSettings):
     max_failed_login_attempts: int = 5
     account_lockout_minutes: int = 15
 
+    # Phase 13: TOTP MFA secret encryption (separate key again -- see
+    # app.core.mfa_crypto -- a compromised MFA key must never also expose
+    # BSNs or Open Banking tokens, and vice versa).
+    mfa_secret_encryption_key: str = INSECURE_DEFAULT_MFA_SECRET_KEY
+    mfa_secret_encryption_key_previous: str = ""
+
     class Config:
         env_file = ".env"
 
@@ -84,4 +91,10 @@ if settings.open_banking_token_encryption_key == INSECURE_DEFAULT_OPEN_BANKING_K
         "OPEN_BANKING_TOKEN_ENCRYPTION_KEY is still the insecure placeholder value. Set a strong, "
         "randomly generated Fernet key in the environment before any real bank access/refresh "
         "token is ever stored."
+    )
+
+if settings.mfa_secret_encryption_key == INSECURE_DEFAULT_MFA_SECRET_KEY:
+    logger.warning(
+        "MFA_SECRET_ENCRYPTION_KEY is still the insecure placeholder value. Set a strong, "
+        "randomly generated Fernet key in the environment before any real user enrolls in MFA."
     )

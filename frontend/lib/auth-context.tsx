@@ -8,8 +8,9 @@ interface AuthState {
   token: string | null;
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, mfaCode?: string) => Promise<{ mfaRequired: boolean }>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -34,12 +35,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restore.finally(() => setLoading(false));
   }, []);
 
-  async function login(email: string, password: string) {
-    const { access_token } = await api.login(email, password);
+  async function login(email: string, password: string, mfaCode?: string) {
+    const { access_token, mfa_required } = await api.login(email, password, mfaCode);
+    if (!access_token) {
+      return { mfaRequired: mfa_required };
+    }
     const u = await api.me(access_token);
     localStorage.setItem("token", access_token);
     setToken(access_token);
     setUser(u);
+    return { mfaRequired: false };
   }
 
   function logout() {
@@ -49,8 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/login");
   }
 
+  async function refreshUser() {
+    if (!token) return;
+    setUser(await api.me(token));
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
