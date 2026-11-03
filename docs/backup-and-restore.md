@@ -57,6 +57,29 @@ verification — never against `onholland_accounting` destructively:
    file — no artifact of this test was left behind, and the live dev
    database was never written to by any step above.
 
+## Re-verified (Phase 12, 2026-11-03)
+
+Repeated the full procedure above against the current schema (now
+including Phase 12's `password_reset_tokens` table and the new
+`users`/`bank_accounts` columns): backup, restore into a fresh disposable
+database (`onholland_phase12_restore_test`), compared row counts across
+`users`, `companies`, `password_reset_tokens` — all matched exactly.
+Dropped the disposable database and removed the scratch dump file
+afterward. The live dev database was never touched destructively.
+
+## RPO / RTO
+
+- **RPO target: 24 hours** (daily backup cadence) — **not yet achieved
+  in practice**, since no automated backup schedule is wired up (see
+  below). Today's actual RPO is "however long since someone last ran
+  `backup_db.sh` by hand" — this is a target, not a verified result.
+- **RTO target: under 30 minutes** for a single-database restore via
+  `restore_db.sh` — the verified restore above (a database with a
+  handful of rows) completed in well under a minute; a realistic
+  production-sized database's restore time was not measured and would
+  need its own benchmark before this target could be called verified
+  rather than estimated.
+
 ## What this does not cover
 
 - Point-in-time recovery / continuous WAL archiving is not configured —
@@ -64,6 +87,11 @@ verification — never against `onholland_accounting` destructively:
   not sub-minute recovery points.
 - There is no automated backup schedule (cron, managed service) wired up
   yet — running `backup_db.sh` is a manual or externally-scheduled action.
+  This is the main reason the RPO target above isn't yet a verified result.
+- Backups are not encrypted at rest by this tooling — `pg_dump`'s output
+  file should be encrypted (e.g. `gpg`/cloud-provider server-side
+  encryption) by whatever process stores it long-term; not implemented
+  here.
 - Restoring does not re-apply Alembic migrations — a restored dump already
   contains the schema as of the backup; run `alembic upgrade head`
   afterward if migrations have advanced since the backup was taken.
