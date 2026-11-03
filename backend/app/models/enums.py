@@ -136,15 +136,20 @@ class BankSourceFormat(str, enum.Enum):
     camt054 = "CAMT054"
     mt940 = "MT940"
     csv = "CSV"
+    open_banking = "OPEN_BANKING"  # Phase 12: synced via a provider, not a file
 
 
 class BankConsentStatus(str, enum.Enum):
-    """Open Banking connection status. Always not_connected in this build --
-    there is no live provider integration, only file import. See
-    docs/bank-integration.md."""
+    """Open Banking connection status. Phase 12 adds a real provider
+    abstraction (app/services/open_banking_provider.py) and a stub
+    provider for development -- no authorised AISP agreement/credentials
+    exist for this project, so `connected` only ever reflects the stub in
+    this build. See docs/open-banking.md."""
 
     not_connected = "NOT_CONNECTED"
+    pending = "PENDING"  # consent flow started, not yet completed
     connected = "CONNECTED"
+    expired = "EXPIRED"  # consent lapsed (PSD2 RTS: max 90 days), needs renewal
     error = "ERROR"
     revoked = "REVOKED"
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.accounting import bank_import, reconciliation_service
+from app.accounting import bank_import, open_banking_service, reconciliation_service
 from app.core.config import settings
 from app.core.deps import get_current_user, require_company_access, require_editor
 from app.core.rate_limit import enforce as enforce_rate_limit
@@ -16,9 +16,12 @@ from app.schemas.banking import (
     BankImportBatchOut,
     BankTransactionDetailOut,
     BankTransactionOut,
+    OpenBankingCallbackRequest,
+    OpenBankingConnectRequest,
     PaymentMatchOut,
     ReverseMatchRequest,
 )
+from app.services.open_banking_provider import get_open_banking_provider
 
 router = APIRouter(tags=["banking"])
 
@@ -228,3 +231,52 @@ def bulk_approve_high_confidence(
             continue
     db.commit()
     return approved
+
+
+# ---- Phase 12: Open Banking (PSD2 AISP) -- stub provider only, see
+# docs/open-banking.md. Manual file import above remains fully available
+# and untouched regardless of connection status. ----
+
+
+@router.post("/bank-accounts/{bank_account_id}/open-banking/connect")
+def connect_open_banking(bank_account_id: int, payload: OpenBankingConnectRequest, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    account = _get_bank_account_or_404(db, user, bank_account_id)
+    provider = get_open_banking_provider()
+    authorization_url = open_banking_service.initiate_connection(db, account, provider, payload.redirect_uri)
+    db.commit()
+    return {"authorization_url": authorization_url, "provider": provider.name}
+
+
+@router.post("/bank-accounts/{bank_account_id}/open-banking/callback", response_model=BankAccountOut)
+def complete_open_banking(bank_account_id: int, payload: OpenBankingCallbackRequest, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    account = _get_bank_account_or_404(db, user, bank_account_id)
+    provider = get_open_banking_provider()
+    try:
+        open_banking_service.complete_connection(db, account, provider, payload.callback_params)
+    except open_banking_service.OpenBankingError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    db.commit()
+    db.refresh(account)
+    return account
+
+
+@router.post("/bank-accounts/{bank_account_id}/open-banking/sync", response_model=BankImportBatchOut)
+def sync_open_banking(bank_account_id: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    account = _get_bank_account_or_404(db, user, bank_account_id)
+    provider = get_open_banking_provider()
+    try:
+        batch = open_banking_service.sync_account(db, account, provider, user.id)
+    except open_banking_service.OpenBankingError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    db.commit()
+    db.refresh(batch)
+    return batch
+
+
+@router.post("/bank-accounts/{bank_account_id}/open-banking/disconnect", response_model=BankAccountOut)
+def disconnect_open_banking(bank_account_id: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    account = _get_bank_account_or_404(db, user, bank_account_id)
+    open_banking_service.disconnect(db, account)
+    db.commit()
+    db.refresh(account)
+    return account

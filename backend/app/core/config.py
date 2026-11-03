@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 INSECURE_DEFAULT_JWT_SECRET = "dev-secret-change-in-production"
 INSECURE_DEFAULT_BSN_ENCRYPTION_KEY = "lKDqZ0RFLmPlasPurAMcQxGNT6KlIu5X3cT41UC8ei4="
+INSECURE_DEFAULT_OPEN_BANKING_KEY = "lFMlxrHVoe19oQjvmkuASRr2LnY3zeEVhA8ewJYBwd4="
 
 
 class Settings(BaseSettings):
@@ -48,6 +49,11 @@ class Settings(BaseSettings):
     kvk_api_key: str | None = None
     kvk_api_base_url: str | None = None
 
+    # Phase 12: Open Banking access/refresh token encryption (separate key
+    # from BSN encryption -- see app.core.token_crypto).
+    open_banking_token_encryption_key: str = INSECURE_DEFAULT_OPEN_BANKING_KEY
+    open_banking_token_encryption_key_previous: str = ""
+
     # Phase 12: how long a password-reset link stays valid, and how many
     # consecutive failed logins trigger a temporary account lock.
     password_reset_token_expire_minutes: int = 30
@@ -71,4 +77,11 @@ if settings.bsn_encryption_key == INSECURE_DEFAULT_BSN_ENCRYPTION_KEY:
         "BSN_ENCRYPTION_KEY is still the insecure placeholder value. Set a strong, randomly "
         "generated Fernet key (cryptography.fernet.Fernet.generate_key()) in the environment "
         "before any real employee BSN is ever stored."
+    )
+
+if settings.open_banking_token_encryption_key == INSECURE_DEFAULT_OPEN_BANKING_KEY:
+    logger.warning(
+        "OPEN_BANKING_TOKEN_ENCRYPTION_KEY is still the insecure placeholder value. Set a strong, "
+        "randomly generated Fernet key in the environment before any real bank access/refresh "
+        "token is ever stored."
     )
