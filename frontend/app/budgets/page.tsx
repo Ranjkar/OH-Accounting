@@ -104,7 +104,7 @@ function BudgetsContent() {
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -112,7 +112,7 @@ function BudgetsContent() {
             </option>
           ))}
         </select>
-        <select value={financialYearId} onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={financialYearId} aria-label="Financial Year" onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">All financial years</option>
           {financialYears.map((fy) => (
             <option key={fy.id} value={fy.id}>
@@ -139,17 +139,17 @@ function BudgetsContent() {
             </div>
           )}
           <form onSubmit={createBudget} className="space-y-3">
-            <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Budget name" className="input-v2 px-3 py-2 text-sm w-64" />
+            <input required value={name} aria-label="Name" onChange={(e) => setName(e.target.value)} placeholder="Budget name" className="input-v2 px-3 py-2 text-sm w-64" />
             <div className="flex items-end gap-2">
-              <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category (e.g. Revenue, Rent)" className="input-v2 px-3 py-2 text-sm w-48" />
-              <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="input-v2 px-2 py-2 text-sm">
+              <input value={category} aria-label="Category" onChange={(e) => setCategory(e.target.value)} placeholder="Category (e.g. Revenue, Rent)" className="input-v2 px-3 py-2 text-sm w-48" />
+              <select value={month} aria-label="Month" onChange={(e) => setMonth(Number(e.target.value))} className="input-v2 px-2 py-2 text-sm">
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
                     Month {m}
                   </option>
                 ))}
               </select>
-              <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="input-v2 px-3 py-2 text-sm w-32" />
+              <input value={amount} aria-label="Amount" onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="input-v2 px-3 py-2 text-sm w-32" />
               <button type="button" onClick={addDraftLine} className="input-v2 px-3 py-2 text-sm">
                 Add line
               </button>

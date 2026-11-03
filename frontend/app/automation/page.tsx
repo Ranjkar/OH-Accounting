@@ -60,6 +60,7 @@ function AutomationContent() {
 
       <select
         value={companyId}
+        aria-label="Company"
         onChange={(e) => {
           setCompanyId(e.target.value ? Number(e.target.value) : "");
           if (!e.target.value) setSummary(null);

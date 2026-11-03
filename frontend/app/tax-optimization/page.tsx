@@ -41,7 +41,7 @@ function TaxOptimizationContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-end gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -49,8 +49,8 @@ function TaxOptimizationContent() {
             </option>
           ))}
         </select>
-        <input value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder="Annual profit" className="input-v2 px-3 py-2 text-sm w-36" />
-        <input value={annualRevenue} onChange={(e) => setAnnualRevenue(e.target.value)} placeholder="Annual revenue" className="input-v2 px-3 py-2 text-sm w-36" />
+        <input value={annualProfit} aria-label="Annual Profit" onChange={(e) => setAnnualProfit(e.target.value)} placeholder="Annual profit" className="input-v2 px-3 py-2 text-sm w-36" />
+        <input value={annualRevenue} aria-label="Annual Revenue" onChange={(e) => setAnnualRevenue(e.target.value)} placeholder="Annual revenue" className="input-v2 px-3 py-2 text-sm w-36" />
         <button onClick={load} disabled={!companyId} className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50">
           Find opportunities
         </button>

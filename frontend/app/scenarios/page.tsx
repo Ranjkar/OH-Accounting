@@ -80,7 +80,7 @@ function ScenariosContent() {
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+      <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
@@ -94,8 +94,8 @@ function ScenariosContent() {
           <h2 className="font-medium text-navy">New scenario</h2>
           <form onSubmit={createScenario} className="space-y-3">
             <div className="flex items-center gap-3">
-              <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="input-v2 px-3 py-2 text-sm w-56" />
-              <select value={scenarioType} onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="input-v2 px-2 py-2 text-sm">
+              <input required value={name} aria-label="Name" onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="input-v2 px-3 py-2 text-sm w-56" />
+              <select value={scenarioType} aria-label="Scenario Type" onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="input-v2 px-2 py-2 text-sm">
                 <option value="BASE">Base case</option>
                 <option value="OPTIMISTIC">Optimistic</option>
                 <option value="CONSERVATIVE">Conservative</option>

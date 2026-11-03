@@ -83,6 +83,7 @@ function DocumentsContent() {
       <div className="flex items-center gap-4">
         <select
           value={companyId}
+          aria-label="Company"
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"
         >

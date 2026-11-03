@@ -82,6 +82,7 @@ function FinancialOverviewContent() {
         <h2 className="text-lg font-medium text-navy">Company detail</h2>
         <select
           value={companyId}
+          aria-label="Company"
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"
         >

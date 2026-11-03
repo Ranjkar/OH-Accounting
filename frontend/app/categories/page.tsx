@@ -102,7 +102,7 @@ function CategoriesContent() {
           <div className="card-v2 p-4 space-y-3">
             <h2 className="font-medium text-navy">Rules</h2>
             <form onSubmit={createRule} className="flex items-end gap-3">
-              <select value={ruleType} onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="input-v2 px-2 py-2 text-sm">
+              <select value={ruleType} aria-label="Rule Type" onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="input-v2 px-2 py-2 text-sm">
                 <option value="SUPPLIER_NAME">Supplier name contains</option>
                 <option value="IBAN">IBAN equals</option>
                 <option value="DESCRIPTION_PATTERN">Description matches pattern</option>
@@ -114,7 +114,7 @@ function CategoriesContent() {
                 placeholder="match value"
                 className="input-v2 px-3 py-2 text-sm"
               />
-              <select value={ruleCategory} onChange={(e) => setRuleCategory(e.target.value)} className="input-v2 px-2 py-2 text-sm">
+              <select value={ruleCategory} aria-label="Rule Category" onChange={(e) => setRuleCategory(e.target.value)} className="input-v2 px-2 py-2 text-sm">
                 {EXPENSE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c}

@@ -51,7 +51,7 @@ function LegalStructureContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-end gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -59,8 +59,8 @@ function LegalStructureContent() {
             </option>
           ))}
         </select>
-        <input value={annualRevenue} onChange={(e) => setAnnualRevenue(e.target.value)} placeholder="Annual revenue" className="input-v2 px-3 py-2 text-sm w-40" />
-        <input value={annualExpenses} onChange={(e) => setAnnualExpenses(e.target.value)} placeholder="Annual operating expenses" className="input-v2 px-3 py-2 text-sm w-48" />
+        <input value={annualRevenue} aria-label="Annual Revenue" onChange={(e) => setAnnualRevenue(e.target.value)} placeholder="Annual revenue" className="input-v2 px-3 py-2 text-sm w-40" />
+        <input value={annualExpenses} aria-label="Annual Expenses" onChange={(e) => setAnnualExpenses(e.target.value)} placeholder="Annual operating expenses" className="input-v2 px-3 py-2 text-sm w-48" />
         <button onClick={compare} disabled={!companyId} className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50">
           Compare
         </button>

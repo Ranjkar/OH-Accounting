@@ -69,7 +69,7 @@ function WorkingHoursContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -78,7 +78,7 @@ function WorkingHoursContent() {
           ))}
         </select>
         {companyId && (
-          <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <select value={employeeId} aria-label="Employee" onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
             <option value="">Select an employee</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -92,14 +92,14 @@ function WorkingHoursContent() {
       {employeeId && (
         <>
           <form onSubmit={createEntry} className="card-v2 p-4 flex items-end gap-3">
-            <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-            <select value={entryType} onChange={(e) => setEntryType(e.target.value)} className="input-v2 px-3 py-2 text-sm">
+            <input type="date" value={entryDate} aria-label="Entry Date" onChange={(e) => setEntryDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <select value={entryType} aria-label="Entry Type" onChange={(e) => setEntryType(e.target.value)} className="input-v2 px-3 py-2 text-sm">
               <option value="WORKED">Worked</option>
               <option value="HOLIDAY">Holiday</option>
               <option value="SICK">Sick</option>
               <option value="ABSENCE">Absence</option>
             </select>
-            <input value={hours} onChange={(e) => setHours(e.target.value)} placeholder="Hours" className="input-v2 px-3 py-2 text-sm w-24" />
+            <input value={hours} aria-label="Hours" onChange={(e) => setHours(e.target.value)} placeholder="Hours" className="input-v2 px-3 py-2 text-sm w-24" />
             <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
               Log entry
             </button>

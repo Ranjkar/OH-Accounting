@@ -71,12 +71,12 @@ function CashFlowContent() {
         </select>
         {tab === "statement" && (
           <>
-            <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
+            <select value={periodType} aria-label="Period Type" onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
               <option value="MONTHLY">Monthly</option>
               <option value="QUARTERLY">Quarterly</option>
               <option value="ANNUAL">Annual</option>
             </select>
-            <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <input type="date" value={referenceDate} aria-label="Reference Date" onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
           </>
         )}
       </div>

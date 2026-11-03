@@ -56,7 +56,7 @@ function PnlContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -64,13 +64,13 @@ function PnlContent() {
             </option>
           ))}
         </select>
-        <select value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
+        <select value={periodType} aria-label="Period Type" onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
           <option value="ANNUAL">Annual</option>
         </select>
-        <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-        <select value={compare} onChange={(e) => setCompare(e.target.value as typeof compare)} className="input-v2 px-3 py-2 text-sm">
+        <input type="date" value={referenceDate} aria-label="Reference Date" onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+        <select value={compare} aria-label="Compare" onChange={(e) => setCompare(e.target.value as typeof compare)} className="input-v2 px-3 py-2 text-sm">
           <option value="">No comparison</option>
           <option value="previous">vs previous period</option>
           <option value="year_on_year">vs same period last year</option>

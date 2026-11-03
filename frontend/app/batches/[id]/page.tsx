@@ -175,6 +175,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
                   <td className="px-4 py-2.5">
                     <input
                       type="checkbox"
+                      aria-label={`Select document ${doc.id}`}
                       checked={selected.has(doc.id)}
                       onChange={() => toggle(doc.id)}
                       disabled={doc.status !== "extracted"}

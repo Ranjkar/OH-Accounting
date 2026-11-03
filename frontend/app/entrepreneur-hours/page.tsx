@@ -58,7 +58,7 @@ function EntrepreneurHoursContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -66,7 +66,7 @@ function EntrepreneurHoursContent() {
             </option>
           ))}
         </select>
-        <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm w-24" />
+        <input type="number" value={year} aria-label="Year" onChange={(e) => setYear(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm w-24" />
       </div>
 
       {dashboard && (
@@ -95,8 +95,8 @@ function EntrepreneurHoursContent() {
 
       {companyId && (
         <form onSubmit={createEntry} className="card-v2 p-4 flex items-end gap-3 flex-wrap">
-          <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-v2 px-3 py-2 text-sm">
+          <input type="date" value={entryDate} aria-label="Entry Date" onChange={(e) => setEntryDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+          <select value={category} aria-label="Category" onChange={(e) => setCategory(e.target.value)} className="input-v2 px-3 py-2 text-sm">
             <option value="business_activity">Business activity</option>
             <option value="training">Training</option>
             <option value="administration">Administration</option>
@@ -104,8 +104,8 @@ function EntrepreneurHoursContent() {
             <option value="travel">Travel</option>
             <option value="other">Other</option>
           </select>
-          <input value={durationHours} onChange={(e) => setDurationHours(e.target.value)} placeholder="Hours" className="input-v2 px-3 py-2 text-sm w-24" />
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" className="input-v2 px-3 py-2 text-sm flex-1" />
+          <input value={durationHours} aria-label="Duration Hours" onChange={(e) => setDurationHours(e.target.value)} placeholder="Hours" className="input-v2 px-3 py-2 text-sm w-24" />
+          <input value={description} aria-label="Description" onChange={(e) => setDescription(e.target.value)} placeholder="Description" className="input-v2 px-3 py-2 text-sm flex-1" />
           <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
             Log hours
           </button>

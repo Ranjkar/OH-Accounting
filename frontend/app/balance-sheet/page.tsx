@@ -74,7 +74,7 @@ function BalanceSheetContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">Select a company</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -82,7 +82,7 @@ function BalanceSheetContent() {
             </option>
           ))}
         </select>
-        <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+        <input type="date" value={asOfDate} aria-label="As Of Date" onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
         {companyId && (
           <div className="flex items-center gap-2 ml-auto text-xs">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
@@ -138,16 +138,16 @@ function BalanceSheetContent() {
         <div className="card-v2 p-4 space-y-3">
           <h2 className="font-medium text-navy">Manual balance-sheet items</h2>
           <form onSubmit={addItem} className="flex items-end gap-3 flex-wrap">
-            <select value={category} onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="input-v2 px-2 py-2 text-sm">
+            <select value={category} aria-label="Category" onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="input-v2 px-2 py-2 text-sm">
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
               ))}
             </select>
-            <input required value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Delivery van)" className="input-v2 px-3 py-2 text-sm" />
-            <input required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="input-v2 px-3 py-2 text-sm w-32" />
-            <input type="date" value={itemDate} onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <input required value={label} aria-label="Label" onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Delivery van)" className="input-v2 px-3 py-2 text-sm" />
+            <input required value={amount} aria-label="Amount" onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="input-v2 px-3 py-2 text-sm w-32" />
+            <input type="date" value={itemDate} aria-label="Item Date" onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
             <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
               Add
             </button>

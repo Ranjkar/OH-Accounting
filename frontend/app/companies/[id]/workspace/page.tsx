@@ -147,6 +147,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
           <form onSubmit={handleAddNote} className="px-5 py-3 border-t border-slate-100 flex items-end gap-3">
             <select
               value={noteType}
+              aria-label="Note Type"
               onChange={(e) => setNoteType(e.target.value as NoteType)}
               className="input-v2 px-2 py-1.5 text-sm"
             >
