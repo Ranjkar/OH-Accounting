@@ -4,8 +4,45 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
+import GlassPageHeader from "@/components/glass/GlassPageHeader";
+import GlassPanel from "@/components/glass/GlassPanel";
+import GlassButton from "@/components/glass/GlassButton";
+import { GlassSelect } from "@/components/glass/GlassInput";
+import { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, FinancialYear, VatReturn } from "@/lib/api";
+
+function LockControl({ companyId, fy, onChange }: { companyId: number; fy: FinancialYear; onChange: (fy: FinancialYear) => void }) {
+  const { token } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle() {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = fy.is_locked ? await api.unlockFinancialYear(token, companyId, fy.id) : await api.lockFinancialYear(token, companyId, fy.id);
+      onChange(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Action failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {error && <span className="text-xs value-negative">{error}</span>}
+      <span className={`text-xs font-medium rounded-full px-2.5 py-1 ${fy.is_locked ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}>
+        {fy.is_locked ? "Locked" : "Open"}
+      </span>
+      <GlassButton size="sm" variant="secondary" onClick={toggle} disabled={busy}>
+        {busy ? "…" : fy.is_locked ? "Unlock" : "Lock"}
+      </GlassButton>
+    </div>
+  );
+}
 
 function VatContent() {
   const { token } = useAuth();
@@ -37,32 +74,29 @@ function VatContent() {
   }, [token, companyId, financialYears]);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">VAT Overview</h1>
+    <div className="space-y-5">
+      <GlassPageHeader title="VAT Overview" subtitle="Per financial year, per period -- locking a financial year blocks new or corrected ledger postings dated within it." />
 
-      {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
+      {error && <GlassErrorState message={error} />}
 
-      <select
-        value={companyId}
-        onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="input-v2 px-3 py-2 text-sm"
-      >
+      <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
           </option>
         ))}
-      </select>
+      </GlassSelect>
 
       {financialYears.map((fy) => (
-        <div key={fy.id} className="card-v2">
-          <div className="px-5 py-3 border-b border-border-subtle">
-            <h2 className="text-sm font-medium text-navy">Financial year {fy.year}</h2>
-          </div>
+        <GlassPanel
+          key={fy.id}
+          title={`Financial year ${fy.year}`}
+          actions={<LockControl companyId={Number(companyId)} fy={fy} onChange={(updated) => setFinancialYears((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))} />}
+        >
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
+              <tr className="text-left text-text-secondary border-b border-white/40">
                 <th className="px-5 py-2 font-medium">Period</th>
                 <th className="px-5 py-2 font-medium">Filing deadline</th>
                 <th className="px-5 py-2 font-medium">VAT due (5a)</th>
@@ -75,10 +109,10 @@ function VatContent() {
               {fy.vat_periods.map((p) => {
                 const vr = returns[p.id];
                 return (
-                  <tr key={p.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                  <tr key={p.id} className="border-b border-white/30 last:border-0 hover:bg-white/40">
                     <td className="px-5 py-2.5">
                       {vr ? (
-                        <Link href={`/vat/${vr.id}`} className="text-navy hover:underline">
+                        <Link href={`/vat/${vr.id}`} className="text-brand-purple-600 hover:underline">
                           {p.label}
                         </Link>
                       ) : (
@@ -95,7 +129,7 @@ function VatContent() {
               })}
             </tbody>
           </table>
-        </div>
+        </GlassPanel>
       ))}
     </div>
   );

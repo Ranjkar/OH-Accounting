@@ -3,6 +3,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
+import GlassPageHeader from "@/components/glass/GlassPageHeader";
+import GlassPanel from "@/components/glass/GlassPanel";
+import GlassCard from "@/components/glass/GlassCard";
+import GlassButton from "@/components/glass/GlassButton";
+import { GlassInput, GlassSelect } from "@/components/glass/GlassInput";
+import GlassTable from "@/components/glass/GlassTable";
+import { GlassErrorState } from "@/components/glass/GlassLoadingState";
+import { IconBank } from "@/components/glass/icons";
 import { useAuth } from "@/lib/auth-context";
 import { api, BankAccount, BankImportBatch, BankSourceFormat, Company } from "@/lib/api";
 
@@ -60,9 +68,7 @@ function BankingContent() {
     setMessage(null);
     try {
       const batch = await api.importBankStatement(token, selectedAccountId, sourceFormat, file);
-      setMessage(
-        `Imported ${batch.transaction_count} transaction(s), ${batch.duplicate_count} duplicate(s) skipped.`
-      );
+      setMessage(`Imported ${batch.transaction_count} transaction(s), ${batch.duplicate_count} duplicate(s) skipped.`);
       setFile(null);
       api.listImportBatches(token, selectedAccountId).then(setBatches);
     } catch (e) {
@@ -71,153 +77,102 @@ function BankingContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Banking</h1>
-      <p className="text-sm text-text-secondary">
-        Live bank API access is not connected. Import bank statement files (CAMT.053/054, MT940, or CSV) to bring
-        transactions in -- nothing here ever reads or stores online-banking login credentials.
-      </p>
+    <div className="space-y-5">
+      <GlassPageHeader
+        title="Banking"
+        subtitle="Live bank API access is not connected. Import bank statement files (CAMT.053/054, MT940, or CSV) to bring transactions in -- nothing here ever reads or stores online-banking login credentials."
+      />
 
-      {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
-      {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
+      {error && <GlassErrorState message={error} />}
+      {message && <div className="rounded-lg bg-green-500/10 border border-green-300/50 text-green-700 text-sm px-4 py-3">{message}</div>}
 
-      <select
-        value={companyId}
-        onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="input-v2 px-3 py-2 text-sm"
-      >
+      <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
         <option value="">Select a company</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
           </option>
         ))}
-      </select>
+      </GlassSelect>
 
       {companyId && (
-        <form onSubmit={handleCreateAccount} className="card-v2 p-4 flex items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-text-secondary">IBAN</label>
-            <input
-              required
-              value={iban}
-              onChange={(e) => setIban(e.target.value)}
-              className="input-v2 px-3 py-2 text-sm"
-              placeholder="NL91ABNA0417164300"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-text-secondary">Account name</label>
-            <input
-              required
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              className="input-v2 px-3 py-2 text-sm"
-              placeholder="Main business account"
-            />
-          </div>
-          <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
-            Add bank account
-          </button>
-        </form>
+        <GlassCard>
+          <form onSubmit={handleCreateAccount} className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-secondary">IBAN</label>
+              <GlassInput required value={iban} onChange={(e) => setIban(e.target.value)} placeholder="NL91ABNA0417164300" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-secondary">Account name</label>
+              <GlassInput required value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="Main business account" />
+            </div>
+            <GlassButton type="submit">Add bank account</GlassButton>
+          </form>
+        </GlassCard>
       )}
 
-      <div className="card-v2 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              <th className="px-5 py-2 font-medium">IBAN</th>
-              <th className="px-5 py-2 font-medium">Account name</th>
-              <th className="px-5 py-2 font-medium">Status</th>
-              <th className="px-5 py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.map((a) => (
-              <tr
-                key={a.id}
-                className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer ${
-                  selectedAccountId === a.id ? "bg-slate-50" : ""
-                }`}
-                onClick={() => setSelectedAccountId(a.id)}
-              >
-                <td className="px-5 py-2.5 font-mono text-xs">{a.iban}</td>
-                <td className="px-5 py-2.5">{a.account_name}</td>
-                <td className="px-5 py-2.5 text-xs text-text-secondary">{a.consent_status}</td>
-                <td className="px-5 py-2.5 text-navy text-xs">Select</td>
-              </tr>
-            ))}
-            {accounts.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-5 py-4 text-text-secondary">
-                  No bank accounts yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <GlassPanel title="Bank Accounts">
+        <GlassTable
+          emptyMessage="No bank accounts yet."
+          columns={[
+            { key: "iban", header: "IBAN", render: (a) => <span className="font-mono text-xs">{a.iban}</span> },
+            { key: "name", header: "Account name", render: (a) => a.account_name },
+            { key: "status", header: "Status", render: (a) => <span className="text-xs text-text-secondary">{a.consent_status.replace(/_/g, " ")}</span> },
+            {
+              key: "action",
+              header: "",
+              render: (a) => (
+                <button onClick={() => setSelectedAccountId(a.id)} className="text-brand-purple-600 hover:underline text-xs">
+                  {selectedAccountId === a.id ? "Selected" : "Select"}
+                </button>
+              ),
+            },
+          ]}
+          rows={accounts}
+          rowKey={(a) => a.id}
+        />
+      </GlassPanel>
 
       {selectedAccountId && (
-        <div className="card-v2 p-4 space-y-4">
-          <h2 className="font-medium text-navy">Import a statement file</h2>
-          <form onSubmit={handleImport} className="flex items-end gap-3">
+        <GlassCard className="space-y-4">
+          <h2 className="font-medium text-text-primary flex items-center gap-2">
+            <IconBank size={16} className="text-brand-purple-500" /> Import a statement file
+          </h2>
+          <form onSubmit={handleImport} className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-text-secondary">Format</label>
-              <select
-                value={sourceFormat}
-                onChange={(e) => setSourceFormat(e.target.value as BankSourceFormat)}
-                className="input-v2 px-3 py-2 text-sm"
-              >
+              <GlassSelect value={sourceFormat} onChange={(e) => setSourceFormat(e.target.value as BankSourceFormat)}>
                 {SOURCE_FORMATS.map((f) => (
                   <option key={f} value={f}>
                     {f}
                   </option>
                 ))}
-              </select>
+              </GlassSelect>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-text-secondary">File</label>
               <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
             </div>
-            <button type="submit" disabled={!file} className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+            <GlassButton type="submit" disabled={!file}>
               Import
-            </button>
+            </GlassButton>
           </form>
 
-          <h3 className="font-medium text-navy text-sm">Import history</h3>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-2 py-2 font-medium">File</th>
-                <th className="px-2 py-2 font-medium">Format</th>
-                <th className="px-2 py-2 font-medium">Imported</th>
-                <th className="px-2 py-2 font-medium">Duplicates</th>
-                <th className="px-2 py-2 font-medium">Errors</th>
-                <th className="px-2 py-2 font-medium">When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {batches.map((b) => (
-                <tr key={b.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-2 py-2">{b.original_filename}</td>
-                  <td className="px-2 py-2">{b.source_format}</td>
-                  <td className="px-2 py-2">{b.transaction_count}</td>
-                  <td className="px-2 py-2">{b.duplicate_count}</td>
-                  <td className="px-2 py-2">{b.error_count > 0 ? <span className="text-error">{b.error_count}</span> : 0}</td>
-                  <td className="px-2 py-2 text-xs text-text-secondary">{new Date(b.imported_at).toLocaleString()}</td>
-                </tr>
-              ))}
-              {batches.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-2 py-3 text-text-secondary">
-                    No imports yet for this account.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+          <h3 className="font-medium text-text-primary text-sm pt-2 border-t border-white/40">Import history</h3>
+          <GlassTable
+            emptyMessage="No imports yet for this account."
+            columns={[
+              { key: "file", header: "File", render: (b) => b.original_filename },
+              { key: "format", header: "Format", render: (b) => b.source_format },
+              { key: "imported", header: "Imported", render: (b) => b.transaction_count },
+              { key: "dup", header: "Duplicates", render: (b) => b.duplicate_count },
+              { key: "errors", header: "Errors", render: (b) => (b.error_count > 0 ? <span className="value-negative">{b.error_count}</span> : 0) },
+              { key: "when", header: "When", render: (b) => <span className="text-xs text-text-secondary">{new Date(b.imported_at).toLocaleString()}</span> },
+            ]}
+            rows={batches}
+            rowKey={(b) => b.id}
+          />
+        </GlassCard>
       )}
     </div>
   );
