@@ -5,12 +5,13 @@ Payment) and creates a new Payslip linked via corrects_payslip_id."""
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.accounting import dutch_tax_rules as tax
 from app.accounting import payroll_engine
 from app.models.employee import Employee
-from app.models.enums import PayrollRunStatus
+from app.models.enums import EmploymentType, PayrollRunStatus
 from app.models.payroll import PayrollRun, Payslip
 
 
@@ -42,13 +43,24 @@ def add_payslip(
         raise PayrollError(f"Payroll run is {run.status.value}, not DRAFT -- cannot add a payslip to it")
 
     rules = tax.get_rule_set(run.tax_year)
+    cumulative_wage_this_year_before_this_period = db.scalar(
+        select(func.coalesce(func.sum(Payslip.gross_salary), Decimal("0")))
+        .join(PayrollRun, Payslip.payroll_run_id == PayrollRun.id)
+        .where(
+            Payslip.employee_id == employee.id,
+            Payslip.voided.is_(False),
+            PayrollRun.period_year == run.period_year,
+            PayrollRun.period_number < run.period_number,
+        )
+    ) or Decimal("0")
     result = payroll_engine.calculate_payslip(
         period_type=run.period_type, salary_basis=employee.salary_basis, monthly_salary=employee.monthly_salary,
         hourly_rate=employee.hourly_rate, paid_hours=paid_hours, overtime_hours=overtime_hours,
         overtime_rate_multiplier=overtime_rate_multiplier, bonus_amount=bonus_amount,
         expense_reimbursement=expense_reimbursement, pay_holiday_allowance_this_period=pay_holiday_allowance_this_period,
         holiday_allowance_pct=employee.holiday_allowance_pct, pension_deduction_pct=pension_deduction_pct,
-        other_deductions=other_deductions, rules=rules,
+        other_deductions=other_deductions, has_permanent_contract=employee.employment_type == EmploymentType.permanent,
+        cumulative_wage_this_year_before_this_period=cumulative_wage_this_year_before_this_period, rules=rules,
     )
     payslip = Payslip(
         tenant_id=run.tenant_id, company_id=run.company_id, payroll_run_id=run.id, employee_id=employee.id,

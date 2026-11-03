@@ -109,3 +109,36 @@ def test_cannot_correct_an_already_corrected_payslip(db_session):
 
     with pytest.raises(payroll_service.PayrollError):
         payroll_service.correct_payslip(db_session, original, reason="second correction")
+
+
+def test_add_payslip_tracks_cumulative_wage_across_periods_for_premium_cap(db_session):
+    """Each add_payslip call must look at the employee's already-added payslips
+    earlier in the same calendar year so the annual premieloon cap (tested in
+    isolation in test_dutch_tax_rules.py) actually applies across periods, not
+    just within a single call with a hardcoded cumulative wage of 0."""
+    tenant, company, user, employee = _setup(db_session)
+    employee.monthly_salary = Decimal("70000.00")
+    db_session.flush()
+    db_session.commit()
+
+    run1 = payroll_service.create_payroll_run(
+        db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+        period_year=2025, period_number=1, created_by_user_id=user.id,
+    )
+    payslip1 = payroll_service.add_payslip(db_session, run1, employee)
+    db_session.commit()
+
+    run2 = payroll_service.create_payroll_run(
+        db_session, tenant_id=tenant.id, company_id=company.id, period_type=PayrollPeriodType.monthly,
+        period_year=2025, period_number=2, created_by_user_id=user.id,
+    )
+    payslip2 = payroll_service.add_payslip(db_session, run2, employee)
+    db_session.commit()
+
+    premiums1 = payslip1.employer_costs_total - payslip1.gross_salary
+    premiums2 = payslip2.employer_costs_total - payslip2.gross_salary
+    # Period 1: full EUR 70,000 is below the EUR 75,864 cap -- premiums computed on the full wage.
+    # Period 2: cumulative wage is already 70,000, so only ~5,864 of this period's wage is still
+    # subject to premiums -- period 2's premiums must be much smaller than period 1's.
+    assert premiums1 > premiums2
+    assert premiums2 < premiums1 / 5
