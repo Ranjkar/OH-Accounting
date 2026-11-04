@@ -103,13 +103,13 @@ function FinancialOverviewContent() {
 
         {owner && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            <Tile label="Revenue (this month)" value={owner.revenue} href="/profit-and-loss" />
-            <Tile label="Net profit (this month)" value={owner.net_profit} href="/profit-and-loss" />
-            <Tile label="Cash position" value={owner.cash_position} href="/balance-sheet" />
-            <Tile label="Outstanding customer payments" value={owner.outstanding_customer_payments} href="/working-capital" />
-            <Tile label="Upcoming supplier payments" value={owner.upcoming_supplier_payments} href="/working-capital" />
-            <Tile label="Estimated VAT position" value={owner.estimated_vat_position} href="/vat" />
-            <Tile label="Budget variance" value={owner.budget_performance ? owner.budget_performance.total_variance : "No approved budget"} href="/budgets" />
+            <Tile label="Revenue (this month)" value={formatEUR(owner.revenue)} href="/profit-and-loss" />
+            <Tile label="Net profit (this month)" value={formatEUR(owner.net_profit)} href="/profit-and-loss" />
+            <Tile label="Cash position" value={formatEUR(owner.cash_position)} href="/balance-sheet" />
+            <Tile label="Outstanding customer payments" value={formatEUR(owner.outstanding_customer_payments)} href="/working-capital" />
+            <Tile label="Upcoming supplier payments" value={formatEUR(owner.upcoming_supplier_payments)} href="/working-capital" />
+            <Tile label="Estimated VAT position" value={formatEUR(owner.estimated_vat_position)} href="/vat" />
+            <Tile label="Budget variance" value={owner.budget_performance ? formatEUR(owner.budget_performance.total_variance) : "No approved budget"} href="/budgets" />
             <Tile label="3-month forecast" value="View" href="/forecasts" />
           </div>
         )}

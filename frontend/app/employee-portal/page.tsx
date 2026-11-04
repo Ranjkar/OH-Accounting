@@ -145,9 +145,9 @@ function StatementTab() {
       {statement && (
         <div className="grid grid-cols-2 gap-3 text-sm">
           <Row label="Payslips included" value={String(statement.number_of_payslips)} />
-          <Row label="Gross salary" value={`€${statement.gross_salary}`} />
-          <Row label="Net salary paid" value={`€${statement.net_salary}`} />
-          <Row label="Wage tax + NI withheld" value={`€${statement.wage_tax_and_national_insurance}`} />
+          <Row label="Gross salary" value={formatEUR(statement.gross_salary)} />
+          <Row label="Net salary paid" value={formatEUR(statement.net_salary)} />
+          <Row label="Wage tax + NI withheld" value={formatEUR(statement.wage_tax_and_national_insurance)} />
         </div>
       )}
     </GlassCard>

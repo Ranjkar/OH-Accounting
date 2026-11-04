@@ -12,6 +12,7 @@ import { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { IconDocuments } from "@/components/glass/icons";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function AnnualStatementsContent() {
   const { token } = useAuth();
@@ -110,14 +111,14 @@ function AnnualStatementsContent() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <StatRow label="Payslips included" value={String(statement.number_of_payslips)} />
-              <StatRow label="Gross salary" value={`€${statement.gross_salary}`} />
-              <StatRow label="Taxable wage" value={`€${statement.taxable_wage}`} />
-              <StatRow label="Wage tax + NI withheld" value={`€${statement.wage_tax_and_national_insurance}`} />
-              <StatRow label="General tax credit" value={`€${statement.general_tax_credit_applied}`} />
-              <StatRow label="Labor tax credit" value={`€${statement.labor_tax_credit_applied}`} />
-              <StatRow label="Pension deduction" value={`€${statement.pension_deduction}`} />
-              <StatRow label="Net salary paid" value={`€${statement.net_salary}`} strong />
-              <StatRow label="Employer Zvw levy" value={`€${statement.employer_levy_zvw}`} />
+              <StatRow label="Gross salary" value={formatEUR(statement.gross_salary)} />
+              <StatRow label="Taxable wage" value={formatEUR(statement.taxable_wage)} />
+              <StatRow label="Wage tax + NI withheld" value={formatEUR(statement.wage_tax_and_national_insurance)} />
+              <StatRow label="General tax credit" value={formatEUR(statement.general_tax_credit_applied)} />
+              <StatRow label="Labor tax credit" value={formatEUR(statement.labor_tax_credit_applied)} />
+              <StatRow label="Pension deduction" value={formatEUR(statement.pension_deduction)} />
+              <StatRow label="Net salary paid" value={formatEUR(statement.net_salary)} strong />
+              <StatRow label="Employer Zvw levy" value={formatEUR(statement.employer_levy_zvw)} />
             </div>
           )}
           <p className="text-xs text-text-secondary mt-4">{String(statement.note)}</p>

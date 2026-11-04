@@ -10,6 +10,7 @@ import GlassButton from "@/components/glass/GlassButton";
 import GlassLoadingState, { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
 import { api, ApiError, Plan, Subscription } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const STATUS_STYLE: Record<string, string> = {
   TRIALING: "status-pill-info",
@@ -107,7 +108,7 @@ function BillingContent() {
           {plans.map((p) => (
             <GlassCard key={p.code} className="space-y-3">
               <h3 className="font-medium text-text-primary">{p.name}</h3>
-              <p className="text-xs text-text-secondary">{p.monthly_price_eur ? `€${p.monthly_price_eur}/month` : "Price not yet set -- contact sales"}</p>
+              <p className="text-xs text-text-secondary">{p.monthly_price_eur ? `${formatEUR(p.monthly_price_eur)}/month` : "Price not yet set -- contact sales"}</p>
               <ul className="text-xs text-text-secondary space-y-1">
                 <li>Up to {p.company_limit} companies</li>
                 <li>Up to {p.user_limit} users</li>

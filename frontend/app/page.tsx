@@ -15,6 +15,7 @@ import GlassLoadingState, { GlassErrorState } from "@/components/glass/GlassLoad
 import { IconSparkle, IconBank, IconCalculator, IconChart } from "@/components/glass/icons";
 import { useAuth } from "@/lib/auth-context";
 import { api, AssistantResponse, BankAccount, CashFlowForecast, Company, DashboardSummary, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function AssistantCard({ companyId }: { companyId: number | "" }) {
   const { token } = useAuth();
@@ -292,17 +293,17 @@ function DashboardContent() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <GlassStatCard label="Total Income (YTD)" value={pnl ? `€${pnl.revenue}` : "—"} tone="success" icon={<IconChart size={16} />} />
+        <GlassStatCard label="Total Income (YTD)" value={pnl ? formatEUR(pnl.revenue) : "—"} tone="success" icon={<IconChart size={16} />} />
         <GlassStatCard
           label="Total Expenses (YTD)"
-          value={pnl ? `€${(Number(pnl.revenue) - Number(pnl.net_profit)).toFixed(2)}` : "—"}
+          value={pnl ? formatEUR((Number(pnl.revenue) - Number(pnl.net_profit)).toFixed(2)) : "—"}
           tone="error"
           icon={<IconChart size={16} />}
         />
-        <GlassStatCard label="Net Profit (YTD)" value={pnl ? `€${pnl.net_profit}` : "—"} tone={pnl && Number(pnl.net_profit) >= 0 ? "success" : "error"} />
+        <GlassStatCard label="Net Profit (YTD)" value={pnl ? formatEUR(pnl.net_profit) : "—"} tone={pnl && Number(pnl.net_profit) >= 0 ? "success" : "error"} />
         <GlassStatCard
           label="Est. VAT payable (open)"
-          value={`€${summary.estimated_vat_payable}`}
+          value={formatEUR(summary.estimated_vat_payable)}
           tone="warning"
           href="/vat"
         />
