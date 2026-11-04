@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, FinancialYear } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 type Format = "pdf" | "xlsx" | "csv";
 
@@ -120,24 +121,24 @@ function ReportsContent() {
                 <h2 className="text-sm font-medium text-text-primary">Period comparison — financial year {comparison.financial_year}</h2>
               </div>
               <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="table-v3">
                 <thead>
-                  <tr className="text-left text-text-secondary border-b border-border-subtle">
-                    <th className="px-5 py-2 font-medium">Period</th>
-                    <th className="px-5 py-2 font-medium">Sales (net)</th>
-                    <th className="px-5 py-2 font-medium">Purchases (net)</th>
-                    <th className="px-5 py-2 font-medium">Net</th>
-                    <th className="px-5 py-2 font-medium">Txns</th>
+                  <tr>
+                    <th>Period</th>
+                    <th className="text-right">Sales (net)</th>
+                    <th className="text-right">Purchases (net)</th>
+                    <th className="text-right">Net</th>
+                    <th className="text-right">Txns</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.periods.map((p) => (
-                    <tr key={p.label} className="border-b border-border last:border-0">
-                      <td className="px-5 py-2.5">{p.label}</td>
-                      <td className="px-5 py-2.5">{p.sales_net}</td>
-                      <td className="px-5 py-2.5">{p.purchases_net}</td>
-                      <td className="px-5 py-2.5">{p.income_minus_expense}</td>
-                      <td className="px-5 py-2.5">{p.transaction_count}</td>
+                    <tr key={p.label}>
+                      <td className="text-text-primary">{p.label}</td>
+                      <td className="col-amount">{formatEUR(p.sales_net)}</td>
+                      <td className="col-amount">{formatEUR(p.purchases_net)}</td>
+                      <td className="col-amount font-medium">{formatEUR(p.income_minus_expense)}</td>
+                      <td className="text-right text-text-secondary">{p.transaction_count}</td>
                     </tr>
                   ))}
                 </tbody>

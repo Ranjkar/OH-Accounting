@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const PNL_LINES: { key: string; label: string; highlight?: boolean }[] = [
   { key: "revenue", label: "Revenue" },
@@ -93,27 +94,27 @@ function PnlContent() {
       {report && (
         <div className="card-v2 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-4 py-2 font-medium">Line</th>
-                <th className="px-4 py-2 font-medium text-right">Current</th>
-                {comparisonKey && <th className="px-4 py-2 font-medium text-right">{compare === "previous" ? "Previous period" : "Same period last year"}</th>}
-                {comparisonKey && <th className="px-4 py-2 font-medium text-right">Change</th>}
-                {comparisonKey && <th className="px-4 py-2 font-medium text-right">% change</th>}
+              <tr>
+                <th>Line</th>
+                <th className="text-right">Current</th>
+                {comparisonKey && <th className="text-right">{compare === "previous" ? "Previous period" : "Same period last year"}</th>}
+                {comparisonKey && <th className="text-right">Change</th>}
+                {comparisonKey && <th className="text-right">% change</th>}
               </tr>
             </thead>
             <tbody>
               {PNL_LINES.map((line) => {
                 const comparison = comparisonKey ? report.comparison?.[line.key] : null;
                 return (
-                  <tr key={line.key} className={`border-b border-border last:border-0 ${line.highlight ? "bg-muted font-medium" : ""}`}>
-                    <td className="px-4 py-2.5">{line.label}</td>
-                    <td className="px-4 py-2.5 text-right font-mono">{report.current[line.key]}</td>
-                    {comparisonKey && <td className="px-4 py-2.5 text-right font-mono text-text-secondary">{comparison?.previous}</td>}
-                    {comparisonKey && <td className="px-4 py-2.5 text-right font-mono">{comparison?.change}</td>}
+                  <tr key={line.key} className={line.highlight ? "bg-muted font-medium" : ""}>
+                    <td className="text-text-primary">{line.label}</td>
+                    <td className="col-amount">{formatEUR(report.current[line.key])}</td>
+                    {comparisonKey && <td className="col-amount text-text-secondary">{formatEUR(comparison?.previous ?? 0)}</td>}
+                    {comparisonKey && <td className="col-amount">{formatEUR(comparison?.change ?? 0)}</td>}
                     {comparisonKey && (
-                      <td className={`px-4 py-2.5 text-right font-mono ${comparison?.change_pct && Number(comparison.change_pct) < 0 ? "text-error" : "text-green-700"}`}>
+                      <td className={`col-amount ${comparison?.change_pct && Number(comparison.change_pct) < 0 ? "value-negative" : "value-positive"}`}>
                         {comparison?.change_pct !== null && comparison?.change_pct !== undefined ? `${comparison.change_pct}%` : "n/a"}
                       </td>
                     )}

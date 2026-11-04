@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function PayrollContent() {
   const { token } = useAuth();
@@ -134,30 +135,30 @@ function PayrollContent() {
       <div className="grid grid-cols-2 gap-6">
         <div className="card-v2 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-4 py-2 font-medium">Period</th>
-                <th className="px-4 py-2 font-medium">Status</th>
+              <tr>
+                <th>Period</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {runs.map((run) => (
                 <tr
                   key={run.id}
-                  className="border-b border-border-subtle last:border-0 hover:bg-surface-page cursor-pointer"
+                  className="cursor-pointer hover:bg-muted"
                   onClick={() => viewRun(run)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); viewRun(run); } }}
                   tabIndex={0}
                   role="button"
                 >
-                  <td className="px-4 py-2.5">{run.period_type} {run.period_number}/{run.period_year}</td>
-                  <td className="px-4 py-2.5">{run.status}</td>
+                  <td className="text-text-primary">{run.period_type} {run.period_number}/{run.period_year}</td>
+                  <td className="text-text-secondary">{run.status}</td>
                 </tr>
               ))}
               {runs.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="px-4 py-4 text-text-secondary">
+                  <td colSpan={2} className="text-text-secondary">
                     No payroll runs yet.
                   </td>
                 </tr>
@@ -193,18 +194,18 @@ function PayrollContent() {
                 </div>
               )}
               {payslips.map((p) => (
-                <div key={p.id} className="border border-border-subtle rounded-md p-2 flex items-center justify-between">
-                  <span>
-                    #{p.id} {p.voided && <span className="text-error">(voided)</span>}
+                <div key={p.id} className="border border-border rounded-md p-2 flex items-center justify-between">
+                  <span className="text-text-primary">
+                    #{p.id} {p.voided && <span className="value-negative">(voided)</span>}
                     {p.corrects_payslip_id && <span className="text-text-secondary"> correction of #{p.corrects_payslip_id}</span>}
                   </span>
-                  <span className="font-mono">{p.gross_salary} → {p.net_salary}</span>
+                  <span className="font-mono tabular-nums text-text-primary">{formatEUR(p.gross_salary)} → {formatEUR(p.net_salary)}</span>
                   <div className="flex items-center gap-2">
-                    <a href={api.payslipPdfUrl(p.id)} target="_blank" rel="noreferrer" className="text-xs underline">
+                    <a href={api.payslipPdfUrl(p.id)} target="_blank" rel="noreferrer" className="text-xs text-navy hover:underline">
                       PDF
                     </a>
                     {!p.voided && (
-                      <button onClick={() => correct(p)} className="text-xs underline">
+                      <button onClick={() => correct(p)} className="text-xs text-navy hover:underline">
                         Correct
                       </button>
                     )}
