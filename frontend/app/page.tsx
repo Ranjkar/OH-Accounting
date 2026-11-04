@@ -338,29 +338,31 @@ function DashboardContent() {
           <p className="px-5 py-4 text-sm text-text-secondary">No open VAT periods.</p>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border">
-                <th className="px-5 py-2 font-medium">Company</th>
-                <th className="px-5 py-2 font-medium">Period</th>
-                <th className="px-5 py-2 font-medium">Filing deadline</th>
-                <th className="px-5 py-2 font-medium">Payment deadline</th>
-                <th className="px-5 py-2 font-medium">Status</th>
+              <tr>
+                <th>Company</th>
+                <th>Period</th>
+                <th>Filing deadline</th>
+                <th>Payment deadline</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {summary.upcoming_deadlines.map((d, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <td className="px-5 py-2.5">
-                    <Link href={`/companies/${d.company_id}/workspace`} className="text-brand-purple-600 hover:underline">
+                <tr key={i}>
+                  <td>
+                    <Link href={`/companies/${d.company_id}/workspace`} className="text-navy hover:underline">
                       {d.company_name}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">{d.period_label}</td>
-                  <td className="px-5 py-2.5">{d.filing_deadline}</td>
-                  <td className="px-5 py-2.5">{d.payment_deadline}</td>
-                  <td className="px-5 py-2.5">
-                    {d.is_overdue ? <span className="value-negative font-medium">Overdue</span> : <span className="value-warning">Upcoming</span>}
+                  <td className="text-text-secondary">{d.period_label}</td>
+                  <td className="text-text-secondary">{d.filing_deadline}</td>
+                  <td className="text-text-secondary">{d.payment_deadline}</td>
+                  <td>
+                    <span className={`status-pill ${d.is_overdue ? "status-pill-danger" : "status-pill-warning"}`}>
+                      {d.is_overdue ? "Overdue" : "Upcoming"}
+                    </span>
                   </td>
                 </tr>
               ))}

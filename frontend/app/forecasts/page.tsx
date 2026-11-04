@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function Bar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min(100, (Math.abs(value) / max) * 100) : 0;
@@ -108,22 +109,22 @@ function ForecastsContent() {
             <h2 className="font-medium text-text-primary mb-2">Cash flow forecast (Phase 6 engine, reused)</h2>
             <p className="text-xs text-amber-600">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm mt-2">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-text-secondary border-b border-border-subtle">
-                  <th className="py-1">Month</th>
-                  <th className="py-1">Incoming</th>
-                  <th className="py-1">Outgoing</th>
-                  <th className="py-1">Net</th>
+                <tr>
+                  <th>Month</th>
+                  <th className="text-right">Incoming</th>
+                  <th className="text-right">Outgoing</th>
+                  <th className="text-right">Net</th>
                 </tr>
               </thead>
               <tbody>
                 {forecast.cash_flow.monthly_projection.map((m: JsonReport) => (
-                  <tr key={m.month} className="border-b border-border last:border-0">
-                    <td className="py-1">{m.month}</td>
-                    <td className="py-1 font-mono text-green-700">+{m.expected_incoming}</td>
-                    <td className="py-1 font-mono text-error">-{m.expected_outgoing}</td>
-                    <td className="py-1 font-mono">{m.net}</td>
+                  <tr key={m.month}>
+                    <td className="text-text-secondary">{m.month}</td>
+                    <td className="col-amount value-positive">+{formatEUR(m.expected_incoming)}</td>
+                    <td className="col-amount value-negative">-{formatEUR(m.expected_outgoing)}</td>
+                    <td className="col-amount font-medium">{formatEUR(m.net)}</td>
                   </tr>
                 ))}
               </tbody>

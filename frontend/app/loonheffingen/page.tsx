@@ -112,11 +112,11 @@ function LoonheffingenContent() {
               <GlassEmptyState title="No payroll runs yet" description="Create one from Payroll Runs & Payslips first." icon={<IconTax size={28} />} />
             ) : (
               <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="table-v3">
                 <thead>
-                  <tr className="text-left text-text-secondary border-b border-border">
-                    <th className="px-4 py-2 font-medium">Period</th>
-                    <th className="px-4 py-2 font-medium">Status</th>
+                  <tr>
+                    <th>Period</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -127,12 +127,12 @@ function LoonheffingenContent() {
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRun(run); } }}
                       tabIndex={0}
                       role="button"
-                      className={`border-b border-border last:border-0 cursor-pointer hover:bg-muted ${selectedRun?.id === run.id ? "bg-muted" : ""}`}
+                      className={`cursor-pointer hover:bg-muted ${selectedRun?.id === run.id ? "bg-muted" : ""}`}
                     >
-                      <td className="px-4 py-2.5">
+                      <td className="text-text-primary">
                         {run.period_type} {run.period_number}/{run.period_year}
                       </td>
-                      <td className="px-4 py-2.5">{run.status}</td>
+                      <td className="text-text-secondary">{run.status}</td>
                     </tr>
                   ))}
                 </tbody>

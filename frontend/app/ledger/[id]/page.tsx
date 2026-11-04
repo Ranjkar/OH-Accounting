@@ -7,6 +7,7 @@ import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
 import { useAuth } from "@/lib/auth-context";
 import { api, TransactionDetail } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function TransactionDetailContent({ transactionId }: { transactionId: number }) {
   const { token, user } = useAuth();
@@ -103,30 +104,30 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           <h2 className="text-sm font-medium text-text-primary">Line items</h2>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              <th className="px-5 py-2 font-medium">#</th>
-              <th className="px-5 py-2 font-medium">Description</th>
-              <th className="px-5 py-2 font-medium">Net</th>
-              <th className="px-5 py-2 font-medium">Rate</th>
-              <th className="px-5 py-2 font-medium">VAT</th>
-              <th className="px-5 py-2 font-medium">Treatment</th>
-              <th className="px-5 py-2 font-medium">Eligibility</th>
-              <th className="px-5 py-2 font-medium">Deductible</th>
+            <tr>
+              <th>#</th>
+              <th>Description</th>
+              <th className="text-right">Net</th>
+              <th className="text-right">Rate</th>
+              <th className="text-right">VAT</th>
+              <th>Treatment</th>
+              <th>Eligibility</th>
+              <th className="text-right">Deductible</th>
             </tr>
           </thead>
           <tbody>
             {transaction.line_items.map((l) => (
-              <tr key={l.line_number} className="border-b border-border last:border-0">
-                <td className="px-5 py-2.5">{l.line_number}</td>
-                <td className="px-5 py-2.5">{l.description ?? "—"}</td>
-                <td className="px-5 py-2.5">{l.net_amount}</td>
-                <td className="px-5 py-2.5">{l.vat_rate}%</td>
-                <td className="px-5 py-2.5">{l.vat_amount}</td>
-                <td className="px-5 py-2.5 text-xs">{l.vat_treatment.replaceAll("_", " ")}</td>
-                <td className="px-5 py-2.5 text-xs">{l.input_vat_eligibility ?? "—"}</td>
-                <td className="px-5 py-2.5">{l.deductible_vat_amount ?? "—"}</td>
+              <tr key={l.line_number}>
+                <td className="text-text-secondary">{l.line_number}</td>
+                <td className="text-text-primary">{l.description ?? "—"}</td>
+                <td className="col-amount">{formatEUR(l.net_amount)}</td>
+                <td className="text-right text-text-secondary">{l.vat_rate}%</td>
+                <td className="col-amount">{formatEUR(l.vat_amount)}</td>
+                <td className="text-xs text-text-secondary">{l.vat_treatment.replaceAll("_", " ")}</td>
+                <td className="text-xs text-text-secondary">{l.input_vat_eligibility ?? "—"}</td>
+                <td className="col-amount">{l.deductible_vat_amount != null ? formatEUR(l.deductible_vat_amount) : "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -140,13 +141,13 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         </div>
         {transaction.payments.length > 0 && (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <tbody>
               {transaction.payments.map((p) => (
-                <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="px-5 py-2">{p.payment_date}</td>
-                  <td className="px-5 py-2">{p.amount}</td>
-                  <td className="px-5 py-2 text-text-secondary">{p.reference ?? ""}</td>
+                <tr key={p.id}>
+                  <td className="text-text-secondary">{p.payment_date}</td>
+                  <td className="col-amount">{formatEUR(p.amount)}</td>
+                  <td className="text-text-secondary">{p.reference ?? ""}</td>
                 </tr>
               ))}
             </tbody>
