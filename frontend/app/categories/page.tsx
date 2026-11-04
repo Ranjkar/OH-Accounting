@@ -129,7 +129,7 @@ function CategoriesContent() {
             <table className="w-full text-sm">
               <tbody>
                 {rules.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-100">
+                  <tr key={r.id} className="border-t border-border">
                     <td className="py-1.5 text-xs text-text-secondary">{r.rule_type}</td>
                     <td className="py-1.5">{r.match_value}</td>
                     <td className="py-1.5 font-medium">{r.category}</td>
@@ -161,7 +161,7 @@ function CategoriesContent() {
               </thead>
               <tbody>
                 {uncategorized.map((t) => (
-                  <tr key={t.id} className="border-b border-slate-100 last:border-0">
+                  <tr key={t.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2.5">{t.invoice_number ?? `#${t.id}`}</td>
                     <td className="px-4 py-2.5">{t.counterparty_name ?? "—"}</td>
                     <td className="px-4 py-2.5 font-mono">{t.net_amount}</td>

@@ -9,7 +9,7 @@ import { api, Company, JsonReport } from "@/lib/api";
 function Bar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min(100, (Math.abs(value) / max) * 100) : 0;
   return (
-    <div className="h-2 bg-slate-100 rounded-full overflow-hidden w-full">
+    <div className="h-2 bg-muted rounded-full overflow-hidden w-full">
       <div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -119,7 +119,7 @@ function ForecastsContent() {
               </thead>
               <tbody>
                 {forecast.cash_flow.monthly_projection.map((m: JsonReport) => (
-                  <tr key={m.month} className="border-b border-slate-100 last:border-0">
+                  <tr key={m.month} className="border-b border-border last:border-0">
                     <td className="py-1">{m.month}</td>
                     <td className="py-1 font-mono text-green-700">+{m.expected_incoming}</td>
                     <td className="py-1 font-mono text-error">-{m.expected_outgoing}</td>

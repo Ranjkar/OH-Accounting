@@ -94,7 +94,7 @@ function TeamAccessSection({ companyId }: { companyId: number }) {
 
       <div>
         <h3 className="text-xs font-medium text-text-secondary mb-2">People with access</h3>
-        <ul className="divide-y divide-slate-100 text-sm">
+        <ul className="divide-y divide-border text-sm">
           {access.map((a) => (
             <li key={a.user_id} className="flex items-center justify-between py-2">
               <span>{a.full_name} <span className="text-text-secondary">({a.email}, {a.role})</span></span>
@@ -107,7 +107,7 @@ function TeamAccessSection({ companyId }: { companyId: number }) {
       {pendingInvitations.length > 0 && (
         <div>
           <h3 className="text-xs font-medium text-text-secondary mb-2">Pending invitations</h3>
-          <ul className="divide-y divide-slate-100 text-sm">
+          <ul className="divide-y divide-border text-sm">
             {pendingInvitations.map((i) => (
               <li key={i.id} className="flex items-center justify-between py-2">
                 <span>{i.invited_email} <span className="text-text-secondary">({i.intended_role}, expires {new Date(i.expires_at).toLocaleDateString()})</span></span>
@@ -205,7 +205,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
             disabled={!canEdit}
             value={company.vat_accounting_basis}
             onChange={(e) => handleBasisChange(e.target.value as VatAccountingBasis)}
-            className="input-v2 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
+            className="input-v2 px-2.5 py-1.5 text-sm disabled:bg-muted"
           >
             <option value="invoice_based">Invoice-based</option>
             <option value="cash_based">Cash-based</option>
@@ -219,12 +219,12 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
               value={proRata}
               onChange={(e) => setProRata(e.target.value)}
               placeholder="e.g. 80"
-              className="w-24 input-v2 px-2.5 py-1.5 text-sm disabled:bg-slate-50"
+              className="w-24 input-v2 px-2.5 py-1.5 text-sm disabled:bg-muted"
             />
             {canEdit && (
               <button
                 onClick={handleProRataSave}
-                className="input-v2 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors"
+                className="input-v2 px-3 py-1.5 text-sm hover:bg-muted transition-colors"
               >
                 Save
               </button>
@@ -237,7 +237,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
 
       <form onSubmit={handleAddYear} className="flex items-end gap-3">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Add financial year</label>
+          <label className="text-sm font-medium text-text-primary">Add financial year</label>
           <input
             type="number"
             value={newYear}
@@ -273,7 +273,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
               </thead>
               <tbody>
                 {fy.vat_periods.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100 last:border-0">
+                  <tr key={p.id} className="border-b border-border last:border-0">
                     <td className="px-5 py-2.5">{p.label}</td>
                     <td className="px-5 py-2.5">{p.start_date}</td>
                     <td className="px-5 py-2.5">{p.end_date}</td>

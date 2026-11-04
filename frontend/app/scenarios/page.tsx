@@ -133,7 +133,7 @@ function ScenariosContent() {
           </thead>
           <tbody>
             {scenarios.map((s) => (
-              <tr key={s.id} className="border-b border-slate-100 last:border-0">
+              <tr key={s.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-2.5">
                   <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                 </td>
@@ -183,7 +183,7 @@ function ScenariosContent() {
             </thead>
             <tbody>
               {comparison.comparison.map((row: JsonReport) => (
-                <tr key={row.name} className="border-b border-slate-100 last:border-0">
+                <tr key={row.name} className="border-b border-border last:border-0">
                   <td className="py-1.5">{row.name}</td>
                   <td className="py-1.5 font-mono">{row.total_forecast_profit}</td>
                   <td className="py-1.5 font-mono">{row.scenario_net_cash_change}</td>

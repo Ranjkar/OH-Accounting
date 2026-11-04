@@ -70,34 +70,34 @@ function BatchesContent() {
           <p className="px-5 py-4 text-sm text-text-secondary">No batches yet.</p>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-5 py-2 font-medium">Uploaded</th>
-                <th className="px-5 py-2 font-medium">Category</th>
-                <th className="px-5 py-2 font-medium">Total</th>
-                <th className="px-5 py-2 font-medium">Extracted</th>
-                <th className="px-5 py-2 font-medium">Needs review</th>
-                <th className="px-5 py-2 font-medium">Duplicates</th>
-                <th className="px-5 py-2 font-medium">Failed</th>
-                <th className="px-5 py-2 font-medium">Approved</th>
+              <tr>
+                <th>Uploaded</th>
+                <th>Category</th>
+                <th className="text-right">Total</th>
+                <th className="text-right">Extracted</th>
+                <th className="text-right">Needs review</th>
+                <th className="text-right">Duplicates</th>
+                <th className="text-right">Failed</th>
+                <th className="text-right">Approved</th>
               </tr>
             </thead>
             <tbody>
               {batches.map((b) => (
-                <tr key={b.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="px-5 py-2.5">
+                <tr key={b.id} className="hover:bg-muted">
+                  <td>
                     <Link href={`/batches/${b.id}`} className="text-navy hover:underline">
                       {new Date(b.created_at).toLocaleString()}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">{b.category}</td>
-                  <td className="px-5 py-2.5">{b.counts.total}</td>
-                  <td className="px-5 py-2.5">{b.counts.extracted}</td>
-                  <td className="px-5 py-2.5 text-pending">{b.counts.needs_review}</td>
-                  <td className="px-5 py-2.5 text-error">{b.counts.duplicates}</td>
-                  <td className="px-5 py-2.5 text-error">{b.counts.failed}</td>
-                  <td className="px-5 py-2.5 text-approved">{b.counts.approved}</td>
+                  <td className="text-text-secondary">{b.category}</td>
+                  <td className="text-right">{b.counts.total}</td>
+                  <td className="text-right">{b.counts.extracted}</td>
+                  <td className="text-right text-pending">{b.counts.needs_review}</td>
+                  <td className="text-right text-error">{b.counts.duplicates}</td>
+                  <td className="text-right text-error">{b.counts.failed}</td>
+                  <td className="text-right text-approved">{b.counts.approved}</td>
                 </tr>
               ))}
             </tbody>

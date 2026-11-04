@@ -114,7 +114,7 @@ function TaxCalendarContent() {
             </thead>
             <tbody>
               {filtered.map((e) => (
-                <tr key={e.vat_period_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                <tr key={e.vat_period_id} className="border-b border-border last:border-0 hover:bg-muted">
                   <td className="px-5 py-2.5">
                     <Link href={`/companies/${e.company_id}/workspace`} className="text-navy hover:underline">
                       {e.company_name}
@@ -146,7 +146,7 @@ function TaxCalendarContent() {
           {[...byMonth.entries()].sort().map(([month, monthEntries]) => (
             <div key={month} className="card-v2">
               <div className="px-5 py-3 border-b border-border-subtle font-medium text-navy">{month}</div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-border">
                 {monthEntries.map((e) => (
                   <div key={e.vat_period_id} className="px-5 py-3 flex items-center justify-between">
                     <div>

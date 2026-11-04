@@ -62,7 +62,7 @@ function CompaniesContent() {
       {showForm && (
         <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4 max-w-lg">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Company name</label>
+            <label className="text-sm font-medium text-text-primary">Company name</label>
             <input
               required
               value={name}
@@ -72,7 +72,7 @@ function CompaniesContent() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">KVK number</label>
+              <label className="text-sm font-medium text-text-primary">KVK number</label>
               <input
                 value={kvk}
                 onChange={(e) => setKvk(e.target.value)}
@@ -80,7 +80,7 @@ function CompaniesContent() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">VAT number</label>
+              <label className="text-sm font-medium text-text-primary">VAT number</label>
               <input
                 value={vat}
                 onChange={(e) => setVat(e.target.value)}
@@ -89,7 +89,7 @@ function CompaniesContent() {
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">VAT filing frequency</label>
+            <label className="text-sm font-medium text-text-primary">VAT filing frequency</label>
             <select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as VatFrequency)}
@@ -109,7 +109,7 @@ function CompaniesContent() {
         </form>
       )}
 
-      <div className="card-v2 divide-y divide-slate-100">
+      <div className="card-v2 divide-y divide-border">
         {companies.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">No companies yet.</p>
         ) : (
@@ -117,7 +117,7 @@ function CompaniesContent() {
             <Link
               key={c.id}
               href={`/companies/${c.id}`}
-              className="flex items-center justify-between px-5 py-3 hover:bg-slate-50"
+              className="flex items-center justify-between px-5 py-3 hover:bg-muted"
             >
               <div>
                 <p className="font-medium text-navy">{c.name}</p>

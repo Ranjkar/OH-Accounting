@@ -81,7 +81,7 @@ function PnlContent() {
               <a
                 key={fmt}
                 href={api.pnlReportUrl(Number(companyId), periodType, referenceDate, fmt)}
-                className="input-v2 px-2 py-1 hover:bg-slate-50"
+                className="input-v2 px-2 py-1 hover:bg-muted"
               >
                 Export {fmt.toUpperCase()}
               </a>
@@ -107,7 +107,7 @@ function PnlContent() {
               {PNL_LINES.map((line) => {
                 const comparison = comparisonKey ? report.comparison?.[line.key] : null;
                 return (
-                  <tr key={line.key} className={`border-b border-slate-100 last:border-0 ${line.highlight ? "bg-slate-50 font-medium" : ""}`}>
+                  <tr key={line.key} className={`border-b border-border last:border-0 ${line.highlight ? "bg-muted font-medium" : ""}`}>
                     <td className="px-4 py-2.5">{line.label}</td>
                     <td className="px-4 py-2.5 text-right font-mono">{report.current[line.key]}</td>
                     {comparisonKey && <td className="px-4 py-2.5 text-right font-mono text-text-secondary">{comparison?.previous}</td>}

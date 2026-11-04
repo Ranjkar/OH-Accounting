@@ -12,10 +12,10 @@ import { useAuth } from "@/lib/auth-context";
 import { api, ApiError, Plan, Subscription } from "@/lib/api";
 
 const STATUS_STYLE: Record<string, string> = {
-  TRIALING: "bg-brand-purple-500/10 text-brand-purple-700 border border-brand-purple-300/50",
-  ACTIVE: "bg-green-500/10 text-green-700 border border-green-300/50",
-  PAST_DUE: "bg-amber-500/10 text-amber-700 border border-amber-300/50",
-  CANCELED: "bg-slate-500/10 text-slate-700 border border-slate-300/50",
+  TRIALING: "status-pill-info",
+  ACTIVE: "status-pill-success",
+  PAST_DUE: "status-pill-warning",
+  CANCELED: "status-pill-neutral",
 };
 
 function BillingContent() {
@@ -83,7 +83,7 @@ function BillingContent() {
               <p className="text-xs text-text-secondary mt-1">Trial ends {new Date(subscription.trial_ends_at).toLocaleDateString()}</p>
             )}
           </div>
-          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${STATUS_STYLE[subscription.status]}`}>{subscription.status}</span>
+          <span className={`status-pill ${STATUS_STYLE[subscription.status]}`}>{subscription.status}</span>
         </div>
         {subscription.status !== "CANCELED" && isAdmin && (
           <div className="mt-4">

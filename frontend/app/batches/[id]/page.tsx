@@ -158,22 +158,22 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
 
       <div className="card-v2 overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              {canEdit && <th className="px-4 py-2"></th>}
-              <th className="px-4 py-2 font-medium">Document</th>
-              <th className="px-4 py-2 font-medium">Type</th>
-              <th className="px-4 py-2 font-medium">Confidence</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-              <th className="px-4 py-2 font-medium">Actions</th>
+            <tr>
+              {canEdit && <th></th>}
+              <th>Document</th>
+              <th>Type</th>
+              <th className="text-right">Confidence</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {batch.documents.map((doc) => (
-              <tr key={doc.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+              <tr key={doc.id} className="hover:bg-muted">
                 {canEdit && (
-                  <td className="px-4 py-2.5">
+                  <td>
                     <input
                       type="checkbox"
                       aria-label={`Select document ${doc.id}`}
@@ -183,19 +183,19 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
                     />
                   </td>
                 )}
-                <td className="px-4 py-2.5">
+                <td>
                   <a href={`/documents/${doc.id}`} className="text-navy hover:underline">
                     {doc.original_filename}
                   </a>
                 </td>
-                <td className="px-4 py-2.5 text-xs">{doc.document_type ?? "—"}</td>
-                <td className="px-4 py-2.5 text-xs">
+                <td className="text-xs text-text-secondary">{doc.document_type ?? "—"}</td>
+                <td className="text-right text-xs text-text-secondary">
                   {doc.classification_confidence !== null ? `${(doc.classification_confidence * 100).toFixed(0)}%` : "—"}
                 </td>
-                <td className="px-4 py-2.5">
+                <td>
                   <DocumentStatusBadge status={doc.status} isDuplicate={doc.is_duplicate} />
                 </td>
-                <td className="px-4 py-2.5 text-xs space-x-2">
+                <td className="text-xs space-x-2">
                   {canEdit && doc.status === "failed" && (
                     <button onClick={() => handleRetry(doc.id)} className="text-navy hover:underline">
                       Retry

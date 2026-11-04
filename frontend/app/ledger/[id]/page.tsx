@@ -118,7 +118,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           </thead>
           <tbody>
             {transaction.line_items.map((l) => (
-              <tr key={l.line_number} className="border-b border-slate-100 last:border-0">
+              <tr key={l.line_number} className="border-b border-border last:border-0">
                 <td className="px-5 py-2.5">{l.line_number}</td>
                 <td className="px-5 py-2.5">{l.description ?? "—"}</td>
                 <td className="px-5 py-2.5">{l.net_amount}</td>
@@ -143,7 +143,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           <table className="w-full text-sm">
             <tbody>
               {transaction.payments.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100 last:border-0">
+                <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-5 py-2">{p.payment_date}</td>
                   <td className="px-5 py-2">{p.amount}</td>
                   <td className="px-5 py-2 text-text-secondary">{p.reference ?? ""}</td>
@@ -154,7 +154,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           </div>
         )}
         {canEdit && (
-          <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-slate-100">
+          <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-border">
             <div className="space-y-1">
               <label className="text-xs font-medium text-text-secondary">Amount</label>
               <input

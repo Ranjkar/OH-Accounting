@@ -75,7 +75,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           <span
             key={step}
             className={`rounded-full px-3 py-1 ${
-              i <= stepIndex ? "bg-navy-solid text-white" : "bg-slate-100 text-text-secondary"
+              i <= stepIndex ? "bg-navy-solid text-white" : "bg-muted text-text-secondary"
             }`}
           >
             {step.replaceAll("_", " ")}
@@ -111,7 +111,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
                     .downloadReport(token, api.vatReturnReportUrl(vatReturn.id, fmt), `vat-return-${vatReturn.id}.${fmt}`)
                     .catch((e) => setError(e instanceof Error ? e.message : "Download failed"))
                 }
-                className="input-v2 px-3 py-1 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
+                className="input-v2 px-3 py-1 text-xs font-medium uppercase hover:bg-muted transition-colors"
               >
                 {fmt}
               </button>
@@ -130,20 +130,20 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           </thead>
           <tbody>
             {BOX_ROWS.map((row) => (
-              <tr key={row.code} className="border-b border-slate-100 last:border-0">
+              <tr key={row.code} className="border-b border-border last:border-0">
                 <td className="px-5 py-2 font-medium text-navy">{row.code}</td>
                 <td className="px-5 py-2">{row.label}</td>
                 <td className="px-5 py-2">{row.net ? vatReturn[row.net] : "—"}</td>
                 <td className="px-5 py-2">{row.vat ? vatReturn[row.vat] : "—"}</td>
               </tr>
             ))}
-            <tr className="border-b border-slate-100 bg-slate-50 font-medium">
+            <tr className="border-b border-border bg-muted font-medium">
               <td className="px-5 py-2">5a</td>
               <td className="px-5 py-2">Total VAT payable</td>
               <td className="px-5 py-2"></td>
               <td className="px-5 py-2">{vatReturn.box_5a_vat}</td>
             </tr>
-            <tr className="border-b border-slate-100 bg-slate-50 font-medium">
+            <tr className="border-b border-border bg-muted font-medium">
               <td className="px-5 py-2">5b</td>
               <td className="px-5 py-2">Deductible input VAT</td>
               <td className="px-5 py-2"></td>
@@ -199,7 +199,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
             <>
               <button
                 onClick={() => handleAction(() => api.recalculateVatReturn(token!, vatReturn.id))}
-                className="input-v2 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
+                className="input-v2 px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
               >
                 Recalculate
               </button>

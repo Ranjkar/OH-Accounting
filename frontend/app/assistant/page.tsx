@@ -68,14 +68,14 @@ function AssistantContent() {
           <button
             disabled={!companyId || loading}
             onClick={() => companyId && run(() => api.assistantCompanySummary(token!, Number(companyId)))}
-            className="input-v2 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="input-v2 px-3 py-1.5 text-sm hover:bg-muted transition-colors disabled:opacity-50"
           >
             Summarize financial position
           </button>
           <button
             disabled={!companyId || loading}
             onClick={() => companyId && run(() => api.assistantMissingDocuments(token!, Number(companyId)))}
-            className="input-v2 px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="input-v2 px-3 py-1.5 text-sm hover:bg-muted transition-colors disabled:opacity-50"
           >
             Identify missing documents
           </button>
@@ -103,13 +103,13 @@ function AssistantContent() {
 
       {response && (
         <div className="card-v2 p-5 space-y-4">
-          <div className="whitespace-pre-wrap text-sm text-slate-800">{response.answer}</div>
+          <div className="whitespace-pre-wrap text-sm text-text-primary">{response.answer}</div>
           <div className="rounded-md bg-amber-50 border border-amber-200 text-pending text-xs px-3 py-2">
             {response.disclaimer}
           </div>
           <details className="text-xs text-text-secondary">
             <summary className="cursor-pointer hover:text-navy">View underlying facts (what the assistant was given)</summary>
-            <pre className="mt-2 overflow-x-auto bg-slate-50 rounded-md p-3 text-xs">{JSON.stringify(response.facts, null, 2)}</pre>
+            <pre className="mt-2 overflow-x-auto bg-muted rounded-md p-3 text-xs">{JSON.stringify(response.facts, null, 2)}</pre>
           </details>
         </div>
       )}

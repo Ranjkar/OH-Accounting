@@ -11,7 +11,7 @@ import { api, Company, DocumentDetail, ExtractedFields, ValidationResult } from 
 const SEVERITY_STYLES: Record<ValidationResult["severity"], string> = {
   error: "bg-red-50 text-error border-red-200",
   warning: "bg-amber-50 text-pending border-amber-200",
-  info: "bg-slate-50 text-slate-600 border-border-subtle",
+  info: "bg-muted text-text-secondary border-border-subtle",
 };
 
 function FieldInput({
@@ -177,7 +177,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
               {doc.content_type} · {(doc.file_size / 1024).toFixed(0)} KB
             </span>
           </div>
-          <div className="h-[600px] bg-slate-100 flex items-center justify-center">
+          <div className="h-[600px] bg-muted flex items-center justify-center">
             {!fileUrl && <p className="text-sm text-text-secondary">Loading preview…</p>}
             {fileUrl && isPdf && <iframe src={fileUrl} className="w-full h-full" title="document preview" />}
             {fileUrl && isImage && (
@@ -276,7 +276,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
                 </thead>
                 <tbody>
                   {doc.line_items.map((li) => (
-                    <tr key={li.line_number} className="border-b border-slate-100 last:border-0">
+                    <tr key={li.line_number} className="border-b border-border last:border-0">
                       <td className="py-1.5">{li.line_number}</td>
                       <td className="py-1.5">{li.description ?? "—"}</td>
                       <td className="py-1.5">{li.net_amount ?? "—"}</td>
@@ -305,7 +305,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
                   </>
                 )}
                 {doc.status !== "approved" && (
-                  <button onClick={handleReprocess} className="input-v2 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors">
+                  <button onClick={handleReprocess} className="input-v2 px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">
                     Reprocess
                   </button>
                 )}

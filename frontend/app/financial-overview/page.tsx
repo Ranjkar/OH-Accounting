@@ -64,7 +64,7 @@ function FinancialOverviewContent() {
               </thead>
               <tbody>
                 {portfolio.portfolio.map((row: JsonReport) => (
-                  <tr key={row.company_id} className="border-b border-slate-100 last:border-0">
+                  <tr key={row.company_id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2.5">{row.company_name}</td>
                     <td className="px-4 py-2.5 font-mono">{row.current_month_revenue}</td>
                     <td className="px-4 py-2.5 font-mono">{row.current_month_net_profit}</td>

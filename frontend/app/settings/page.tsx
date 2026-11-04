@@ -81,7 +81,7 @@ function MfaSection() {
           <p className="text-sm text-text-secondary">
             Add this account to your authenticator app (Google Authenticator, 1Password, etc.) using this setup key, then enter the 6-digit code it shows to confirm:
           </p>
-          <p className="font-mono text-xs break-all rounded-md bg-slate-50 px-3 py-2">{setupSecret}</p>
+          <p className="font-mono text-xs break-all rounded-md bg-muted px-3 py-2">{setupSecret}</p>
           <p className="text-xs text-text-secondary break-all">{provisioningUri}</p>
           <div className="flex items-end gap-3">
             <div className="space-y-1">
@@ -149,9 +149,9 @@ function SettingsContent() {
         <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-text-primary">Company VAT settings</h2>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {companies.map((c) => (
-            <Link key={c.id} href={`/companies/${c.id}`} className="flex items-center justify-between px-5 py-3 hover:bg-slate-50">
+            <Link key={c.id} href={`/companies/${c.id}`} className="flex items-center justify-between px-5 py-3 hover:bg-muted">
               <div>
                 <p className="font-medium text-navy text-sm">{c.name}</p>
                 <p className="text-xs text-text-secondary">

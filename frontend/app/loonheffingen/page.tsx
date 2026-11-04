@@ -15,18 +15,18 @@ import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
 
 const STATUS_TONE: Record<string, string> = {
-  DRAFT: "bg-slate-200 text-slate-700",
-  VALIDATION: "bg-amber-100 text-amber-700",
-  ACCOUNTANT_REVIEW: "bg-amber-100 text-amber-700",
-  APPROVED: "bg-blue-100 text-blue-700",
-  READY_FOR_SUBMISSION: "bg-blue-100 text-blue-700",
-  SUBMITTED: "bg-indigo-100 text-indigo-700",
-  ACCEPTED: "bg-green-100 text-green-700",
-  REJECTED: "bg-red-100 text-red-700",
+  DRAFT: "status-pill-neutral",
+  VALIDATION: "status-pill-warning",
+  ACCOUNTANT_REVIEW: "status-pill-warning",
+  APPROVED: "status-pill-info",
+  READY_FOR_SUBMISSION: "status-pill-info",
+  SUBMITTED: "status-pill-info",
+  ACCEPTED: "status-pill-success",
+  REJECTED: "status-pill-danger",
 };
 
 function StatusBadge({ status }: { status: string }) {
-  return <span className={`text-xs font-medium rounded-full px-2.5 py-1 ${STATUS_TONE[status] ?? "bg-slate-200 text-slate-700"}`}>{status.replace(/_/g, " ")}</span>;
+  return <span className={`status-pill ${STATUS_TONE[status] ?? "status-pill-neutral"}`}>{status.replace(/_/g, " ")}</span>;
 }
 
 function LoonheffingenContent() {

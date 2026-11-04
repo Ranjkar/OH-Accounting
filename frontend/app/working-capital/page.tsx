@@ -59,7 +59,7 @@ function WorkingCapitalContent() {
             <div className="bg-white rounded-lg border border-red-200 p-4">
               <h2 className="font-medium text-error mb-2">Payment delay alerts</h2>
               {alerts.map((a) => (
-                <div key={a.transaction_id} className="flex items-center justify-between text-sm py-1 border-b border-slate-100 last:border-0">
+                <div key={a.transaction_id} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
                   <span>
                     {a.counterparty_name} -- invoice #{a.transaction_id} ({a.days_overdue} days overdue)
                   </span>
@@ -105,7 +105,7 @@ function WorkingCapitalContent() {
               </thead>
               <tbody>
                 {trend.map((t) => (
-                  <tr key={t.period_end} className="border-b border-slate-100 last:border-0">
+                  <tr key={t.period_end} className="border-b border-border last:border-0">
                     <td className="py-1">{t.period_end}</td>
                     <td className="py-1 font-mono">{t.accounts_receivable}</td>
                     <td className="py-1 font-mono">{t.accounts_payable}</td>

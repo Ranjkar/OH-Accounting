@@ -165,7 +165,7 @@ function CashFlowContent() {
               </thead>
               <tbody>
                 {forecast.monthly_projection.map((m) => (
-                  <tr key={m.month} className="border-b border-slate-100 last:border-0">
+                  <tr key={m.month} className="border-b border-border last:border-0">
                     <td className="px-4 py-2.5">{m.month}</td>
                     <td className="px-4 py-2.5 font-mono text-green-700">+{m.expected_incoming}</td>
                     <td className="px-4 py-2.5 font-mono text-error">-{m.expected_outgoing}</td>

@@ -16,7 +16,7 @@ function KpiCard({ name, kpi }: { name: string; kpi: JsonReport }) {
         <p className="text-sm text-amber-600">Not available</p>
       )}
       <p className="text-xs text-text-secondary mt-1">{kpi.explanation}</p>
-      <p className="text-xs text-slate-300 mt-1 font-mono">{kpi.formula}</p>
+      <p className="text-xs text-text-muted mt-1 font-mono">{kpi.formula}</p>
       {kpi.missing_data && <p className="text-xs text-error mt-1">{kpi.missing_data}</p>}
     </div>
   );

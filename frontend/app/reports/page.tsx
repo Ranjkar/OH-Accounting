@@ -15,7 +15,7 @@ function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void 
         <button
           key={fmt}
           onClick={() => onDownload(fmt)}
-          className="input-v2 px-3 py-1.5 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
+          className="input-v2 px-3 py-1.5 text-xs font-medium uppercase hover:bg-muted transition-colors"
         >
           {fmt}
         </button>
@@ -132,7 +132,7 @@ function ReportsContent() {
                 </thead>
                 <tbody>
                   {comparison.periods.map((p) => (
-                    <tr key={p.label} className="border-b border-slate-100 last:border-0">
+                    <tr key={p.label} className="border-b border-border last:border-0">
                       <td className="px-5 py-2.5">{p.label}</td>
                       <td className="px-5 py-2.5">{p.sales_net}</td>
                       <td className="px-5 py-2.5">{p.purchases_net}</td>

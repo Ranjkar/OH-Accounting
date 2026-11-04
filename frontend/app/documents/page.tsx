@@ -111,7 +111,7 @@ function DocumentsContent() {
         </div>
       </div>
 
-      <div className="card-v2 divide-y divide-slate-100">
+      <div className="card-v2 divide-y divide-border">
         {documents.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">
             {companyId ? "No documents yet for this company." : "Select a company and upload a document to get started."}
@@ -121,7 +121,7 @@ function DocumentsContent() {
             <Link
               key={doc.id}
               href={`/documents/${doc.id}`}
-              className="flex items-center justify-between px-5 py-3 hover:bg-slate-50"
+              className="flex items-center justify-between px-5 py-3 hover:bg-muted"
             >
               <div>
                 <p className="font-medium text-navy">{doc.original_filename}</p>

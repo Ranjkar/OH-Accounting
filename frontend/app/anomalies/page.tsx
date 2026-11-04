@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, AnomalyFlag, AnomalyStatus, Company } from "@/lib/api";
 
 const SEVERITY_COLOR: Record<string, string> = {
-  info: "bg-slate-100 text-slate-600",
+  info: "bg-muted text-text-secondary",
   warning: "bg-amber-100 text-amber-700",
   critical: "bg-red-100 text-error",
 };
@@ -109,7 +109,7 @@ function AnomaliesContent() {
               <span className="text-xs text-text-secondary">{f.rule_code}</span>
             </div>
             <p className="text-sm">{f.message}</p>
-            <pre className="text-xs bg-slate-50 rounded-md p-2 overflow-x-auto">{JSON.stringify(f.evidence, null, 2)}</pre>
+            <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto">{JSON.stringify(f.evidence, null, 2)}</pre>
             {f.status === "OPEN" && (
               <div className="flex items-center gap-2">
                 <button onClick={() => acknowledge(f.id)} className="btn-primary-v2 px-3 py-1.5 text-xs">

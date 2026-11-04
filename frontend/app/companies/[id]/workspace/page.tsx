@@ -91,7 +91,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
         <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-text-primary">Period completeness</h2>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {workspace.period_completeness.map((p) => (
             <div key={p.vat_period_id} className="px-5 py-4">
               <div className="flex items-center justify-between mb-2">
@@ -102,8 +102,8 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
               <table className="w-full text-sm">
                 <tbody>
                   {p.rows.map((row) => (
-                    <tr key={row.requirement} className="border-b border-slate-50 last:border-0">
-                      <td className="py-1 pr-4 text-slate-600 w-48">{row.requirement}</td>
+                    <tr key={row.requirement} className="border-b border-border last:border-0">
+                      <td className="py-1 pr-4 text-text-secondary w-48">{row.requirement}</td>
                       <td className="py-1 pr-4 w-32">
                         <span className={row.complete ? "text-approved font-medium" : "text-pending font-medium"}>
                           {row.complete ? "Complete" : "Pending"}
@@ -124,7 +124,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
         <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-text-primary">Notes &amp; customer questions</h2>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {workspace.notes.length === 0 ? (
             <p className="px-5 py-4 text-sm text-text-secondary">No notes yet.</p>
           ) : (
@@ -134,7 +134,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                   <p className="text-xs text-text-secondary">
                     {NOTE_TYPE_LABELS[note.note_type]} · {note.status} · {new Date(note.created_at).toLocaleDateString()}
                   </p>
-                  <p className="text-sm text-slate-800 mt-1">{note.body}</p>
+                  <p className="text-sm text-text-primary mt-1">{note.body}</p>
                 </div>
                 {canEdit && note.status !== "RESOLVED" && (
                   <button onClick={() => handleResolve(note.id)} className="text-xs text-navy hover:underline whitespace-nowrap">
@@ -146,7 +146,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
           )}
         </div>
         {canEdit && (
-          <form onSubmit={handleAddNote} className="px-5 py-3 border-t border-slate-100 flex items-end gap-3">
+          <form onSubmit={handleAddNote} className="px-5 py-3 border-t border-border flex items-end gap-3">
             <select
               value={noteType}
               aria-label="Note Type"
@@ -184,7 +184,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
           <table className="w-full text-sm">
             <tbody>
               {workspace.vat_returns.map((vr) => (
-                <tr key={vr.id} className="border-b border-slate-100 last:border-0">
+                <tr key={vr.id} className="border-b border-border last:border-0">
                   <td className="px-5 py-2.5">
                     <a href={`/vat/${vr.id}`} className="text-navy hover:underline">
                       {vr.period_label}

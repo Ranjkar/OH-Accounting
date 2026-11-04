@@ -4,7 +4,14 @@ import { FormEvent, useEffect, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
-import { api, Budget, Company, FinancialYear, JsonReport } from "@/lib/api";
+import { api, Budget, BudgetStatus, Company, FinancialYear, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
+
+const BUDGET_STATUS_PILL: Record<BudgetStatus, string> = {
+  DRAFT: "status-pill-neutral",
+  SUBMITTED: "status-pill-info",
+  APPROVED: "status-pill-success",
+};
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -129,7 +136,7 @@ function BudgetsContent() {
             Get AI suggestion from last year&apos;s actuals
           </button>
           {suggestion && (
-            <div className="bg-slate-50 rounded-md p-3 text-xs space-y-1">
+            <div className="bg-muted rounded-md p-3 text-xs space-y-1">
               {suggestion.ai_suggestion.suggestions.map((s: JsonReport) => (
                 <p key={s.category}>
                   <span className="font-medium">{s.category}</span>: {s.suggested_monthly_amount}/mo -- {s.reasoning}
@@ -155,7 +162,7 @@ function BudgetsContent() {
               </button>
             </div>
             {draftLines.length > 0 && (
-              <ul className="text-xs text-slate-600 space-y-0.5">
+              <ul className="text-xs text-text-secondary space-y-0.5">
                 {draftLines.map((l, i) => (
                   <li key={i}>
                     {l.category} / month {l.month}: {l.amount}
@@ -173,29 +180,29 @@ function BudgetsContent() {
       <div className="grid grid-cols-2 gap-6">
         <div className="card-v2 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-4 py-2 font-medium">Name</th>
-                <th className="px-4 py-2 font-medium">Version</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium" />
+              <tr>
+                <th>Name</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {budgets.map((b) => (
-                <tr key={b.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => viewBudget(b)}>
-                  <td className="px-4 py-2.5">{b.name}</td>
-                  <td className="px-4 py-2.5">v{b.version}</td>
-                  <td className="px-4 py-2.5">{b.status}</td>
-                  <td className="px-4 py-2.5 text-xs">
+                <tr key={b.id} className="cursor-pointer hover:bg-muted" onClick={() => viewBudget(b)}>
+                  <td className="text-text-primary">{b.name}</td>
+                  <td className="text-text-secondary">v{b.version}</td>
+                  <td><span className={`status-pill ${BUDGET_STATUS_PILL[b.status]}`}>{b.status.toLowerCase()}</span></td>
+                  <td className="text-xs">
                     {b.status === "DRAFT" && (
-                      <button onClick={(e) => { e.stopPropagation(); submit(b); }} className="text-navy underline">
+                      <button onClick={(e) => { e.stopPropagation(); submit(b); }} className="text-navy hover:underline">
                         Submit
                       </button>
                     )}
                     {b.status === "SUBMITTED" && (
-                      <button onClick={(e) => { e.stopPropagation(); approve(b); }} className="text-navy underline">
+                      <button onClick={(e) => { e.stopPropagation(); approve(b); }} className="text-navy hover:underline">
                         Approve
                       </button>
                     )}
@@ -204,7 +211,7 @@ function BudgetsContent() {
               ))}
               {budgets.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-4 text-text-secondary">
+                  <td colSpan={4} className="text-text-secondary">
                     No budgets yet.
                   </td>
                 </tr>
@@ -220,13 +227,13 @@ function BudgetsContent() {
               <h3 className="font-medium text-text-primary">{variance.budget_name} -- actual vs budget</h3>
               {variance.lines.length === 0 && <p className="text-text-secondary">No lines in this budget.</p>}
               {variance.lines.map((l: JsonReport, i: number) => (
-                <div key={i} className="flex items-center justify-between border-b border-slate-100 py-1">
+                <div key={i} className="flex items-center justify-between border-b border-border py-1">
                   <span>
                     {l.category} (month {l.month})
                   </span>
-                  <span className="font-mono">
-                    {l.actual} / {l.budgeted}{" "}
-                    <span className={Number(l.variance) < 0 ? "text-error" : "text-green-700"}>
+                  <span className="font-mono tabular-nums">
+                    {formatEUR(l.actual)} / {formatEUR(l.budgeted)}{" "}
+                    <span className={Number(l.variance) < 0 ? "value-negative" : "value-positive"}>
                       ({l.variance_pct !== null ? `${l.variance_pct}%` : "n/a"})
                     </span>
                   </span>
@@ -234,7 +241,7 @@ function BudgetsContent() {
               ))}
               <div className="flex items-center justify-between font-medium pt-2">
                 <span>Total variance</span>
-                <span className="font-mono">{variance.total_variance}</span>
+                <span className="font-mono tabular-nums">{formatEUR(variance.total_variance)}</span>
               </div>
               <div className="flex items-center gap-2 pt-2 text-xs">
                 <a href={api.budgetVsActualReportUrl(selected.id, "pdf")} className="input-v2 px-2 py-1">

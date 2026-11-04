@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, BalanceSheetItemCategory, Company, JsonReport, ManualBalanceSheetItem } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const CATEGORIES: { value: BalanceSheetItemCategory; label: string }[] = [
   { value: "FIXED_ASSETS", label: "Fixed assets" },
@@ -17,9 +18,9 @@ const CATEGORIES: { value: BalanceSheetItemCategory; label: string }[] = [
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`flex items-center justify-between py-1.5 ${highlight ? "font-semibold border-t border-border-subtle mt-1 pt-2" : ""}`}>
-      <span className="text-slate-600">{label}</span>
-      <span className="font-mono">{value}</span>
+    <div className={`flex items-center justify-between py-1.5 ${highlight ? "font-semibold border-t border-border mt-1 pt-2" : ""}`}>
+      <span className="text-text-secondary">{label}</span>
+      <span className="font-mono tabular-nums">{formatEUR(value)}</span>
     </div>
   );
 }
@@ -86,7 +87,7 @@ function BalanceSheetContent() {
         {companyId && (
           <div className="flex items-center gap-2 ml-auto text-xs">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
-              <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), asOfDate, fmt)} className="input-v2 px-2 py-1 hover:bg-slate-50">
+              <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), asOfDate, fmt)} className="input-v2 px-2 py-1 hover:bg-muted">
                 Export {fmt.toUpperCase()}
               </a>
             ))}
@@ -153,19 +154,27 @@ function BalanceSheetContent() {
             </button>
           </form>
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Label</th>
+                <th className="text-right">Amount</th>
+                <th>Date</th>
+              </tr>
+            </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="py-1.5 text-xs text-text-secondary">{item.category}</td>
-                  <td className="py-1.5">{item.label}</td>
-                  <td className="py-1.5 font-mono">{item.amount}</td>
-                  <td className="py-1.5 text-xs text-text-secondary">{item.as_of_date}</td>
+                <tr key={item.id}>
+                  <td className="text-xs text-text-secondary">{item.category}</td>
+                  <td className="text-text-primary">{item.label}</td>
+                  <td className="col-amount">{formatEUR(item.amount)}</td>
+                  <td className="text-xs text-text-secondary">{item.as_of_date}</td>
                 </tr>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td className="py-2 text-text-secondary">No manual items recorded yet.</td>
+                  <td colSpan={4} className="text-text-secondary">No manual items recorded yet.</td>
                 </tr>
               )}
             </tbody>
