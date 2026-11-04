@@ -13,10 +13,10 @@ function KpiCard({ name, kpi }: { name: string; kpi: JsonReport }) {
       {kpi.value !== null ? (
         <p className="text-2xl font-semibold text-navy font-mono">{kpi.value}</p>
       ) : (
-        <p className="text-sm text-amber-600">Not available</p>
+        <p className="text-sm text-pending">Not available</p>
       )}
       <p className="text-xs text-text-secondary mt-1">{kpi.explanation}</p>
-      <p className="text-xs text-text-muted mt-1 font-mono">{kpi.formula}</p>
+      <p className="text-xs text-text-secondary mt-1 font-mono">{kpi.formula}</p>
       {kpi.missing_data && <p className="text-xs text-error mt-1">{kpi.missing_data}</p>}
     </div>
   );

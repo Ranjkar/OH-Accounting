@@ -510,11 +510,15 @@ select.input-v2 {
   font-weight: 500;
   line-height: 1.4;
 }
-.status-pill-success { background: rgba(21, 128, 61, 0.12); color: var(--semantic-success); }
+/* Tint alpha kept low enough (0.06, not the earlier 0.12) that the
+   WCAG AA 4.5:1 text contrast holds against the blended background --
+   0.12 measured ~4.25:1 for warning/success text, a real failure caught
+   by axe-core's color-contrast rule run against the live, rendered page. */
+.status-pill-success { background: rgba(21, 128, 61, 0.06); color: var(--semantic-success); }
 .status-pill-neutral { background: var(--color-token-muted); color: var(--text-secondary); }
-.status-pill-info { background: rgba(29, 78, 216, 0.12); color: var(--semantic-info); }
-.status-pill-warning { background: rgba(180, 83, 9, 0.12); color: var(--semantic-warning); }
-.status-pill-danger { background: rgba(185, 28, 28, 0.12); color: var(--semantic-error); }
+.status-pill-info { background: rgba(29, 78, 216, 0.06); color: var(--semantic-info); }
+.status-pill-warning { background: rgba(180, 83, 9, 0.06); color: var(--semantic-warning); }
+.status-pill-danger { background: rgba(185, 28, 28, 0.06); color: var(--semantic-error); }
 
 /* ---- Compact financial tables (Mollie banking-list style) ----
    Applied to the 27 pages still using a plain <table> (see

@@ -113,7 +113,7 @@ function CashFlowContent() {
             <p className="text-sm">+ Increase in AP: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_payable)}</span></p>
             <p className="text-sm font-medium">≈ Approx operating cash: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.approx_operating_cash_from_accrual)}</span></p>
             <p className="text-sm font-medium">Actual operating cash: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.actual_operating_cash)}</span></p>
-            <p className="text-xs text-amber-600 mt-2">{statement.accrual_vs_cash_reconciliation.note}</p>
+            <p className="text-xs text-pending mt-2">{statement.accrual_vs_cash_reconciliation.note}</p>
           </div>
         </div>
       )}
@@ -124,7 +124,7 @@ function CashFlowContent() {
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">Actual -- net bank movement to date</p>
               <p className="text-2xl font-semibold text-navy font-mono">{formatEUR(forecast.net_bank_transaction_movement)}</p>
-              <p className="text-xs text-amber-600 mt-1">{forecast.net_bank_transaction_movement_disclaimer}</p>
+              <p className="text-xs text-pending mt-1">{forecast.net_bank_transaction_movement_disclaimer}</p>
             </div>
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">Confirmed -- outstanding invoices</p>
@@ -147,7 +147,7 @@ function CashFlowContent() {
             <p className="text-sm font-mono mt-1">
               Payable: {formatEUR(forecast.forecast_vat_payable)} · Refundable: {formatEUR(forecast.forecast_vat_refundable)}
             </p>
-            <p className="text-xs text-amber-600 mt-1">{forecast.forecast_vat_disclaimer}</p>
+            <p className="text-xs text-pending mt-1">{forecast.forecast_vat_disclaimer}</p>
           </div>
 
           <div className="card-v2 overflow-hidden">

@@ -261,7 +261,7 @@ function DashboardContent() {
             {user ? `Welcome back, ${user.full_name.split(" ")[0]}.` : "Welcome back."}
           </p>
         </div>
-        <GlassSelect value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
           <option value="">All companies</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>

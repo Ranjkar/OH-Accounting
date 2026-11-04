@@ -82,7 +82,7 @@ function EntrepreneurHoursContent() {
           <div className="h-2 bg-surface-page rounded-full overflow-hidden">
             <div className="h-2 hero-gradient-v2 rounded-full" style={{ width: `${pct}%` }} />
           </div>
-          <p className="text-xs text-amber-600">{dashboard.disclaimer}</p>
+          <p className="text-xs text-pending">{dashboard.disclaimer}</p>
           <div className="text-xs text-text-secondary">
             {Object.entries(dashboard.hours_by_category as Record<string, string>).map(([cat, hrs]) => (
               <span key={cat} className="mr-3">

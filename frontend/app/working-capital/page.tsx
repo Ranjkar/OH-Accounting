@@ -126,7 +126,7 @@ function WorkingCapitalContent() {
                   <p className="text-sm">DSO: <span className="font-mono">{ccc.days_sales_outstanding ?? "n/a"}</span></p>
                   <p className="text-sm">DPO: <span className="font-mono">{ccc.days_payable_outstanding ?? "n/a"}</span></p>
                   <p className="text-sm">DIO: <span className="font-mono">n/a</span></p>
-                  <p className="text-xs text-amber-600 mt-1">{ccc.missing_data}</p>
+                  <p className="text-xs text-pending mt-1">{ccc.missing_data}</p>
                 </>
               )}
             </div>
@@ -137,7 +137,7 @@ function WorkingCapitalContent() {
                   {c.counterparty_name}: {c.pct_of_total}%
                 </p>
               ))}
-              {customerConcentration?.missing_data && <p className="text-xs text-amber-600">{customerConcentration.missing_data}</p>}
+              {customerConcentration?.missing_data && <p className="text-xs text-pending">{customerConcentration.missing_data}</p>}
             </div>
             <div className="card-v2 p-4">
               <h2 className="font-medium text-text-primary mb-2">Supplier dependency</h2>
@@ -146,7 +146,7 @@ function WorkingCapitalContent() {
                   {c.category}: {c.pct_of_total}%
                 </p>
               ))}
-              {supplierDependency?.missing_data && <p className="text-xs text-amber-600">{supplierDependency.missing_data}</p>}
+              {supplierDependency?.missing_data && <p className="text-xs text-pending">{supplierDependency.missing_data}</p>}
             </div>
           </div>
         </>

@@ -83,7 +83,7 @@ function LegalStructureContent() {
             <p className="text-sm">Corporate tax: <span className="font-mono">{formatEUR(result.bv.corporate_tax)}</span></p>
             <p className="text-sm">Retained profit after corporate tax: <span className="font-mono">{formatEUR(result.bv.retained_profit_after_corporate_tax)}</span></p>
           </div>
-          <p className="text-xs text-amber-600">{result.disclaimer}</p>
+          <p className="text-xs text-pending">{result.disclaimer}</p>
         </>
       )}
     </div>

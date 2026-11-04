@@ -69,7 +69,7 @@ function TaxOptimizationContent() {
                 Estimated savings: <span className="font-mono text-green-700">{o.potential_savings}</span>
               </p>
             ) : (
-              <p className="text-sm text-amber-600">Confidence: {o.confidence}</p>
+              <p className="text-sm text-pending">Confidence: {o.confidence}</p>
             )}
             <ul className="text-xs text-text-secondary list-disc pl-4">
               {(o.eligibility_conditions as string[]).map((c, j) => (

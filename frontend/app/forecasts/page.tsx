@@ -98,7 +98,7 @@ function ForecastsContent() {
               {forecast.vat_payments.upcoming_vat_payments.map((p: JsonReport) => (
                 <p key={p.vat_period_id} className="text-sm">
                   {p.period_label} (due {p.payment_deadline}): <span className="font-mono">{formatEUR(p.estimated_net_payable)}</span>{" "}
-                  {!p.is_final && <span className="text-amber-600 text-xs">(estimate)</span>}
+                  {!p.is_final && <span className="text-pending text-xs">(estimate)</span>}
                 </p>
               ))}
               <p className="text-xs text-text-secondary mt-2">{forecast.tax_liability.note}</p>
@@ -107,7 +107,7 @@ function ForecastsContent() {
 
           <div className="card-v2 p-4">
             <h2 className="font-medium text-text-primary mb-2">Cash flow forecast (Phase 6 engine, reused)</h2>
-            <p className="text-xs text-amber-600">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
+            <p className="text-xs text-pending">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
             <div className="overflow-x-auto">
             <table className="table-v3">
               <thead>

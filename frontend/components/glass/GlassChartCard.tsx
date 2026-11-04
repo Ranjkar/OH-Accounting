@@ -91,7 +91,7 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
         style={{ height }}
-        role="img"
+        role="group"
         aria-label={`${title} chart -- see the data table below for exact values`}
         aria-describedby={tableId}
         onMouseLeave={() => setHover(null)}

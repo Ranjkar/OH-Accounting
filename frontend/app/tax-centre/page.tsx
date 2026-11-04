@@ -117,7 +117,7 @@ function TaxCentreContent() {
               <p className="text-sm">OSS: <span className="text-text-secondary">{overview.oss.note}</span></p>
               <p className="text-sm">Income tax: <span className="text-text-secondary">{overview.income_tax.note}</span></p>
               <p className="text-sm">Corporate tax: <span className="text-text-secondary">{overview.corporate_income_tax.note}</span></p>
-              <p className="text-xs text-amber-600 pt-2">{overview.sbr_digipoort_integration_status}</p>
+              <p className="text-xs text-pending pt-2">{overview.sbr_digipoort_integration_status}</p>
             </div>
           </div>
 

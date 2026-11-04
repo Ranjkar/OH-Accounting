@@ -166,12 +166,14 @@ function AiIntelligenceContent() {
             <GlassCard className="space-y-3">
               <h2 className="font-medium text-text-primary">Cash-flow prediction</h2>
               {cashFlow ? (
-                <dl className="text-sm space-y-1.5">
-                  <div className="flex justify-between"><dt className="text-text-secondary">Expected incoming</dt><dd className="font-mono">{formatEUR(cashFlow.expected_incoming_total)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-text-secondary">Expected outgoing</dt><dd className="font-mono">{formatEUR(cashFlow.expected_outgoing_total)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-text-secondary">Forecast VAT payable</dt><dd className="font-mono">{formatEUR(cashFlow.forecast_vat_payable)}</dd></div>
+                <>
+                  <dl className="text-sm space-y-1.5">
+                    <div className="flex justify-between"><dt className="text-text-secondary">Expected incoming</dt><dd className="font-mono">{formatEUR(cashFlow.expected_incoming_total)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">Expected outgoing</dt><dd className="font-mono">{formatEUR(cashFlow.expected_outgoing_total)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">Forecast VAT payable</dt><dd className="font-mono">{formatEUR(cashFlow.forecast_vat_payable)}</dd></div>
+                  </dl>
                   <p className="text-xs text-text-secondary pt-1">{cashFlow.forecast_vat_disclaimer}</p>
-                </dl>
+                </>
               ) : (
                 <p className="text-sm text-text-secondary">No forecast available.</p>
               )}
@@ -183,11 +185,13 @@ function AiIntelligenceContent() {
             <GlassCard className="space-y-3">
               <h2 className="font-medium text-text-primary">Outstanding invoices</h2>
               {forecast?.outstanding_invoices ? (
-                <dl className="text-sm space-y-1.5">
-                  <div className="flex justify-between"><dt className="text-text-secondary">Receivables outstanding</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-text-secondary">Payables outstanding</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</dd></div>
+                <>
+                  <dl className="text-sm space-y-1.5">
+                    <div className="flex justify-between"><dt className="text-text-secondary">Receivables outstanding</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">Payables outstanding</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</dd></div>
+                  </dl>
                   <p className="text-xs text-text-secondary pt-1">{forecast.outstanding_invoices.note}</p>
-                </dl>
+                </>
               ) : (
                 <p className="text-sm text-text-secondary">No data available.</p>
               )}

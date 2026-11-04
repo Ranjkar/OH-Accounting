@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, AutomationCentreSummary, Company } from "@/lib/api";
 
 function Tile({ label, value, href, tone }: { label: string; value: number; href: string; tone?: "warn" | "crit" }) {
-  const toneClass = tone === "crit" ? "text-error" : tone === "warn" ? "text-amber-600" : "text-navy";
+  const toneClass = tone === "crit" ? "text-error" : tone === "warn" ? "text-pending" : "text-navy";
   return (
     <Link href={href} className="card-v2 p-4 hover:border-navy transition-colors">
       <p className="text-xs text-text-secondary">{label}</p>
