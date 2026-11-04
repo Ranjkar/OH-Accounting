@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_Arabic, Vazirmatn } from "next/font/google";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { CompanyProvider } from "@/lib/company-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { LocaleProvider } from "@/lib/locale-context";
+import { AppLocale, dirFor } from "@/i18n/config";
 
 // Runs before paint, before React hydrates: reads the persisted
 // preference (or OS preference for "system"/first visit) and sets
@@ -31,16 +34,54 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Phase 16: Arabic-script font coverage for fa-IR/ar-SA. Vazirmatn is used
+// for Persian specifically (tuned Persian metrics/ligatures -- noticeably
+// better than a generic Arabic-script font for fa text); Noto Sans Arabic
+// covers Arabic itself plus acts as a shared fallback. Both are loaded
+// unconditionally (not only when that locale is active) so there's no
+// layout shift switching into an RTL language mid-session -- the font is
+// already in the page's font-family stack, just unused until then. See
+// globals.css for where [dir="rtl"]/:lang(fa) apply these as the primary
+// sans-serif stack.
+const notoSansArabic = Noto_Sans_Arabic({
+  variable: "--font-noto-sans-arabic",
+  subsets: ["arabic"],
+});
+
+const vazirmatn = Vazirmatn({
+  variable: "--font-vazirmatn",
+  subsets: ["arabic"],
+});
+
 export const metadata: Metadata = {
   title: "OnHolland Accounting",
   description: "AI-powered accounting and Dutch VAT administration platform",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Phase 16: resolving the interface locale needs cookies()/headers() (see
+// i18n/request.ts), which this project's `cacheComponents` build mode
+// otherwise requires wrapping in Suspense to keep a route statically
+// prerenderable. There is no static/marketing surface in this app --
+// every route sits behind AuthGuard and fetches account-specific data
+// client-side -- so opting the whole tree out of prerendering here has no
+// real downside, and keeps <html lang/dir> synchronous instead of
+// deferring it behind a Suspense boundary (which would reintroduce
+// exactly the hydration flash server-resolved locale was meant to avoid).
+export const instant = false;
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Server-resolved (cookie, then Accept-Language, then Dutch -- see
+  // i18n/request.ts) so <html lang/dir> are correct on the very first
+  // byte sent to the browser. Unlike the theme (which can only be known
+  // client-side, hence the no-flash script below), locale never flashes.
+  const locale = (await getLocale()) as AppLocale;
+  const dir = dirFor(locale);
+
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang={locale}
+      dir={dir}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSansArabic.variable} ${vazirmatn.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -49,7 +90,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <AuthProvider>
-            <CompanyProvider>{children}</CompanyProvider>
+            <LocaleProvider initialLocale={locale}>
+              <CompanyProvider>{children}</CompanyProvider>
+            </LocaleProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -191,6 +191,11 @@ export interface User {
   role: UserRole;
   mfa_enabled: boolean;
   is_platform_admin: boolean;
+  /** Phase 16: raw personal override (null = none set, follows the
+   * tenant's default). Use lib/locale-context's effective locale rather
+   * than reading this directly in UI code. */
+  locale: string | null;
+  tenant_default_locale: string;
 }
 
 export interface Company {
@@ -815,6 +820,8 @@ export const api = {
     request<void>("/auth/mfa/enable", { method: "POST", token, body: JSON.stringify({ secret, code }) }),
   mfaDisable: (token: string, code: string) =>
     request<void>("/auth/mfa/disable", { method: "POST", token, body: JSON.stringify({ code }) }),
+  updateMyLocale: (token: string, locale: string | null) =>
+    request<User>("/auth/me/locale", { method: "PATCH", token, body: JSON.stringify({ locale }) }),
   listCompanies: (token: string) => request<Company[]>("/companies", { token }),
   createCompany: (
     token: string,

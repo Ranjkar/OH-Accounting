@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:i18n": "node scripts/check-translation-parity.mjs"
   },
   "dependencies": {
     "next": "16.4.3",
+    "next-intl": "^4.14.9",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
