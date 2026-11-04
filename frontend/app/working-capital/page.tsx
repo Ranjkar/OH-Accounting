@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function WorkingCapitalContent() {
   const { token } = useAuth();
@@ -94,22 +95,22 @@ function WorkingCapitalContent() {
           <div className="card-v2 p-4">
             <h2 className="font-medium text-text-primary mb-2">Working capital trend (6 months)</h2>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-text-secondary border-b border-border-subtle">
-                  <th className="py-1">Month end</th>
-                  <th className="py-1">AR</th>
-                  <th className="py-1">AP</th>
-                  <th className="py-1">Net working capital</th>
+                <tr>
+                  <th>Month end</th>
+                  <th className="text-right">AR</th>
+                  <th className="text-right">AP</th>
+                  <th className="text-right">Net working capital</th>
                 </tr>
               </thead>
               <tbody>
                 {trend.map((t) => (
-                  <tr key={t.period_end} className="border-b border-border last:border-0">
-                    <td className="py-1">{t.period_end}</td>
-                    <td className="py-1 font-mono">{t.accounts_receivable}</td>
-                    <td className="py-1 font-mono">{t.accounts_payable}</td>
-                    <td className="py-1 font-mono">{t.net_working_capital}</td>
+                  <tr key={t.period_end}>
+                    <td className="text-text-secondary">{t.period_end}</td>
+                    <td className="col-amount">{formatEUR(t.accounts_receivable)}</td>
+                    <td className="col-amount">{formatEUR(t.accounts_payable)}</td>
+                    <td className="col-amount font-medium">{formatEUR(t.net_working_capital)}</td>
                   </tr>
                 ))}
               </tbody>

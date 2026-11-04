@@ -107,35 +107,35 @@ function WorkingHoursContent() {
 
           <div className="card-v2 overflow-hidden">
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-text-secondary border-b border-border-subtle">
-                  <th className="px-4 py-2 font-medium">Date</th>
-                  <th className="px-4 py-2 font-medium">Type</th>
-                  <th className="px-4 py-2 font-medium">Hours</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 font-medium" />
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th className="text-right">Hours</th>
+                  <th>Status</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {entries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-border-subtle last:border-0">
-                    <td className="px-4 py-2.5">{entry.entry_date}</td>
-                    <td className="px-4 py-2.5">{entry.entry_type}</td>
-                    <td className="px-4 py-2.5 font-mono">{entry.hours}</td>
-                    <td className="px-4 py-2.5">{entry.status}</td>
-                    <td className="px-4 py-2.5 text-xs">
+                  <tr key={entry.id}>
+                    <td className="text-text-secondary">{entry.entry_date}</td>
+                    <td className="text-text-primary">{entry.entry_type}</td>
+                    <td className="text-right font-mono tabular-nums">{entry.hours}</td>
+                    <td className="text-text-secondary">{entry.status}</td>
+                    <td className="text-xs">
                       {entry.status === "DRAFT" && (
-                        <button onClick={() => submit(entry)} className="underline">
+                        <button onClick={() => submit(entry)} className="text-navy hover:underline">
                           Submit
                         </button>
                       )}
                       {entry.status === "SUBMITTED" && (
                         <span className="flex gap-2">
-                          <button onClick={() => approve(entry)} className="underline">
+                          <button onClick={() => approve(entry)} className="text-navy hover:underline">
                             Approve
                           </button>
-                          <button onClick={() => reject(entry)} className="underline">
+                          <button onClick={() => reject(entry)} className="text-error hover:underline">
                             Reject
                           </button>
                         </span>
@@ -145,7 +145,7 @@ function WorkingHoursContent() {
                 ))}
                 {entries.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-4 text-text-secondary">
+                    <td colSpan={5} className="text-text-secondary">
                       No entries yet.
                     </td>
                   </tr>
