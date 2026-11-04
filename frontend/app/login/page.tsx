@@ -2,12 +2,16 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
+import LanguageSelector from "@/components/glass/LanguageSelector";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tSettings = useTranslations("settings");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
@@ -27,20 +31,20 @@ export default function LoginPage() {
         router.push("/");
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed");
+      setError(err instanceof ApiError ? err.message : t("invalidCredentials"));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 min-h-screen app-shell-v2">
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4 min-h-screen app-shell-v2">
       <form onSubmit={handleSubmit} className="glass-panel p-8 w-full max-w-sm space-y-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl hero-gradient-v2 flex items-center justify-center text-base font-bold text-white flex-shrink-0">O</div>
           <div>
             <h1 className="text-lg font-semibold text-text-primary">OnHolland Accounting</h1>
-            <p className="text-sm text-text-secondary">Sign in to your account</p>
+            <p className="text-sm text-text-secondary">{t("signInSubtitle")}</p>
           </div>
         </div>
 
@@ -52,13 +56,14 @@ export default function LoginPage() {
 
         <div className="space-y-1.5">
           <label htmlFor="login-email" className="text-sm font-medium text-text-primary">
-            Email
+            {t("emailLabel")}
           </label>
           <input
             id="login-email"
             type="email"
             required
             autoComplete="username"
+            dir="ltr"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full input-v2 px-3 py-2 text-sm"
@@ -66,7 +71,7 @@ export default function LoginPage() {
         </div>
         <div className="space-y-1.5">
           <label htmlFor="login-password" className="text-sm font-medium text-text-primary">
-            Password
+            {t("passwordLabel")}
           </label>
           <input
             id="login-password"
@@ -74,6 +79,7 @@ export default function LoginPage() {
             required
             disabled={mfaRequired}
             autoComplete="current-password"
+            dir="ltr"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full input-v2 px-3 py-2 text-sm disabled:opacity-60"
@@ -83,7 +89,7 @@ export default function LoginPage() {
         {mfaRequired && (
           <div className="space-y-1.5">
             <label htmlFor="login-mfa-code" className="text-sm font-medium text-text-primary">
-              Authenticator code
+              {t("mfaCodeLabel")}
             </label>
             <input
               id="login-mfa-code"
@@ -92,19 +98,21 @@ export default function LoginPage() {
               autoComplete="one-time-code"
               required
               autoFocus
+              dir="ltr"
               value={mfaCode}
               onChange={(e) => setMfaCode(e.target.value)}
-              placeholder="6-digit code"
+              placeholder={tSettings("mfaDigitCode")}
               className="w-full input-v2 px-3 py-2 text-sm"
             />
-            <p className="text-xs text-text-secondary">This account has MFA enabled. Enter the current code from your authenticator app.</p>
+            <p className="text-xs text-text-secondary">{t("mfaCodeHint")}</p>
           </div>
         )}
 
         <button type="submit" disabled={submitting} className="btn-primary-v2 w-full py-2 text-sm disabled:opacity-50">
-          {submitting ? "Signing in…" : mfaRequired ? "Verify code" : "Sign in"}
+          {submitting ? t("signingIn") : mfaRequired ? t("verifyCode") : t("signInButton")}
         </button>
       </form>
+      <LanguageSelector />
     </div>
   );
 }

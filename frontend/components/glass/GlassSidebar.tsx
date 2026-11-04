@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
+import { ASSIGNABLE_ROLES } from "@/lib/api";
 import GlassNavigationGroup from "./GlassNavigationGroup";
 import { EMPLOYEE_ROLE_NAV_GROUPS, NAV_GROUPS, PLATFORM_ADMIN_NAV_GROUP } from "./navConfig";
 import { IconCollapse, IconExpand, IconLogout, IconX } from "./icons";
@@ -21,6 +22,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   const pathname = usePathname();
   const tGroups = useTranslations("nav.groups");
   const tShell = useTranslations("shell");
+  const tRoles = useTranslations("users.roles");
   const [collapsed, setCollapsed] = useState(false);
   // Single-open accordion: at most one group is expanded at a time (null =
   // none). Opening a group closes whichever was open before it. Keyed by
@@ -132,7 +134,9 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-sm text-sidebar-text truncate">{user.full_name}</p>
-                <p className="text-xs text-sidebar-text-secondary truncate capitalize">{user.role}</p>
+                <p className="text-xs text-sidebar-text-secondary truncate capitalize">
+                  {(ASSIGNABLE_ROLES as string[]).includes(user.role) ? tRoles(user.role as never) : user.role}
+                </p>
               </div>
             )}
           </div>

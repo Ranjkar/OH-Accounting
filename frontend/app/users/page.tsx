@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -24,6 +25,8 @@ const INVITATION_PILL: Record<string, string> = {
 };
 
 function UsersContent() {
+  const t = useTranslations("users");
+  const tCommon = useTranslations("common");
   const { token, user: currentUser } = useAuth();
   const [users, setUsers] = useState<TenantUser[]>([]);
   const [invitations, setInvitations] = useState<UserInvitation[]>([]);
@@ -48,7 +51,7 @@ function UsersContent() {
         setInvitations(inv);
         setError(null);
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Failed to load users"))
+      .catch((e) => setError(e instanceof ApiError ? e.message : t("loadFailed")))
       .finally(() => setLoading(false));
   }
 
@@ -66,7 +69,7 @@ function UsersContent() {
       setInviteRole("accountant");
       refresh();
     } catch (e) {
-      setInviteError(e instanceof ApiError ? e.message : "Failed to create invitation");
+      setInviteError(e instanceof ApiError ? e.message : t("inviteFailed"));
     } finally {
       setInviteBusy(false);
     }
@@ -80,7 +83,7 @@ function UsersContent() {
       await api.updateUserRole(token, targetUser.id, role);
       refresh();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to change role");
+      setError(e instanceof ApiError ? e.message : t("roleChangeFailed"));
     } finally {
       setBusyUserId(null);
     }
@@ -95,7 +98,7 @@ function UsersContent() {
       else await api.activateUser(token, targetUser.id);
       refresh();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to update user status");
+      setError(e instanceof ApiError ? e.message : t("statusUpdateFailed"));
     } finally {
       setBusyUserId(null);
     }
@@ -108,7 +111,7 @@ function UsersContent() {
     try {
       await api.revokeUserSessions(token, targetUser.id);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to revoke sessions");
+      setError(e instanceof ApiError ? e.message : t("revokeSessionsFailed"));
     } finally {
       setBusyUserId(null);
     }
@@ -120,7 +123,7 @@ function UsersContent() {
       await api.revokeUserInvitation(token, invitation.id);
       refresh();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to revoke invitation");
+      setError(e instanceof ApiError ? e.message : t("revokeInvitationFailed"));
     }
   }
 
@@ -138,14 +141,11 @@ function UsersContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-text-primary">Users &amp; Permissions</h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Everyone in your organisation, their role, status, and company access. Role changes and
-            activation/deactivation are enforced server-side regardless of what this page offers.
-          </p>
+          <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+          <p className="text-sm text-text-secondary mt-1">{t("subtitle")}</p>
         </div>
         <button onClick={() => setShowInviteForm((v) => !v)} className="btn-primary-v2 px-4 py-2 text-sm">
-          {showInviteForm ? "Cancel" : "Invite user"}
+          {showInviteForm ? tCommon("cancel") : t("inviteUser")}
         </button>
       </div>
 
@@ -153,22 +153,23 @@ function UsersContent() {
 
       {showInviteForm && (
         <form onSubmit={handleInvite} className="card-v2 p-5 space-y-3">
-          <h2 className="font-medium text-text-primary">Invite a new user</h2>
+          <h2 className="font-medium text-text-primary">{t("inviteNewUser")}</h2>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
-              <label htmlFor="invite-email" className="text-xs font-medium text-text-secondary">Email</label>
+              <label htmlFor="invite-email" className="text-xs font-medium text-text-secondary">{t("emailHeader")}</label>
               <input
                 id="invite-email"
                 type="email"
                 required
+                dir="ltr"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 className="input-v2 px-3 py-2 text-sm w-64"
-                placeholder="name@example.com"
+                placeholder={t("emailPlaceholder")}
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="invite-role" className="text-xs font-medium text-text-secondary">Role</label>
+              <label htmlFor="invite-role" className="text-xs font-medium text-text-secondary">{tCommon("role")}</label>
               <select
                 id="invite-role"
                 value={inviteRole}
@@ -177,24 +178,23 @@ function UsersContent() {
               >
                 {ASSIGNABLE_ROLES.filter((r) => isOwner || !["owner", "admin"].includes(r)).map((r) => (
                   <option key={r} value={r}>
-                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                    {t(`roles.${r}` as never)}
                   </option>
                 ))}
               </select>
             </div>
             <button type="submit" disabled={inviteBusy} className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50">
-              {inviteBusy ? "Sending…" : "Send invitation"}
+              {inviteBusy ? tCommon("sending") : t("sendInvitation")}
             </button>
           </div>
-          {!isOwner && <p className="text-xs text-text-secondary">As an admin, you can invite accountants and viewers. Only an owner can invite another owner or admin.</p>}
+          {!isOwner && <p className="text-xs text-text-secondary">{t("adminInviteNote")}</p>}
           {inviteError && <p className="text-sm text-error">{inviteError}</p>}
           {inviteResult && (
             <div className="rounded-md bg-muted px-3 py-2 text-xs space-y-1">
               <p className="text-text-primary">
-                Invitation created for <span className="font-medium">{inviteResult.email}</span>. No email provider is
-                configured in this environment -- share this link with them directly:
+                {t("invitationCreatedFor")} <span className="font-medium" dir="ltr">{inviteResult.email}</span>. {t("noEmailProviderShareLink")}
               </p>
-              <p className="font-mono break-all text-text-secondary">
+              <p className="font-mono break-all text-text-secondary" dir="ltr">
                 {typeof window !== "undefined" ? window.location.origin : ""}/users/invitations/accept?token={inviteResult.token}
               </p>
             </div>
@@ -204,19 +204,19 @@ function UsersContent() {
 
       <div className="card-v2 overflow-hidden">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-text-primary">Team ({users.length})</h2>
+          <h2 className="text-sm font-medium text-text-primary">{t("teamCount", { count: users.length })}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>MFA</th>
-                <th>Company access</th>
-                <th>Joined</th>
+                <th>{t("nameHeader")}</th>
+                <th>{t("emailHeader")}</th>
+                <th>{tCommon("role")}</th>
+                <th>{tCommon("status")}</th>
+                <th>{t("mfa")}</th>
+                <th>{t("companyAccess")}</th>
+                <th>{t("joined")}</th>
                 <th />
               </tr>
             </thead>
@@ -226,11 +226,11 @@ function UsersContent() {
                 return (
                   <tr key={u.id}>
                     <td className="text-text-primary">{u.full_name}</td>
-                    <td className="text-text-secondary">{u.email}</td>
+                    <td className="text-text-secondary" dir="ltr">{u.email}</td>
                     <td>
                       {u.id !== currentUser?.id && options.length > 0 ? (
                         <select
-                          aria-label={`Role for ${u.full_name}`}
+                          aria-label={`${tCommon("role")}: ${u.full_name}`}
                           value={u.role}
                           disabled={busyUserId === u.id}
                           onChange={(e) => handleRoleChange(u, e.target.value as UserRole)}
@@ -239,27 +239,27 @@ function UsersContent() {
                           {!ASSIGNABLE_ROLES.includes(u.role) && <option value={u.role}>{u.role}</option>}
                           {options.map((r) => (
                             <option key={r} value={r}>
-                              {r}
+                              {t(`roles.${r}` as never)}
                             </option>
                           ))}
                         </select>
                       ) : (
-                        <span className={`status-pill ${ROLE_PILL[u.role]}`}>{u.role}</span>
+                        <span className={`status-pill ${ROLE_PILL[u.role]}`}>{ASSIGNABLE_ROLES.includes(u.role) ? t(`roles.${u.role}` as never) : u.role}</span>
                       )}
                     </td>
                     <td>
                       <span className={`status-pill ${u.is_active ? "status-pill-success" : "status-pill-danger"}`}>
-                        {u.is_active ? "Active" : "Inactive"}
+                        {u.is_active ? tCommon("active") : tCommon("inactive")}
                       </span>
                     </td>
-                    <td className="text-text-secondary text-xs">{u.mfa_enabled ? "Enabled" : "—"}</td>
+                    <td className="text-text-secondary text-xs">{u.mfa_enabled ? tCommon("enabled") : "—"}</td>
                     <td className="text-text-secondary text-xs">
                       {u.companies.length === 0 ? "—" : u.companies.map((c) => c.name).join(", ")}
                     </td>
                     <td className="text-text-secondary text-xs">{formatDate(u.created_at)}</td>
                     <td className="text-xs">
                       {u.id === currentUser?.id ? (
-                        <span className="text-text-secondary">You</span>
+                        <span className="text-text-secondary">{t("you")}</span>
                       ) : (
                         <div className="flex items-center gap-2 justify-end">
                           <button
@@ -267,14 +267,14 @@ function UsersContent() {
                             disabled={busyUserId === u.id}
                             className="text-navy hover:underline disabled:opacity-50"
                           >
-                            Revoke sessions
+                            {t("revokeSessions")}
                           </button>
                           <button
                             onClick={() => handleToggleActive(u)}
                             disabled={busyUserId === u.id}
                             className={`hover:underline disabled:opacity-50 ${u.is_active ? "text-error" : "text-navy"}`}
                           >
-                            {u.is_active ? "Deactivate" : "Activate"}
+                            {u.is_active ? t("deactivate") : t("activate")}
                           </button>
                         </div>
                       )}
@@ -285,7 +285,7 @@ function UsersContent() {
               {!loading && users.length === 0 && (
                 <tr>
                   <td colSpan={8} className="text-text-secondary">
-                    No users yet.
+                    {t("noUsersYet")}
                   </td>
                 </tr>
               )}
@@ -297,32 +297,32 @@ function UsersContent() {
       {invitations.length > 0 && (
         <div className="card-v2 overflow-hidden">
           <div className="px-5 py-3 border-b border-border-subtle">
-            <h2 className="text-sm font-medium text-text-primary">Invitations</h2>
+            <h2 className="text-sm font-medium text-text-primary">{t("invitations")}</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="table-v3">
               <thead>
                 <tr>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Expires</th>
+                  <th>{t("emailHeader")}</th>
+                  <th>{tCommon("role")}</th>
+                  <th>{tCommon("status")}</th>
+                  <th>{t("expires")}</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {invitations.map((inv) => (
                   <tr key={inv.id}>
-                    <td className="text-text-primary">{inv.invited_email}</td>
-                    <td className="text-text-secondary text-xs">{inv.intended_role}</td>
+                    <td className="text-text-primary" dir="ltr">{inv.invited_email}</td>
+                    <td className="text-text-secondary text-xs">{ASSIGNABLE_ROLES.includes(inv.intended_role) ? t(`roles.${inv.intended_role}` as never) : inv.intended_role}</td>
                     <td>
-                      <span className={`status-pill ${INVITATION_PILL[inv.status]}`}>{inv.status}</span>
+                      <span className={`status-pill ${INVITATION_PILL[inv.status]}`}>{t(`invitationStatus.${inv.status.toLowerCase()}` as never)}</span>
                     </td>
                     <td className="text-text-secondary text-xs">{formatDate(inv.expires_at)}</td>
                     <td className="text-xs">
                       {inv.status === "PENDING" && (
                         <button onClick={() => handleRevokeInvitation(inv)} className="text-error hover:underline">
-                          Revoke
+                          {t("revoke")}
                         </button>
                       )}
                     </td>

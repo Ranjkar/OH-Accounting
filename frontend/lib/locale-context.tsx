@@ -82,22 +82,33 @@ export function LocaleProvider({ initialLocale, children }: { initialLocale: App
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Once per authenticated session: if the backend has an explicit
-  // preference (or tenant default) that differs from what's currently
-  // showing, adopt it -- this is what makes the preference "follow the
-  // user across devices after logging in." Deliberately only syncs once
-  // (guarded by syncedFromBackend) so it can never fight a locale the
-  // user picks by hand later in the same session, and never overrides an
-  // explicit choice already reflected in this browser's own cookie.
+  // Once per authenticated session:
+  // - If the user has an EXPLICIT personal override saved (user.locale
+  //   not null) that differs from what's currently showing, adopt it --
+  //   this is what makes a personal preference follow the user across
+  //   devices after logging in.
+  // - If they have no personal override yet (user.locale is null -- only
+  //   the generic, never-personally-chosen tenant default applies), the
+  //   locale already showing in THIS browser (an explicit local choice,
+  //   or the Accept-Language-derived initial guess) wins instead, and is
+  //   pushed to the backend as their new personal preference. The
+  //   tenant's default must never silently overwrite what the user is
+  //   already looking at -- that would be exactly the "let something else
+  //   override an explicit/local preference" failure mode the brief
+  //   warns against, just arriving from the backend instead of the
+  //   browser's Accept-Language header.
+  // Deliberately only runs once (guarded by syncedFromBackend) so it can
+  // never fight a locale the user picks by hand later in the session.
   useEffect(() => {
     if (!user || syncedFromBackend) return;
-    const backendCode = user.locale ?? user.tenant_default_locale;
-    if (isSupportedCode(backendCode)) {
-      const backendLocale = CODE_TO_LOCALE[backendCode];
+    if (isSupportedCode(user.locale)) {
+      const backendLocale = CODE_TO_LOCALE[user.locale];
       if (backendLocale !== locale) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocale(backendLocale, false);
       }
+    } else if (token) {
+      api.updateMyLocale(token, LOCALE_TO_CODE[locale]).catch(() => {});
     }
     setSyncedFromBackend(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps

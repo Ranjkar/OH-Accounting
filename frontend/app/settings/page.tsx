@@ -8,7 +8,7 @@ import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import ThemeToggle from "@/components/glass/ThemeToggle";
 import LanguageSelector from "@/components/glass/LanguageSelector";
-import { api, ApiError, Company } from "@/lib/api";
+import { api, ApiError, ASSIGNABLE_ROLES, Company } from "@/lib/api";
 import { IconChevronRight } from "@/components/glass/icons";
 
 function MfaSection() {
@@ -73,7 +73,7 @@ function MfaSection() {
       {user?.mfa_enabled ? (
         <div className="space-y-3">
           <p className="text-sm text-text-secondary">
-            {t.rich("mfaEnabledBody", { status: () => <span className="font-medium text-navy">{t("mfaEnabledLabel")}</span> })}
+            {t.rich("mfaEnabledBody", { status: (chunks) => <span className="font-medium text-navy">{chunks}</span> })}
           </p>
           <form onSubmit={handleDisable} className="flex items-end gap-3">
             <div className="space-y-1">
@@ -100,7 +100,7 @@ function MfaSection() {
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-text-secondary">
-            {t.rich("mfaNotEnabledBody", { status: () => <span className="font-medium text-navy">{t("mfaNotEnabledLabel")}</span> })}
+            {t.rich("mfaNotEnabledBody", { status: (chunks) => <span className="font-medium text-navy">{chunks}</span> })}
           </p>
           <button onClick={startSetup} className="btn-primary-v2 px-4 py-2 text-sm">{t("mfaSetUp")}</button>
         </div>
@@ -111,6 +111,7 @@ function MfaSection() {
 
 function SettingsContent() {
   const t = useTranslations("settings");
+  const tRoles = useTranslations("users.roles");
   const { token, user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -138,7 +139,9 @@ function SettingsContent() {
           </div>
           <div className="flex justify-between max-w-sm">
             <dt className="text-text-secondary">{t("accountRole")}</dt>
-            <dd className="text-navy font-medium capitalize">{user?.role}</dd>
+            <dd className="text-navy font-medium capitalize">
+              {user && (ASSIGNABLE_ROLES as string[]).includes(user.role) ? tRoles(user.role as never) : user?.role}
+            </dd>
           </div>
         </dl>
       </div>

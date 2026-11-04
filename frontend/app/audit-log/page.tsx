@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -8,21 +9,21 @@ import { api, ApiError, AuditLogEntry } from "@/lib/api";
 
 const PAGE_SIZE = 25;
 
-function formatTimestamp(value: string): string {
-  return new Intl.DateTimeFormat("nl-NL", { dateStyle: "medium", timeStyle: "medium" }).format(new Date(value));
-}
-
 function JsonSnapshot({ label, value }: { label: string; value: Record<string, unknown> | null }) {
   if (!value || Object.keys(value).length === 0) return null;
   return (
     <div>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">{label}</p>
-      <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto">{JSON.stringify(value, null, 2)}</pre>
+      <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto" dir="ltr">{JSON.stringify(value, null, 2)}</pre>
     </div>
   );
 }
 
 function AuditLogContent() {
+  const t = useTranslations("auditLog");
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
+  const locale = useLocale();
   const { token } = useAuth();
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -39,6 +40,10 @@ function AuditLogContent() {
   const [entityType, setEntityType] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  function formatTimestamp(value: string): string {
+    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "medium" }).format(new Date(value));
+  }
 
   useEffect(() => {
     if (!token) return;
@@ -63,7 +68,7 @@ function AuditLogContent() {
         setTotal(page.total);
         setError(null);
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Failed to load the audit log"))
+      .catch((e) => setError(e instanceof ApiError ? e.message : tErrors("loadFailed")))
       .finally(() => setLoading(false));
   }
 
@@ -89,31 +94,27 @@ function AuditLogContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Audit Log</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Every security-sensitive action in your organisation -- logins, role changes, company access, invoices,
-          payments, VAT, ledger corrections, bank imports and reconciliation. Read-only; nothing here can be edited
-          or deleted through the application.
-        </p>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+        <p className="text-sm text-text-secondary mt-1">{t("subtitle")}</p>
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="card-v2 p-4 flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <label htmlFor="audit-search" className="text-xs font-medium text-text-secondary">Search</label>
+          <label htmlFor="audit-search" className="text-xs font-medium text-text-secondary">{tCommon("search")}</label>
           <input
             id="audit-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="action or entity type"
+            placeholder={t("searchPlaceholder")}
             className="input-v2 px-3 py-2 text-sm w-48"
           />
         </div>
         <div className="space-y-1">
-          <label htmlFor="audit-action" className="text-xs font-medium text-text-secondary">Action</label>
+          <label htmlFor="audit-action" className="text-xs font-medium text-text-secondary">{t("action")}</label>
           <select id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} className="input-v2 px-3 py-2 text-sm">
-            <option value="">All actions</option>
+            <option value="">{t("allActions")}</option>
             {actions.map((a) => (
               <option key={a} value={a}>
                 {a}
@@ -122,29 +123,29 @@ function AuditLogContent() {
           </select>
         </div>
         <div className="space-y-1">
-          <label htmlFor="audit-entity" className="text-xs font-medium text-text-secondary">Entity</label>
+          <label htmlFor="audit-entity" className="text-xs font-medium text-text-secondary">{t("entity")}</label>
           <select id="audit-entity" value={entityType} onChange={(e) => setEntityType(e.target.value)} className="input-v2 px-3 py-2 text-sm">
-            <option value="">All entities</option>
-            {entityTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            <option value="">{t("allEntities")}</option>
+            {entityTypes.map((et) => (
+              <option key={et} value={et}>
+                {et}
               </option>
             ))}
           </select>
         </div>
         <div className="space-y-1">
-          <label htmlFor="audit-from" className="text-xs font-medium text-text-secondary">From</label>
+          <label htmlFor="audit-from" className="text-xs font-medium text-text-secondary">{t("from")}</label>
           <input id="audit-from" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
         </div>
         <div className="space-y-1">
-          <label htmlFor="audit-to" className="text-xs font-medium text-text-secondary">To</label>
+          <label htmlFor="audit-to" className="text-xs font-medium text-text-secondary">{t("to")}</label>
           <input id="audit-to" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
         </div>
         <button onClick={applyFilters} className="btn-primary-v2 px-4 py-2 text-sm">
-          Apply
+          {tCommon("apply")}
         </button>
         <button onClick={clearFilters} className="input-v2 px-3 py-2 text-sm">
-          Clear
+          {tCommon("clear")}
         </button>
       </div>
 
@@ -153,10 +154,10 @@ function AuditLogContent() {
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Entity</th>
+                <th>{t("timestamp")}</th>
+                <th>{t("actor")}</th>
+                <th>{t("action")}</th>
+                <th>{t("entity")}</th>
                 <th />
               </tr>
             </thead>
@@ -168,12 +169,12 @@ function AuditLogContent() {
                     onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                   >
                     <td className="text-text-secondary text-xs">{formatTimestamp(entry.created_at)}</td>
-                    <td className="text-text-primary text-xs">{entry.actor ? entry.actor.full_name : "System"}</td>
-                    <td className="text-text-primary text-xs font-mono">{entry.action}</td>
-                    <td className="text-text-secondary text-xs">
+                    <td className="text-text-primary text-xs">{entry.actor ? entry.actor.full_name : t("system")}</td>
+                    <td className="text-text-primary text-xs font-mono" dir="ltr">{entry.action}</td>
+                    <td className="text-text-secondary text-xs" dir="ltr">
                       {entry.entity_type} #{entry.entity_id}
                     </td>
-                    <td className="text-xs text-navy">{expandedId === entry.id ? "Hide" : "Details"}</td>
+                    <td className="text-xs text-navy">{expandedId === entry.id ? tCommon("hide") : tCommon("details")}</td>
                   </tr>
                   {expandedId === entry.id && (
                     <tr>
@@ -181,15 +182,15 @@ function AuditLogContent() {
                         <div className="p-3 space-y-2">
                           {entry.request_id && (
                             <p className="text-xs text-text-secondary">
-                              Request ID: <span className="font-mono">{entry.request_id}</span>
+                              {t("requestId")}: <span className="font-mono" dir="ltr">{entry.request_id}</span>
                             </p>
                           )}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <JsonSnapshot label="Before" value={entry.before} />
-                            <JsonSnapshot label="After" value={entry.after} />
+                            <JsonSnapshot label={t("before")} value={entry.before} />
+                            <JsonSnapshot label={t("after")} value={entry.after} />
                           </div>
                           {!entry.before && !entry.after && (
-                            <p className="text-xs text-text-secondary">No additional detail recorded for this event.</p>
+                            <p className="text-xs text-text-secondary">{t("noAdditionalDetail")}</p>
                           )}
                         </div>
                       </td>
@@ -200,7 +201,7 @@ function AuditLogContent() {
               {!loading && entries.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-text-secondary">
-                    No audit events match these filters.
+                    {t("noEventsMatch")}
                   </td>
                 </tr>
               )}
@@ -211,7 +212,7 @@ function AuditLogContent() {
 
       <div className="flex items-center justify-between text-sm text-text-secondary">
         <span>
-          {total === 0 ? "No events" : `Showing ${pageStart}-${pageEnd} of ${total}`}
+          {total === 0 ? t("noEvents") : t("showingRange", { start: pageStart, end: pageEnd, total })}
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -219,14 +220,14 @@ function AuditLogContent() {
             disabled={skip === 0}
             className="input-v2 px-3 py-1.5 text-xs disabled:opacity-50"
           >
-            Previous
+            {tCommon("previous")}
           </button>
           <button
             onClick={() => setSkip((s) => s + PAGE_SIZE)}
             disabled={skip + PAGE_SIZE >= total}
             className="input-v2 px-3 py-1.5 text-xs disabled:opacity-50"
           >
-            Next
+            {tCommon("next")}
           </button>
         </div>
       </div>
