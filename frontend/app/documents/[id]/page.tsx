@@ -210,7 +210,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
             <div className="space-y-1.5">
               {doc.validation_results.map((v, i) => (
                 <div key={i} className={`rounded-md border px-3 py-2 text-sm ${SEVERITY_STYLES[v.severity]}`}>
-                  <span className="font-medium uppercase text-xs mr-2">{v.severity}</span>
+                  <span className="font-medium uppercase text-xs me-2">{v.severity}</span>
                   {v.message}
                 </div>
               ))}

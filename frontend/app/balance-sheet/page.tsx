@@ -85,7 +85,7 @@ function BalanceSheetContent() {
         </select>
         <input type="date" value={asOfDate} aria-label="As Of Date" onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
         {companyId && (
-          <div className="flex items-center gap-2 ml-auto text-xs">
+          <div className="flex items-center gap-2 ms-auto text-xs">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
               <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), asOfDate, fmt)} className="input-v2 px-2 py-1 hover:bg-muted">
                 Export {fmt.toUpperCase()}

@@ -32,7 +32,7 @@ export default function CompanySwitcher() {
           <ul
             role="listbox"
             aria-label="Companies"
-            className="absolute left-0 mt-1 w-64 max-h-80 overflow-y-auto glass-panel p-1.5 z-50"
+            className="absolute start-0 mt-1 w-64 max-h-80 overflow-y-auto glass-panel p-1.5 z-50"
           >
             {companies.map((c) => (
               <li key={c.id}>
@@ -43,7 +43,7 @@ export default function CompanySwitcher() {
                     setSelectedCompanyId(c.id);
                     setOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors ${
+                  className={`w-full text-start px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors ${
                     c.id === selectedCompanyId ? "bg-brand-purple-500/10 text-brand-purple-700 font-medium" : "text-text-primary"
                   }`}
                 >

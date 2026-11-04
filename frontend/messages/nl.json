@@ -46,7 +46,8 @@
     "selectAll": "Alles selecteren",
     "noResults": "Geen resultaten",
     "required": "Verplicht",
-    "optional": "Optioneel"
+    "optional": "Optioneel",
+    "soon": "Binnenkort"
   },
   "nav": {
     "groups": {
@@ -113,6 +114,10 @@
       "usersPermissions": "Gebruikers & Rechten",
       "auditLog": "Auditlogboek",
       "platformOverview": "Platformoverzicht"
+    },
+    "unavailable": {
+      "chartOfAccountsUnavailable": "Nog niet geïmplementeerd -- deze app gebruikt BTW-rubriek/categorie-indeling in plaats van een traditioneel rekeningschema.",
+      "leaveAbsenceUnavailable": "Nog geen apart onderdeel -- verlof/ziekte/afwezigheid zijn invoertypen binnen Gewerkte uren."
     }
   },
   "shell": {
@@ -329,7 +334,29 @@
     "appearanceDescription": "Kies hoe OnHolland eruitziet op dit apparaat. Systeem volgt de instelling van uw besturingssysteem.",
     "languageRegion": "Taal & Regio",
     "mfaTitle": "Tweefactorauthenticatie (MFA)",
-    "companyVatSettings": "BTW-instellingen per bedrijf"
+    "companyVatSettings": "BTW-instellingen per bedrijf",
+    "accountName": "Naam",
+    "accountEmail": "E-mailadres",
+    "accountRole": "Rol",
+    "mfaEnabledLabel": "ingeschakeld",
+    "mfaNotEnabledLabel": "niet ingeschakeld",
+    "mfaEnabledBody": "MFA is momenteel {status} op uw account. Uitschakelen vereist een actuele code uit uw authenticator-app -- er is geen herstelcode-optie in deze versie, dus bij een verloren apparaat moet een beheerder dit rechtstreeks wissen.",
+    "mfaNotEnabledBody": "MFA is momenteel {status}. Inschakelen vereist bij elke toekomstige login een code, geverifieerd met een tijdgebonden eenmalige code (TOTP) -- geen sms, geen externe MFA-provider.",
+    "mfaCurrentCode": "Huidige code",
+    "mfaDigitCode": "6-cijferige code",
+    "mfaDisable": "MFA uitschakelen",
+    "mfaSetupInstructions": "Voeg dit account toe aan uw authenticator-app (Google Authenticator, 1Password, etc.) met deze setup-sleutel, voer vervolgens de getoonde 6-cijferige code in ter bevestiging:",
+    "mfaCodeFromApp": "Code uit app",
+    "mfaConfirmEnable": "Bevestigen en inschakelen",
+    "mfaSetUp": "MFA instellen",
+    "mfaEnabledSuccess": "MFA is nu ingeschakeld op uw account.",
+    "mfaDisabledSuccess": "MFA is uitgeschakeld op uw account.",
+    "mfaSetupFailed": "MFA-installatie starten mislukt",
+    "mfaInvalidCode": "Ongeldige code",
+    "vatAccounting": "boekhouding",
+    "vatFiling": "aangifte",
+    "vatProRata": "pro-rata",
+    "editLink": "Bewerken"
   },
   "users": {
     "title": "Gebruikers & Rechten",

@@ -443,7 +443,11 @@ body {
 .nav-rail-v2 {
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
-  border-right: 1px solid var(--sidebar-border);
+  /* Logical property (Phase 16): the sidebar sits on the reading-start
+     side in both directions (left in LTR, right in RTL -- GlassSidebar's
+     own layout, not this border, is what actually moves it; this just
+     keeps the divider on the side that's visually "inward" either way). */
+  border-inline-end: 1px solid var(--sidebar-border);
 }
 
 .nav-item-v2 {
@@ -483,10 +487,16 @@ body {
 select.input-v2 {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 2.25rem;
+  padding-inline-end: 2.25rem;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
+  /* background-position has no logical-keyword form in CSS yet --
+     mirrored explicitly for RTL below. The chevron glyph itself ('v') is
+     direction-agnostic, so it needs no separate flip. */
   background-position: right 0.65rem center;
+}
+:root[dir="rtl"] select.input-v2 {
+  background-position: left 0.65rem center;
 }
 
 /* ---- Semantic value colouring (financial figures) ----
@@ -530,7 +540,7 @@ select.input-v2 {
   border-collapse: collapse;
 }
 .table-v3 thead th {
-  text-align: left;
+  text-align: start;
   font-size: var(--font-size-label);
   font-weight: 500;
   color: var(--text-secondary);
@@ -546,6 +556,14 @@ select.input-v2 {
   border-bottom: none;
 }
 .table-v3 .col-amount {
+  /* Deliberately NOT logical (not text-align: end): monetary/numeric
+     columns stay right-aligned regardless of interface direction, the
+     same convention Excel/Google Sheets use in RTL mode -- digits are
+     always rendered left-to-right regardless of surrounding text
+     direction, so anchoring them to a fixed edge keeps the decimal
+     point aligned down the column and the figures scannable, in both
+     Arabic and Persian accounting contexts just as much as in Dutch/
+     English ones. */
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
@@ -581,3 +599,17 @@ table, .financial-table { font-variant-numeric: tabular-nums; font-feature-setti
 .glass-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
 .glass-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
 .glass-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- Phase 16: RTL icon mirroring ----
+   Only icons whose MEANING is directional get flipped -- an arrow that
+   means "go to the previous/next item in reading order" points the
+   wrong way once reading order reverses. Deliberately opt-in via these
+   two classes rather than a blanket rule: search/settings/currency/
+   status icons etc. must never mirror (a magnifying glass or a euro
+   sign doesn't have a "direction"), so nothing is flipped unless a
+   component explicitly applies one of these. */
+[dir="rtl"] .icon-directional {
+  transform: scaleX(-1);
+}
+.chevron-closed { transform: rotate(-90deg); }
+[dir="rtl"] .chevron-closed { transform: rotate(90deg); }

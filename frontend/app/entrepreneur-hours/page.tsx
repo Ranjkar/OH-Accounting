@@ -85,7 +85,7 @@ function EntrepreneurHoursContent() {
           <p className="text-xs text-pending">{dashboard.disclaimer}</p>
           <div className="text-xs text-text-secondary">
             {Object.entries(dashboard.hours_by_category as Record<string, string>).map(([cat, hrs]) => (
-              <span key={cat} className="mr-3">
+              <span key={cat} className="me-3">
                 {cat}: {hrs}h
               </span>
             ))}

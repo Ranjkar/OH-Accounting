@@ -77,7 +77,7 @@ function PnlContent() {
           <option value="year_on_year">vs same period last year</option>
         </select>
         {companyId && (
-          <div className="flex items-center gap-2 ml-auto text-xs">
+          <div className="flex items-center gap-2 ms-auto text-xs">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
               <a
                 key={fmt}

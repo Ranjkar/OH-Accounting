@@ -71,7 +71,7 @@ function TaxOptimizationContent() {
             ) : (
               <p className="text-sm text-pending">Confidence: {o.confidence}</p>
             )}
-            <ul className="text-xs text-text-secondary list-disc pl-4">
+            <ul className="text-xs text-text-secondary list-disc ps-4">
               {(o.eligibility_conditions as string[]).map((c, j) => (
                 <li key={j}>{c}</li>
               ))}

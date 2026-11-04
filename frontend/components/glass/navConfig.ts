@@ -12,18 +12,25 @@ import {
 import type { ComponentType, SVGProps } from "react";
 
 export interface NavLeaf {
-  label: string;
+  /** Key under the "nav.items" translation namespace -- resolved via
+   * useTranslations("nav") at render time (navConfig.ts itself is a
+   * plain module, not a component, so it can't call useTranslations
+   * directly). English literal removed in Phase 16; see messages/*.json. */
+  labelKey: string;
   href?: string;
   /** Set when the proposed IA names a feature this backend doesn't expose
    * yet -- rendered disabled with an explanatory tooltip instead of a
-   * fake working link (explicit instruction: never invent a page). */
-  unavailable?: string;
+   * fake working link (explicit instruction: never invent a page). Key
+   * under "nav.unavailable" or an existing domain namespace that already
+   * had the right copy (customers.unavailable / suppliers.unavailable). */
+  unavailableKey?: string;
   /** Only shown to this role, if set. */
   onlyRole?: string;
 }
 
 export interface NavGroup {
-  label: string;
+  /** Key under the "nav.groups" translation namespace. */
+  labelKey: string;
   icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
   items: NavLeaf[];
 }
@@ -34,104 +41,104 @@ export interface NavGroup {
  * frontend), or explicitly marked unavailable. Nothing here is a mockup. */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Dashboard",
+    labelKey: "dashboard",
     icon: IconDashboard,
     items: [
-      { label: "Overview", href: "/" },
-      { label: "Financial Overview", href: "/financial-overview" },
-      { label: "AI Intelligence Dashboard", href: "/ai-intelligence" },
-      { label: "AI Assistant", href: "/assistant" },
-      { label: "Review & Approval Centre", href: "/review-centre" },
+      { labelKey: "overview", href: "/" },
+      { labelKey: "financialOverview", href: "/financial-overview" },
+      { labelKey: "aiIntelligenceDashboard", href: "/ai-intelligence" },
+      { labelKey: "aiAssistant", href: "/assistant" },
+      { labelKey: "reviewApprovalCentre", href: "/review-centre" },
     ],
   },
   {
-    label: "Accounting",
+    labelKey: "accounting",
     icon: IconLedger,
     items: [
-      { label: "General Ledger", href: "/ledger" },
-      { label: "Trial Balance", href: "/trial-balance" },
-      { label: "Profit & Loss", href: "/profit-and-loss" },
-      { label: "Balance Sheet", href: "/balance-sheet" },
-      { label: "VAT Returns", href: "/vat" },
-      { label: "Chart of Accounts", unavailable: "Not yet implemented -- this app uses VAT-box/category classification rather than a traditional chart of accounts." },
+      { labelKey: "generalLedger", href: "/ledger" },
+      { labelKey: "trialBalance", href: "/trial-balance" },
+      { labelKey: "profitLoss", href: "/profit-and-loss" },
+      { labelKey: "balanceSheet", href: "/balance-sheet" },
+      { labelKey: "vatReturns", href: "/vat" },
+      { labelKey: "chartOfAccounts", unavailableKey: "nav.unavailable.chartOfAccountsUnavailable" },
     ],
   },
   {
-    label: "Sales & Purchases",
+    labelKey: "salesPurchases",
     icon: IconInvoice,
     items: [
-      { label: "Sales Invoices", href: "/sales/upload" },
-      { label: "Purchase Invoices", href: "/purchases/upload" },
-      { label: "Upload Batches", href: "/batches" },
-      { label: "Expense Categories", href: "/categories" },
-      { label: "Customers", unavailable: "No dedicated customer record management yet -- customer names are captured per-invoice." },
-      { label: "Suppliers", unavailable: "No dedicated supplier record management yet -- supplier names are captured per-invoice." },
+      { labelKey: "salesInvoices", href: "/sales/upload" },
+      { labelKey: "purchaseInvoices", href: "/purchases/upload" },
+      { labelKey: "uploadBatches", href: "/batches" },
+      { labelKey: "expenseCategories", href: "/categories" },
+      { labelKey: "customers", unavailableKey: "customers.unavailable" },
+      { labelKey: "suppliers", unavailableKey: "suppliers.unavailable" },
     ],
   },
   {
-    label: "Banking",
+    labelKey: "banking",
     icon: IconBank,
     items: [
-      { label: "Bank Accounts", href: "/banking" },
-      { label: "Bank Transactions", href: "/bank-transactions" },
-      { label: "Reconciliation", href: "/reconciliation" },
-      { label: "Automation Centre", href: "/automation" },
-      { label: "Anomalies", href: "/anomalies" },
+      { labelKey: "bankAccounts", href: "/banking" },
+      { labelKey: "bankTransactions", href: "/bank-transactions" },
+      { labelKey: "reconciliation", href: "/reconciliation" },
+      { labelKey: "automationCentre", href: "/automation" },
+      { labelKey: "anomalies", href: "/anomalies" },
     ],
   },
   {
-    label: "Payroll & HR",
+    labelKey: "payrollHr",
     icon: IconPayroll,
     items: [
-      { label: "Employees", href: "/employees" },
-      { label: "Payroll Runs & Payslips", href: "/payroll" },
-      { label: "Payroll Tax (Loonheffingen)", href: "/loonheffingen" },
-      { label: "Annual Statements (Jaaropgaaf)", href: "/annual-statements" },
-      { label: "Working Hours", href: "/working-hours" },
-      { label: "Entrepreneur Hours", href: "/entrepreneur-hours" },
-      { label: "Employee Portal", href: "/employee-portal" },
-      { label: "Leave & Absence", unavailable: "Not a separate module yet -- holiday/sick/absence are entry types within Working Hours." },
+      { labelKey: "employees", href: "/employees" },
+      { labelKey: "payrollRunsPayslips", href: "/payroll" },
+      { labelKey: "payrollTax", href: "/loonheffingen" },
+      { labelKey: "annualStatements", href: "/annual-statements" },
+      { labelKey: "workingHours", href: "/working-hours" },
+      { labelKey: "entrepreneurHours", href: "/entrepreneur-hours" },
+      { labelKey: "employeePortal", href: "/employee-portal" },
+      { labelKey: "leaveAbsence", unavailableKey: "nav.unavailable.leaveAbsenceUnavailable" },
     ],
   },
   {
-    label: "Tax & Compliance",
+    labelKey: "taxCompliance",
     icon: IconTax,
     items: [
-      { label: "Tax Centre", href: "/tax-centre" },
-      { label: "Tax Optimisation", href: "/tax-optimization" },
-      { label: "Legal Structure", href: "/legal-structure" },
-      { label: "Compliance Calendar", href: "/calendar" },
-      { label: "Government Integration Centre", href: "/government" },
+      { labelKey: "taxCentre", href: "/tax-centre" },
+      { labelKey: "taxOptimisation", href: "/tax-optimization" },
+      { labelKey: "legalStructure", href: "/legal-structure" },
+      { labelKey: "complianceCalendar", href: "/calendar" },
+      { labelKey: "governmentIntegrationCentre", href: "/government" },
     ],
   },
   {
-    label: "Planning & Analytics",
+    labelKey: "planningAnalytics",
     icon: IconPlanning,
     items: [
-      { label: "Cash Flow", href: "/cash-flow" },
-      { label: "Forecasts", href: "/forecasts" },
-      { label: "Scenarios", href: "/scenarios" },
-      { label: "Budgets", href: "/budgets" },
-      { label: "KPIs & Insights", href: "/kpis" },
-      { label: "Working Capital", href: "/working-capital" },
+      { labelKey: "cashFlow", href: "/cash-flow" },
+      { labelKey: "forecasts", href: "/forecasts" },
+      { labelKey: "scenarios", href: "/scenarios" },
+      { labelKey: "budgets", href: "/budgets" },
+      { labelKey: "kpisInsights", href: "/kpis" },
+      { labelKey: "workingCapital", href: "/working-capital" },
     ],
   },
   {
-    label: "Documents",
+    labelKey: "documents",
     icon: IconDocuments,
-    items: [{ label: "All Documents", href: "/documents" }],
+    items: [{ labelKey: "allDocuments", href: "/documents" }],
   },
   {
-    label: "Company & Settings",
+    labelKey: "companySettings",
     icon: IconSettings,
     items: [
-      { label: "Companies", href: "/companies" },
-      { label: "Management Reports", href: "/management-reports" },
-      { label: "Reports", href: "/reports" },
-      { label: "Billing & Subscription", href: "/billing" },
-      { label: "Settings", href: "/settings" },
-      { label: "Users & Permissions", href: "/users" },
-      { label: "Audit Log", href: "/audit-log" },
+      { labelKey: "companies", href: "/companies" },
+      { labelKey: "managementReports", href: "/management-reports" },
+      { labelKey: "reports", href: "/reports" },
+      { labelKey: "billingSubscription", href: "/billing" },
+      { labelKey: "settings", href: "/settings" },
+      { labelKey: "usersPermissions", href: "/users" },
+      { labelKey: "auditLog", href: "/audit-log" },
     ],
   },
 ];
@@ -140,9 +147,9 @@ export const NAV_GROUPS: NavGroup[] = [
  * see app.models.user.User.is_platform_admin) -- GlassSidebar appends
  * this itself rather than every tenant seeing an empty/403 group. */
 export const PLATFORM_ADMIN_NAV_GROUP: NavGroup = {
-  label: "Administration",
+  labelKey: "administration",
   icon: IconSettings,
-  items: [{ label: "Platform Overview", href: "/admin" }],
+  items: [{ labelKey: "platformOverview", href: "/admin" }],
 };
 
 /** An employee-role account (app.core.deps.get_current_employee on the
@@ -150,8 +157,8 @@ export const PLATFORM_ADMIN_NAV_GROUP: NavGroup = {
  * 403. Show only what actually works for that role. */
 export const EMPLOYEE_ROLE_NAV_GROUPS: NavGroup[] = [
   {
-    label: "My Workspace",
+    labelKey: "myWorkspace",
     icon: IconPayroll,
-    items: [{ label: "Employee Portal", href: "/employee-portal" }],
+    items: [{ labelKey: "employeePortal", href: "/employee-portal" }],
   },
 ];

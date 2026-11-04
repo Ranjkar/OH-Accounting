@@ -46,7 +46,8 @@
     "selectAll": "Select all",
     "noResults": "No results",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "soon": "Soon"
   },
   "nav": {
     "groups": {
@@ -113,6 +114,10 @@
       "usersPermissions": "Users & Permissions",
       "auditLog": "Audit Log",
       "platformOverview": "Platform Overview"
+    },
+    "unavailable": {
+      "chartOfAccountsUnavailable": "Not yet implemented -- this app uses VAT-box/category classification rather than a traditional chart of accounts.",
+      "leaveAbsenceUnavailable": "Not a separate module yet -- holiday/sick/absence are entry types within Working Hours."
     }
   },
   "shell": {
@@ -329,7 +334,29 @@
     "appearanceDescription": "Choose how OnHolland looks on this device. System follows your operating system's setting.",
     "languageRegion": "Language & Region",
     "mfaTitle": "Two-factor authentication (MFA)",
-    "companyVatSettings": "Company VAT settings"
+    "companyVatSettings": "Company VAT settings",
+    "accountName": "Name",
+    "accountEmail": "Email address",
+    "accountRole": "Role",
+    "mfaEnabledLabel": "enabled",
+    "mfaNotEnabledLabel": "not enabled",
+    "mfaEnabledBody": "MFA is currently {status} on your account. Disabling it requires a current code from your authenticator app -- there is no recovery-code fallback in this build, so a lost device requires an operator to clear it directly.",
+    "mfaNotEnabledBody": "MFA is currently {status}. Enabling it requires a code at every future login, verified with a time-based one-time code (TOTP) -- no SMS, no third-party MFA provider.",
+    "mfaCurrentCode": "Current code",
+    "mfaDigitCode": "6-digit code",
+    "mfaDisable": "Disable MFA",
+    "mfaSetupInstructions": "Add this account to your authenticator app (Google Authenticator, 1Password, etc.) using this setup key, then enter the 6-digit code it shows to confirm:",
+    "mfaCodeFromApp": "Code from app",
+    "mfaConfirmEnable": "Confirm and enable",
+    "mfaSetUp": "Set up MFA",
+    "mfaEnabledSuccess": "MFA is now enabled on your account.",
+    "mfaDisabledSuccess": "MFA has been disabled on your account.",
+    "mfaSetupFailed": "Failed to start MFA setup",
+    "mfaInvalidCode": "Invalid code",
+    "vatAccounting": "accounting",
+    "vatFiling": "filing",
+    "vatProRata": "pro-rata",
+    "editLink": "Edit"
   },
   "users": {
     "title": "Users & Permissions",

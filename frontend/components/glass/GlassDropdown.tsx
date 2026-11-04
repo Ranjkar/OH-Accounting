@@ -6,12 +6,16 @@ import { IconChevronDown } from "./icons";
 interface GlassDropdownProps {
   label: ReactNode;
   children: (close: () => void) => ReactNode;
-  align?: "left" | "right";
+  /** Logical (Phase 16), not physical -- "end" is the right edge in LTR
+   * and the left edge in RTL, which is what every current caller
+   * actually wants (pin the panel to the trigger's trailing edge so it
+   * never overflows past the content edge, in either direction). */
+  align?: "start" | "end";
 }
 
 const MENU_ITEM_SELECTOR = '[role="menuitem"], a[href], button:not([disabled])';
 
-export default function GlassDropdown({ label, children, align = "right" }: GlassDropdownProps) {
+export default function GlassDropdown({ label, children, align = "end" }: GlassDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -82,7 +86,7 @@ export default function GlassDropdown({ label, children, align = "right" }: Glas
         <div
           ref={menuRef}
           role="menu"
-          className={`absolute z-40 mt-2 min-w-[12rem] glass-panel-elevated p-1.5 ${align === "right" ? "right-0" : "left-0"}`}
+          className={`absolute z-40 mt-2 min-w-[12rem] glass-panel-elevated p-1.5 ${align === "end" ? "end-0" : "start-0"}`}
         >
           {
             // `close` only reads triggerRef.current inside its own body,

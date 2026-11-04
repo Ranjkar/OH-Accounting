@@ -160,7 +160,7 @@ export default function BulkUploadScreen({ category, title, description, acceptH
                 <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
                   <span className="text-text-primary">{f.name}</span>
                   <span className="text-xs text-text-secondary">{(f.size / 1024).toFixed(0)} KB</span>
-                  <button onClick={() => removeFile(i)} className="text-xs text-error hover:underline ml-3">
+                  <button onClick={() => removeFile(i)} className="text-xs text-error hover:underline ms-3">
                     Remove
                   </button>
                 </div>

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
 import GlassNavigationGroup from "./GlassNavigationGroup";
 import { EMPLOYEE_ROLE_NAV_GROUPS, NAV_GROUPS, PLATFORM_ADMIN_NAV_GROUP } from "./navConfig";
@@ -18,9 +19,13 @@ interface GlassSidebarProps {
 export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebarProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const tGroups = useTranslations("nav.groups");
+  const tShell = useTranslations("shell");
   const [collapsed, setCollapsed] = useState(false);
   // Single-open accordion: at most one group is expanded at a time (null =
-  // none). Opening a group closes whichever was open before it.
+  // none). Opening a group closes whichever was open before it. Keyed by
+  // the group's stable labelKey (not its translated display text), so the
+  // persisted choice survives a language switch.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -45,7 +50,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
         setOpenGroup(storedOpen);
       } else {
         const activeGroup = groups.find((g) => g.items.some((i) => i.href && isActive(i.href)));
-        setOpenGroup(activeGroup?.label ?? groups[0]?.label ?? null);
+        setOpenGroup(activeGroup?.labelKey ?? groups[0]?.labelKey ?? null);
       }
     } catch {
       // localStorage unavailable (private mode etc.) -- fall back to the active group only.
@@ -61,16 +66,16 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   useEffect(() => {
     if (!hydrated) return;
     const activeGroup = groups.find((g) => g.items.some((i) => i.href && isActive(i.href)));
-    if (activeGroup && activeGroup.label !== openGroup) {
+    if (activeGroup && activeGroup.labelKey !== openGroup) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOpenGroup(activeGroup.label);
+      setOpenGroup(activeGroup.labelKey);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, hydrated]);
 
-  function toggleGroup(label: string) {
+  function toggleGroup(labelKey: string) {
     setOpenGroup((prev) => {
-      const next = prev === label ? null : label;
+      const next = prev === labelKey ? null : labelKey;
       try {
         if (next) localStorage.setItem(OPEN_GROUP_KEY, next);
         else localStorage.removeItem(OPEN_GROUP_KEY);
@@ -97,7 +102,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
       <div className="flex items-center gap-2 px-4 py-5 flex-shrink-0">
         <div className="w-8 h-8 rounded-lg hero-gradient-v2 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">O</div>
         {!collapsed && <span className="font-semibold tracking-tight text-sidebar-text">OnHolland</span>}
-        <button onClick={onMobileClose} aria-label="Close navigation" className="ml-auto lg:hidden text-sidebar-text-secondary hover:text-sidebar-text p-1">
+        <button onClick={onMobileClose} aria-label={tShell("closeNavigation")} className="ms-auto lg:hidden text-sidebar-text-secondary hover:text-sidebar-text p-1">
           <IconX size={18} />
         </button>
       </div>
@@ -105,12 +110,12 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
       <nav className="flex-1 overflow-y-auto glass-scroll px-2 space-y-1 pb-4" aria-label="Main navigation">
         {groups.map((group) => (
           <GlassNavigationGroup
-            key={group.label}
-            label={group.label}
+            key={group.labelKey}
+            label={tGroups(group.labelKey as never)}
             icon={group.icon}
             items={group.items}
-            open={openGroup === group.label}
-            onToggle={() => toggleGroup(group.label)}
+            open={openGroup === group.labelKey}
+            onToggle={() => toggleGroup(group.labelKey)}
             collapsedRail={collapsed}
             isActive={isActive}
             onNavigate={onMobileClose}
@@ -132,17 +137,17 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
             )}
           </div>
         )}
-        <button onClick={logout} className="nav-item-v2 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left">
+        <button onClick={logout} className="nav-item-v2 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-start">
           <IconLogout size={16} className="flex-shrink-0" />
-          {!collapsed && <span>Log out</span>}
+          {!collapsed && <span>{tShell("logOut")}</span>}
         </button>
         <button
           onClick={toggleCollapsed}
-          className="nav-item-v2 hidden lg:flex w-full items-center gap-2.5 px-3 py-2 text-sm text-left"
-          aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+          className="nav-item-v2 hidden lg:flex w-full items-center gap-2.5 px-3 py-2 text-sm text-start"
+          aria-label={collapsed ? tShell("expand") : tShell("collapse")}
         >
           {collapsed ? <IconExpand size={16} /> : <IconCollapse size={16} />}
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>{tShell("collapse")}</span>}
         </button>
       </div>
     </>

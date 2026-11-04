@@ -28,7 +28,7 @@ export default function GlassTable<T>({ columns, rows, rowKey, onRowClick, empty
     <>
       <table className="w-full text-sm hidden sm:table">
         <thead>
-          <tr className="text-left text-text-secondary border-b border-border">
+          <tr className="text-start text-text-secondary border-b border-border">
             {columns.map((c) => (
               <th key={c.key} className={`px-5 py-2.5 font-medium whitespace-nowrap ${c.className ?? ""}`}>
                 {c.header}

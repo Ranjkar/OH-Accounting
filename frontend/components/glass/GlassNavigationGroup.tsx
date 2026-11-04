@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ComponentType, SVGProps } from "react";
+import { useTranslations } from "next-intl";
 import { IconChevronDown } from "./icons";
 import type { NavLeaf } from "./navConfig";
 
@@ -37,10 +38,10 @@ export default function GlassNavigationGroup({ label, icon: Icon, items, open, o
             items, since `hidden` removes them from the tab order entirely
             until shown. group-focus-within keeps the flyout visible for as
             long as the toggle button or any item inside it has focus. */}
-        <div className="absolute left-full top-0 ml-2 hidden group-hover:block group-focus-within:block z-50 min-w-[14rem] glass-panel-dark p-2">
+        <div className="absolute start-full top-0 ms-2 hidden group-hover:block group-focus-within:block z-50 min-w-[14rem] glass-panel-dark p-2">
           <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-text-secondary">{label}</p>
           {items.map((item) => (
-            <NavLeafLink key={item.label} item={item} active={!!item.href && isActive(item.href)} onNavigate={onNavigate} />
+            <NavLeafLink key={item.labelKey} item={item} active={!!item.href && isActive(item.href)} onNavigate={onNavigate} />
           ))}
         </div>
       </div>
@@ -53,16 +54,16 @@ export default function GlassNavigationGroup({ label, icon: Icon, items, open, o
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="w-full flex items-center gap-2.5 px-3 py-2 text-left"
+        className="w-full flex items-center gap-2.5 px-3 py-2 text-start"
       >
         <Icon size={16} className="text-sidebar-text-secondary flex-shrink-0" />
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-text-secondary truncate">{label}</span>
-        <IconChevronDown size={14} className={`text-sidebar-text-secondary transition-transform duration-150 ${open ? "" : "-rotate-90"}`} />
+        <IconChevronDown size={14} className={`text-sidebar-text-secondary transition-transform duration-150 ${open ? "" : "chevron-closed"}`} />
       </button>
       {open && (
         <div className="space-y-0.5 pb-1">
           {items.map((item) => (
-            <NavLeafLink key={item.label} item={item} active={!!item.href && isActive(item.href)} onNavigate={onNavigate} />
+            <NavLeafLink key={item.labelKey} item={item} active={!!item.href && isActive(item.href)} onNavigate={onNavigate} />
           ))}
         </div>
       )}
@@ -71,15 +72,26 @@ export default function GlassNavigationGroup({ label, icon: Icon, items, open, o
 }
 
 function NavLeafLink({ item, active, onNavigate }: { item: NavLeaf; active: boolean; onNavigate?: () => void }) {
-  if (item.unavailable) {
+  const tNav = useTranslations("nav.items");
+  const tRoot = useTranslations();
+  const tCommon = useTranslations("common");
+  // `item.labelKey` is a plain `string` (set in navConfig.ts, a non-
+  // component module that can't be statically typed against next-intl's
+  // generated message-key union) -- the `as never` casts here trade away
+  // compile-time key checking at THIS call site specifically, but every
+  // key it can ever hold is still verified at test time
+  // (navConfig.test.ts resolves each one against nl.json directly).
+  const label = tNav(item.labelKey as never);
+
+  if (item.unavailableKey) {
     return (
       <div
-        title={item.unavailable}
+        title={tRoot(item.unavailableKey as never)}
         aria-disabled="true"
-        className="flex items-center gap-2.5 pl-9 pr-3 py-1.5 text-sm text-text-muted cursor-not-allowed"
+        className="flex items-center gap-2.5 ps-9 pe-3 py-1.5 text-sm text-text-muted cursor-not-allowed"
       >
-        <span className="truncate">{item.label}</span>
-        <span className="text-[9px] uppercase tracking-wide bg-muted text-text-muted rounded px-1.5 py-0.5 flex-shrink-0">Soon</span>
+        <span className="truncate">{label}</span>
+        <span className="text-[9px] uppercase tracking-wide bg-muted text-text-muted rounded px-1.5 py-0.5 flex-shrink-0">{tCommon("soon")}</span>
       </div>
     );
   }
@@ -87,10 +99,10 @@ function NavLeafLink({ item, active, onNavigate }: { item: NavLeaf; active: bool
     <Link
       href={item.href!}
       onClick={onNavigate}
-      className={`nav-item-v2 flex items-center gap-2.5 pl-9 pr-3 py-1.5 text-sm ${active ? "active" : ""}`}
+      className={`nav-item-v2 flex items-center gap-2.5 ps-9 pe-3 py-1.5 text-sm ${active ? "active" : ""}`}
       aria-current={active ? "page" : undefined}
     >
-      <span className="truncate">{item.label}</span>
+      <span className="truncate">{label}</span>
     </Link>
   );
 }

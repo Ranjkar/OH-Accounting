@@ -79,7 +79,7 @@ function ForecastsContent() {
                 <Bar value={Number(m.forecast_revenue)} max={maxValue} color="bg-navy-solid" />
               </div>
             ))}
-            <ul className="text-xs text-text-secondary list-disc pl-4">
+            <ul className="text-xs text-text-secondary list-disc ps-4">
               {forecast.revenue_expense_profit.assumptions.map((a: string, i: number) => (
                 <li key={i}>{a}</li>
               ))}
