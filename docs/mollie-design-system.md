@@ -63,27 +63,49 @@ verification — see `docs/ui-visual-verification.md`.
 - **Status pills** (`.status-pill-success/-neutral/-info/-warning/-danger`):
   low-saturation tinted fills, matching the Mollie transaction-list
   description (green=paid/matched, grey=neutral/expired,
-  blue=info/refunded, amber=pending, red=failed).
+  blue=info/refunded, amber=pending, red=failed). Tint alpha is `0.06`
+  (not `0.12` as first shipped) — a real-browser axe-core run found the
+  original value measured ~4.25:1 text-on-tint contrast in light mode
+  (needs 4.5:1 for 12px text); `0.06` re-measures at 4.5–6.1:1 across
+  all four colors in both themes. See `docs/ui-visual-verification.md`.
 - **Tables** (`.table-v3`): compact rows (~36px), thin horizontal
   separators only, right-aligned monetary columns (`.col-amount`), no
-  vertical gridlines. Applied as the reference implementation to Bank
-  Transactions and the Accounting Ledger; the remaining plain-`<table>`
-  pages keep their existing (already mobile-safe, `overflow-x-auto`-wrapped)
-  markup — not yet migrated to this class, a scoped remaining item (see
-  `docs/ui-transformation-progress.md`).
+  vertical gridlines. Now applied to every financial-list page in the
+  app (completed in the "MOLLIE UI COMPLETION" continuation round) —
+  confirmed via `grep` that no plain `<table className="w-full
+  text-sm">` markup remains anywhere in `app/`. Wide tables (8+
+  columns) scroll within their own card (`overflow-x-auto`) rather than
+  overflowing the page on narrow viewports — verified at 390/768/1024/
+  1440px.
 - **Native `<select>` elements**: `appearance: none` plus a custom
   theme-aware chevron (inline SVG data-URI) so a select matches
   `.input-v2`'s flat styling instead of the OS's own dropdown chrome.
-- **Charts** (`GlassChartCard`): SVG `fill`/`stroke` now reference CSS
+- **Charts** (`GlassChartCard`): SVG `fill`/`stroke` reference CSS
   custom properties (`var(--navy)`, `var(--border-subtle)`, etc.)
-  instead of hardcoded hex, so they theme correctly — previously they
-  did not (a bug found by screenshot, not assumed).
+  instead of hardcoded hex, so they theme correctly. The chart
+  container's ARIA role is `role="group"` (not `role="img"`, which
+  would forbid its real focusable per-data-point hit targets — an ARIA
+  conflict axe-core caught; see `docs/ui-visual-verification.md`). The
+  app has one chart (dashboard Cash Flow); it shows a single
+  forward-looking forecast series only — its backend response has no
+  comparison/prior-period field, so no second series was added
+  (fabricating one was explicitly out of scope).
 
 ## Currency & number formatting
 
 `lib/format.ts`'s `formatEUR()` — `Intl.NumberFormat("nl-NL", {style:
 "currency", currency: "EUR"})`, giving `€ 1.250,00` / `€ -89,50`
-exactly per the brief's Dutch-formatting requirement. Previously no
-such helper existed anywhere in the codebase; every page rendered the
-backend's raw Decimal string unformatted. Applied to Bank Transactions
-and the Ledger as the reference implementation.
+exactly per the brief's Dutch-formatting requirement. Now applied
+consistently everywhere a monetary value is displayed. This took two
+cleanup rounds to actually reach "everywhere": the first round applied
+it only to Bank Transactions and the Ledger as the reference
+implementation and left every other page rendering the backend's raw
+Decimal string unformatted; the completion round found and fixed 16
+more files across two passes — some had never called `formatEUR` at
+all (e.g. `financial-overview`'s company-detail tiles showing
+`"3003.20"`), others used ad-hoc `` `€${value}` `` string
+interpolation instead of the shared formatter (e.g. the dashboard's
+own YTD stat cards showing `"€1000.00"` instead of `"€ 1.000,00"` —
+correct-looking at a glance, wrong on close inspection, which is
+exactly why this needed an actual visual pass rather than a code-only
+review).

@@ -122,6 +122,25 @@ system, which would NOT respond to a theme change if left as-is:
 fixed (replaced with a token-backed class) as part of this phase's
 dark-mode work — tracked in `docs/ui-transformation-progress.md`.
 
+## Addendum (PHASE 14 CONTINUATION — MOLLIE UI COMPLETION)
+
+This audit's §3/§6 inventoried `components/glass/` but not the rest of
+`components/` (e.g. `components/BulkUploadScreen.tsx`,
+`components/AuthGuard.tsx`, `components/TransactionBadges.tsx`, etc.).
+That gap let one real component slip through every subsequent sweep for
+two full rounds: `BulkUploadScreen.tsx` (backing `/sales/upload` and
+`/purchases/upload`) kept the entire pre-Mollie hardcoded palette
+unmodified, discovered only when a tablet screenshot of its page looked
+wrong. Fixed in the continuation round; see
+`docs/ui-visual-verification.md` for detail. A repo-wide (not
+`app/`-scoped) grep for `bg-slate-*`/`text-slate-*`/`border-slate-*`/
+`divide-slate-*`/`bg-white` now returns matches only in the three
+self-contained badge components that were always correctly exempted
+(`DocumentStatusBadge`, `CalendarStatusBadge`, `TransactionBadges`).
+
+The 27-page `table-v3` migration referenced throughout this document as
+future work is now complete — see `docs/ui-transformation-progress.md`.
+
 ## 9. Components that won't respond correctly to a theme change
 
 Everything using a legacy/Phase-11 token *by value* responds correctly
