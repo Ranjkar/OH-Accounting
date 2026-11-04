@@ -130,8 +130,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Reports", href: "/reports" },
       { label: "Billing & Subscription", href: "/billing" },
       { label: "Settings", href: "/settings" },
-      { label: "Users & Permissions", unavailable: "Not yet implemented -- roles exist but there is no self-service role management UI." },
-      { label: "Audit Log", unavailable: "Audit entries are recorded on the backend but have no viewer UI yet." },
+      { label: "Users & Permissions", href: "/users" },
+      { label: "Audit Log", href: "/audit-log" },
     ],
   },
 ];

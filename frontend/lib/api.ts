@@ -29,7 +29,11 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
-export type UserRole = "admin" | "accountant" | "viewer" | "customer" | "employee";
+export type UserRole = "owner" | "admin" | "accountant" | "viewer" | "customer" | "employee";
+/** Roles assignable through the Phase 15 user-management API --
+ * `customer`/`employee` are legacy/specialised and have their own flows
+ * (see backend app/schemas/user.py's ASSIGNABLE_ROLES). */
+export const ASSIGNABLE_ROLES: UserRole[] = ["owner", "admin", "accountant", "viewer"];
 export type VatFrequency = "monthly" | "quarterly" | "annual";
 export type VatPeriodStatus = "open" | "filed" | "paid";
 export type VatAccountingBasis = "invoice_based" | "cash_based";
@@ -218,6 +222,68 @@ export interface CompanyInvitation {
   created_at: string;
   expires_at: string;
   accepted_at: string | null;
+}
+
+// ---- Phase 15: tenant user management & audit log ----
+
+export interface TenantUser {
+  id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  is_active: boolean;
+  mfa_enabled: boolean;
+  created_at: string;
+  companies: { id: number; name: string }[];
+}
+
+export interface UserInvitation {
+  id: number;
+  invited_email: string;
+  intended_role: UserRole;
+  status: CompanyInvitationStatus;
+  invited_by_user_id: number;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+}
+
+export interface AuditLogActor {
+  id: number;
+  email: string;
+  full_name: string;
+}
+
+export interface AuditLogEntry {
+  id: number;
+  user_id: number | null;
+  actor: AuditLogActor | null;
+  action: string;
+  entity_type: string;
+  entity_id: number;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  request_id: string | null;
+  event_metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AuditLogPage {
+  items: AuditLogEntry[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface AuditLogFilters {
+  skip?: number;
+  limit?: number;
+  user_id?: number;
+  action?: string;
+  entity_type?: string;
+  q?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
 export interface VatPeriod {
@@ -775,6 +841,41 @@ export const api = {
     request<CompanyInvitation>(`/companies/${companyId}/invitations/${invitationId}/revoke`, { method: "POST", token }),
   acceptCompanyInvitation: (token: string, invitationToken: string) =>
     request<CompanyAccess>("/companies/invitations/accept", { method: "POST", token, body: JSON.stringify({ token: invitationToken }) }),
+
+  // ---- Phase 15: tenant user management ----
+  listUsers: (token: string) => request<TenantUser[]>("/users", { token }),
+  getUser: (token: string, userId: number) => request<TenantUser>(`/users/${userId}`, { token }),
+  updateUserRole: (token: string, userId: number, role: UserRole) =>
+    request<TenantUser>(`/users/${userId}/role`, { method: "PATCH", token, body: JSON.stringify({ role }) }),
+  activateUser: (token: string, userId: number) => request<TenantUser>(`/users/${userId}/activate`, { method: "POST", token }),
+  deactivateUser: (token: string, userId: number) => request<TenantUser>(`/users/${userId}/deactivate`, { method: "POST", token }),
+  revokeUserSessions: (token: string, userId: number) => request<void>(`/users/${userId}/revoke-sessions`, { method: "POST", token }),
+  listUserInvitations: (token: string) => request<UserInvitation[]>("/users/invitations", { token }),
+  createUserInvitation: (token: string, invitedEmail: string, intendedRole: UserRole, initialCompanyIds?: number[]) =>
+    request<{ invitation: UserInvitation; raw_token: string }>("/users/invitations", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ invited_email: invitedEmail, intended_role: intendedRole, initial_company_ids: initialCompanyIds ?? null }),
+    }),
+  revokeUserInvitation: (token: string, invitationId: number) =>
+    request<UserInvitation>(`/users/invitations/${invitationId}/revoke`, { method: "POST", token }),
+  acceptUserInvitation: (invitationToken: string, fullName: string, password: string) =>
+    request<TenantUser>("/users/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify({ token: invitationToken, full_name: fullName, password }),
+    }),
+
+  // ---- Phase 15: audit log ----
+  listAuditLog: (token: string, filters: AuditLogFilters = {}) => {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
+    }
+    const qs = search.toString();
+    return request<AuditLogPage>(`/audit-log${qs ? `?${qs}` : ""}`, { token });
+  },
+  listAuditActions: (token: string) => request<string[]>("/audit-log/actions", { token }),
+  listAuditEntityTypes: (token: string) => request<string[]>("/audit-log/entity-types", { token }),
   listFinancialYears: (token: string, companyId: number) =>
     request<FinancialYear[]>(`/companies/${companyId}/financial-years`, { token }),
   createFinancialYear: (token: string, companyId: number, year: number) =>

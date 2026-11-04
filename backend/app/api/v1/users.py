@@ -63,103 +63,20 @@ def list_users(db: Session = Depends(get_db), user: User = Depends(require_admin
     return db.query(User).filter(User.tenant_id == user.tenant_id).order_by(User.created_at).all()
 
 
-@router.get("/{user_id}", response_model=TenantUserOut)
-def get_user(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
-    return _get_tenant_user_or_404(db, user, user_id)
-
-
-@router.patch("/{user_id}/role", response_model=TenantUserOut)
-def update_user_role(user_id: int, payload: UserRoleUpdate, db: Session = Depends(get_db), user: User = Depends(require_admin)):
-    """Role-change escalation rules (never trust the frontend for these --
-    re-checked here on every call):
-    - A user can never change their own role (self-escalation).
-    - A plain admin may only move a target BETWEEN accountant and viewer --
-      touching anyone who currently is, or would become, an owner or admin
-      requires an owner actor. (Not just granting upward: an admin cannot
-      demote an owner or another admin either -- that would let one admin
-      strip another admin's or an owner's privileges, itself a form of
-      unauthorized escalation of the acting admin's own effective power.)
-    - The last active owner in a tenant can never be demoted away from
-      owner -- a tenant must always retain at least one.
-    - `customer`/`employee` are not assignable here -- they have their own
-      dedicated flows and are intentionally out of this endpoint's scope."""
-    if payload.role not in ASSIGNABLE_ROLES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role must be one of {[r.value for r in ASSIGNABLE_ROLES]}")
-
-    target = _get_tenant_user_or_404(db, user, user_id)
-
-    if target.id == user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot change your own role")
-
-    privileged = (UserRole.owner, UserRole.admin)
-    if user.role != UserRole.owner and (payload.role in privileged or target.role in privileged):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only an owner can grant, revoke, or change an owner's or admin's role")
-
-    if target.role == UserRole.owner and payload.role != UserRole.owner:
-        if _count_active_owners(db, user.tenant_id, exclude_user_id=target.id) == 0:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Cannot change the role of the last owner -- promote another user to owner first")
-
-    before_role = target.role
-    target.role = payload.role
-    _audit(db, user, "role_change", target.id, before={"role": before_role.value}, after={"role": payload.role.value})
-    db.commit()
-    db.refresh(target)
-    return target
-
-
-@router.post("/{user_id}/activate", response_model=TenantUserOut)
-def activate_user(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
-    target = _get_tenant_user_or_404(db, user, user_id)
-    if target.is_active:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already active")
-    target.is_active = True
-    target.failed_login_attempts = 0
-    target.locked_until = None
-    _audit(db, user, "user_activated", target.id, after={"is_active": True})
-    db.commit()
-    db.refresh(target)
-    return target
-
-
-@router.post("/{user_id}/deactivate", response_model=TenantUserOut)
-def deactivate_user(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
-    """Blocks login immediately (is_active=False) and revokes every
-    existing session (token_version bump) -- never deletes the row or
-    touches any linked financial/employee/payroll record, same principle
-    as the existing self-service /auth/me/deactivate."""
-    target = _get_tenant_user_or_404(db, user, user_id)
-    if target.id == user.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Use /auth/me/deactivate to deactivate your own account")
-    if not target.is_active:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already inactive")
-    if target.role == UserRole.owner and _count_active_owners(db, user.tenant_id, exclude_user_id=target.id) == 0:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Cannot deactivate the last owner -- promote another user to owner first")
-
-    target.is_active = False
-    target.token_version += 1
-    _audit(db, user, "user_deactivated", target.id, after={"is_active": False})
-    db.commit()
-    db.refresh(target)
-    return target
-
-
-@router.post("/{user_id}/revoke-sessions", status_code=status.HTTP_204_NO_CONTENT)
-def revoke_user_sessions(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
-    """Force-logout everywhere for the target user, without deactivating
-    the account -- bumps token_version, same mechanism as
-    /auth/logout and password reset."""
-    target = _get_tenant_user_or_404(db, user, user_id)
-    target.token_version += 1
-    _audit(db, user, "sessions_revoked", target.id)
-    db.commit()
-
-
 # ---- Phase 15: tenant invitations (creates a brand-new account) ----
 # Distinct from app.api.v1.companies' company-access invitations, which
 # only grant an *existing* account access to one more company. No email
 # provider is configured in this system (same documented limitation as
 # every other invitation flow here) -- the raw token is returned once, for
 # the inviting party to relay out-of-band.
+#
+# IMPORTANT: every literal "/invitations..." route below must stay
+# registered before the parameterized "/{user_id}..." routes further down
+# this file -- FastAPI/Starlette matches routes in registration order, and
+# "/{user_id}" would otherwise greedily match the literal segment
+# "invitations" as a (non-numeric, 422-rejected) user_id. This bit a real
+# manual-testing pass: GET /users/invitations returned a 422 from the
+# wrong route until the invitation routes were moved up here.
 
 
 @router.post("/invitations", response_model=UserInvitationCreateResult, status_code=status.HTTP_201_CREATED)
@@ -263,3 +180,98 @@ def accept_user_invitation(payload: AcceptUserInvitationRequest, db: Session = D
     db.commit()
     db.refresh(new_user)
     return TenantUserOut.model_validate(new_user)
+
+
+# ---- Phase 15: individual user administration (parameterized routes --
+# must stay below every literal "/invitations..." route above) ----
+
+
+@router.get("/{user_id}", response_model=TenantUserOut)
+def get_user(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    return _get_tenant_user_or_404(db, user, user_id)
+
+
+@router.patch("/{user_id}/role", response_model=TenantUserOut)
+def update_user_role(user_id: int, payload: UserRoleUpdate, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    """Role-change escalation rules (never trust the frontend for these --
+    re-checked here on every call):
+    - A user can never change their own role (self-escalation).
+    - A plain admin may only move a target BETWEEN accountant and viewer --
+      touching anyone who currently is, or would become, an owner or admin
+      requires an owner actor. (Not just granting upward: an admin cannot
+      demote an owner or another admin either -- that would let one admin
+      strip another admin's or an owner's privileges, itself a form of
+      unauthorized escalation of the acting admin's own effective power.)
+    - The last active owner in a tenant can never be demoted away from
+      owner -- a tenant must always retain at least one.
+    - `customer`/`employee` are not assignable here -- they have their own
+      dedicated flows and are intentionally out of this endpoint's scope."""
+    if payload.role not in ASSIGNABLE_ROLES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role must be one of {[r.value for r in ASSIGNABLE_ROLES]}")
+
+    target = _get_tenant_user_or_404(db, user, user_id)
+
+    if target.id == user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot change your own role")
+
+    privileged = (UserRole.owner, UserRole.admin)
+    if user.role != UserRole.owner and (payload.role in privileged or target.role in privileged):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only an owner can grant, revoke, or change an owner's or admin's role")
+
+    if target.role == UserRole.owner and payload.role != UserRole.owner:
+        if _count_active_owners(db, user.tenant_id, exclude_user_id=target.id) == 0:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Cannot change the role of the last owner -- promote another user to owner first")
+
+    before_role = target.role
+    target.role = payload.role
+    _audit(db, user, "role_change", target.id, before={"role": before_role.value}, after={"role": payload.role.value})
+    db.commit()
+    db.refresh(target)
+    return target
+
+
+@router.post("/{user_id}/activate", response_model=TenantUserOut)
+def activate_user(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    target = _get_tenant_user_or_404(db, user, user_id)
+    if target.is_active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already active")
+    target.is_active = True
+    target.failed_login_attempts = 0
+    target.locked_until = None
+    _audit(db, user, "user_activated", target.id, after={"is_active": True})
+    db.commit()
+    db.refresh(target)
+    return target
+
+
+@router.post("/{user_id}/deactivate", response_model=TenantUserOut)
+def deactivate_user(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    """Blocks login immediately (is_active=False) and revokes every
+    existing session (token_version bump) -- never deletes the row or
+    touches any linked financial/employee/payroll record, same principle
+    as the existing self-service /auth/me/deactivate."""
+    target = _get_tenant_user_or_404(db, user, user_id)
+    if target.id == user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Use /auth/me/deactivate to deactivate your own account")
+    if not target.is_active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already inactive")
+    if target.role == UserRole.owner and _count_active_owners(db, user.tenant_id, exclude_user_id=target.id) == 0:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Cannot deactivate the last owner -- promote another user to owner first")
+
+    target.is_active = False
+    target.token_version += 1
+    _audit(db, user, "user_deactivated", target.id, after={"is_active": False})
+    db.commit()
+    db.refresh(target)
+    return target
+
+
+@router.post("/{user_id}/revoke-sessions", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_user_sessions(user_id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    """Force-logout everywhere for the target user, without deactivating
+    the account -- bumps token_version, same mechanism as
+    /auth/logout and password reset."""
+    target = _get_tenant_user_or_404(db, user, user_id)
+    target.token_version += 1
+    _audit(db, user, "sessions_revoked", target.id)
+    db.commit()

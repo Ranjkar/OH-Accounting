@@ -50,7 +50,12 @@ def list_audit_log(
         query = query.filter(AuditLog.created_at <= datetime.combine(date_to, time.max, tzinfo=timezone.utc))
 
     total = query.count()
-    rows = query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
+    # id DESC as a tiebreaker: created_at alone is not guaranteed unique
+    # (several events in the same request, or a tight bulk insert, can
+    # share a timestamp down to the column's own precision), and without a
+    # deterministic secondary sort, offset/limit pagination over tied rows
+    # can return a row on two different pages or skip one entirely.
+    rows = query.order_by(AuditLog.created_at.desc(), AuditLog.id.desc()).offset(skip).limit(limit).all()
 
     actor_ids = {r.user_id for r in rows if r.user_id is not None}
     actors = {u.id: u for u in db.query(User).filter(User.id.in_(actor_ids)).all()} if actor_ids else {}

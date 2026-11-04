@@ -213,6 +213,19 @@ def test_non_admin_cannot_activate_deactivate_or_change_roles(client, db_session
 # ---- invitations: create / list / revoke / accept ----
 
 
+def test_list_invitations_route_is_not_shadowed_by_the_user_id_route(client, db_session):
+    """Regression test: GET /users/invitations was initially registered
+    AFTER GET /users/{user_id} in this router, so FastAPI/Starlette's
+    order-dependent routing matched "invitations" as a (non-numeric)
+    user_id first, returning a 422 instead of ever reaching the real
+    handler. Found via manual/visual verification, not by this test suite
+    -- added here so it can never silently regress."""
+    _, owner, admin, accountant, viewer = _setup(db_session)
+    resp = client.get("/api/v1/users/invitations", headers=_login(client, "owner@acme.nl"))
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
 def test_admin_can_invite_accountant_but_not_owner(client, db_session):
     _, owner, admin, accountant, viewer = _setup(db_session)
     headers = _login(client, "admin@acme.nl")
