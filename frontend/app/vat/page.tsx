@@ -11,6 +11,7 @@ import { GlassSelect } from "@/components/glass/GlassInput";
 import { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, FinancialYear, VatReturn } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function LockControl({ companyId, fy, onChange }: { companyId: number; fy: FinancialYear; onChange: (fy: FinancialYear) => void }) {
   const { token } = useAuth();
@@ -95,36 +96,36 @@ function VatContent() {
           actions={<LockControl companyId={Number(companyId)} fy={fy} onChange={(updated) => setFinancialYears((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))} />}
         >
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border">
-                <th className="px-5 py-2 font-medium">Period</th>
-                <th className="px-5 py-2 font-medium">Filing deadline</th>
-                <th className="px-5 py-2 font-medium">VAT due (5a)</th>
-                <th className="px-5 py-2 font-medium">Deductible (5b)</th>
-                <th className="px-5 py-2 font-medium">Net payable</th>
-                <th className="px-5 py-2 font-medium">Status</th>
+              <tr>
+                <th>Period</th>
+                <th>Filing deadline</th>
+                <th className="text-right">VAT due (5a)</th>
+                <th className="text-right">Deductible (5b)</th>
+                <th className="text-right">Net payable</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {fy.vat_periods.map((p) => {
                 const vr = returns[p.id];
                 return (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted">
-                    <td className="px-5 py-2.5">
+                  <tr key={p.id} className="hover:bg-muted">
+                    <td>
                       {vr ? (
-                        <Link href={`/vat/${vr.id}`} className="text-brand-purple-600 hover:underline">
+                        <Link href={`/vat/${vr.id}`} className="text-navy hover:underline">
                           {p.label}
                         </Link>
                       ) : (
-                        p.label
+                        <span className="text-text-primary">{p.label}</span>
                       )}
                     </td>
-                    <td className="px-5 py-2.5">{p.filing_deadline}</td>
-                    <td className="px-5 py-2.5">{vr?.box_5a_vat ?? "—"}</td>
-                    <td className="px-5 py-2.5">{vr?.box_5b_vat ?? "—"}</td>
-                    <td className="px-5 py-2.5 font-medium">{vr?.net_payable ?? "—"}</td>
-                    <td className="px-5 py-2.5 text-xs uppercase text-text-secondary">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
+                    <td className="text-text-secondary">{p.filing_deadline}</td>
+                    <td className="col-amount">{vr ? formatEUR(vr.box_5a_vat) : "—"}</td>
+                    <td className="col-amount">{vr ? formatEUR(vr.box_5b_vat) : "—"}</td>
+                    <td className="col-amount font-medium">{vr ? formatEUR(vr.net_payable) : "—"}</td>
+                    <td className="text-xs uppercase text-text-secondary">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
                   </tr>
                 );
               })}

@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport, Scenario, ScenarioType } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const ASSUMPTION_FIELDS: { key: string; label: string; placeholder: string }[] = [
   { key: "revenue_change_pct", label: "Revenue change %", placeholder: "e.g. 10 or -15" },
@@ -122,25 +123,25 @@ function ScenariosContent() {
 
       <div className="card-v2 overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              <th className="px-4 py-2 font-medium" />
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">Type</th>
-              <th className="px-4 py-2 font-medium" />
+            <tr>
+              <th />
+              <th>Name</th>
+              <th>Type</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {scenarios.map((s) => (
-              <tr key={s.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-2.5">
-                  <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
+              <tr key={s.id}>
+                <td>
+                  <input type="checkbox" aria-label={`Select scenario ${s.name}`} checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                 </td>
-                <td className="px-4 py-2.5">{s.name}</td>
-                <td className="px-4 py-2.5 text-xs">{s.scenario_type}</td>
-                <td className="px-4 py-2.5 text-xs">
-                  <button onClick={() => duplicate(s)} className="text-navy underline">
+                <td className="text-text-primary">{s.name}</td>
+                <td className="text-xs text-text-secondary">{s.scenario_type}</td>
+                <td className="text-xs">
+                  <button onClick={() => duplicate(s)} className="text-navy hover:underline">
                     Duplicate
                   </button>
                 </td>
@@ -148,7 +149,7 @@ function ScenariosContent() {
             ))}
             {scenarios.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-text-secondary">
+                <td colSpan={4} className="text-text-secondary">
                   No scenarios yet.
                 </td>
               </tr>
@@ -173,20 +174,20 @@ function ScenariosContent() {
         <div className="card-v2 p-4">
           <h2 className="font-medium text-text-primary mb-2">Comparison</h2>
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="py-1">Scenario</th>
-                <th className="py-1">Forecast profit</th>
-                <th className="py-1">Net cash change</th>
+              <tr>
+                <th>Scenario</th>
+                <th className="text-right">Forecast profit</th>
+                <th className="text-right">Net cash change</th>
               </tr>
             </thead>
             <tbody>
               {comparison.comparison.map((row: JsonReport) => (
-                <tr key={row.name} className="border-b border-border last:border-0">
-                  <td className="py-1.5">{row.name}</td>
-                  <td className="py-1.5 font-mono">{row.total_forecast_profit}</td>
-                  <td className="py-1.5 font-mono">{row.scenario_net_cash_change}</td>
+                <tr key={row.name}>
+                  <td className="text-text-primary">{row.name}</td>
+                  <td className="col-amount">{formatEUR(row.total_forecast_profit)}</td>
+                  <td className="col-amount">{formatEUR(row.scenario_net_cash_change)}</td>
                 </tr>
               ))}
             </tbody>

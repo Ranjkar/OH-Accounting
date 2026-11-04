@@ -6,6 +6,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Reconciliation, VatReturn } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const BOX_ROWS: { code: string; label: string; net?: keyof VatReturn; vat?: keyof VatReturn }[] = [
   { code: "1a", label: "Domestic sales, high rate (21%)", net: "box_1a_net", vat: "box_1a_vat" },
@@ -63,7 +64,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           <button onClick={() => router.push("/vat")} className="text-sm text-navy hover:underline">
             ← Back to VAT overview
           </button>
-          <h1 className="text-xl font-semibold text-navy mt-1">VAT Return — {vatReturn.rules_version}</h1>
+          <h1 className="text-xl font-semibold text-text-primary mt-1">VAT Return — {vatReturn.rules_version}</h1>
         </div>
         <span className="text-xs uppercase font-medium text-text-secondary">{vatReturn.status.replaceAll("_", " ")}</span>
       </div>
@@ -119,41 +120,41 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           </div>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              <th className="px-5 py-2 font-medium">Box</th>
-              <th className="px-5 py-2 font-medium">Description</th>
-              <th className="px-5 py-2 font-medium">Net</th>
-              <th className="px-5 py-2 font-medium">VAT</th>
+            <tr>
+              <th>Box</th>
+              <th>Description</th>
+              <th className="text-right">Net</th>
+              <th className="text-right">VAT</th>
             </tr>
           </thead>
           <tbody>
             {BOX_ROWS.map((row) => (
-              <tr key={row.code} className="border-b border-border last:border-0">
-                <td className="px-5 py-2 font-medium text-navy">{row.code}</td>
-                <td className="px-5 py-2">{row.label}</td>
-                <td className="px-5 py-2">{row.net ? vatReturn[row.net] : "—"}</td>
-                <td className="px-5 py-2">{row.vat ? vatReturn[row.vat] : "—"}</td>
+              <tr key={row.code}>
+                <td className="font-medium text-navy">{row.code}</td>
+                <td className="text-text-primary">{row.label}</td>
+                <td className="col-amount">{row.net ? formatEUR(vatReturn[row.net] as string) : "—"}</td>
+                <td className="col-amount">{row.vat ? formatEUR(vatReturn[row.vat] as string) : "—"}</td>
               </tr>
             ))}
-            <tr className="border-b border-border bg-muted font-medium">
-              <td className="px-5 py-2">5a</td>
-              <td className="px-5 py-2">Total VAT payable</td>
-              <td className="px-5 py-2"></td>
-              <td className="px-5 py-2">{vatReturn.box_5a_vat}</td>
+            <tr className="bg-muted font-medium">
+              <td>5a</td>
+              <td className="text-text-primary">Total VAT payable</td>
+              <td></td>
+              <td className="col-amount">{formatEUR(vatReturn.box_5a_vat)}</td>
             </tr>
-            <tr className="border-b border-border bg-muted font-medium">
-              <td className="px-5 py-2">5b</td>
-              <td className="px-5 py-2">Deductible input VAT</td>
-              <td className="px-5 py-2"></td>
-              <td className="px-5 py-2">{vatReturn.box_5b_vat}</td>
+            <tr className="bg-muted font-medium">
+              <td>5b</td>
+              <td className="text-text-primary">Deductible input VAT</td>
+              <td></td>
+              <td className="col-amount">{formatEUR(vatReturn.box_5b_vat)}</td>
             </tr>
             <tr className="bg-navy-solid text-white font-medium">
-              <td className="px-5 py-2">5g</td>
-              <td className="px-5 py-2">Final total (5a − 5b)</td>
-              <td className="px-5 py-2"></td>
-              <td className="px-5 py-2">{vatReturn.net_payable}</td>
+              <td>5g</td>
+              <td>Final total (5a − 5b)</td>
+              <td></td>
+              <td className="col-amount">{formatEUR(vatReturn.net_payable)}</td>
             </tr>
           </tbody>
         </table>
