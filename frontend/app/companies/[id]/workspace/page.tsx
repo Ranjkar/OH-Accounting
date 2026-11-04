@@ -6,6 +6,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, CompanyWorkspace, NoteType } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   INTERNAL: "Internal note",
@@ -99,17 +100,17 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                 <span className="text-xs text-text-secondary">Filing deadline {p.filing_deadline}</span>
               </div>
               <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="table-v3">
                 <tbody>
                   {p.rows.map((row) => (
-                    <tr key={row.requirement} className="border-b border-border last:border-0">
-                      <td className="py-1 pr-4 text-text-secondary w-48">{row.requirement}</td>
-                      <td className="py-1 pr-4 w-32">
-                        <span className={row.complete ? "text-approved font-medium" : "text-pending font-medium"}>
+                    <tr key={row.requirement}>
+                      <td className="text-text-secondary w-48">{row.requirement}</td>
+                      <td className="w-32">
+                        <span className={`status-pill ${row.complete ? "status-pill-success" : "status-pill-warning"}`}>
                           {row.complete ? "Complete" : "Pending"}
                         </span>
                       </td>
-                      <td className="py-1 text-text-secondary text-xs">{row.detail}</td>
+                      <td className="text-text-secondary text-xs">{row.detail}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -181,17 +182,24 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
           <p className="px-5 py-4 text-sm text-text-secondary">No VAT returns computed yet.</p>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Status</th>
+                <th className="text-right">Net payable</th>
+              </tr>
+            </thead>
             <tbody>
               {workspace.vat_returns.map((vr) => (
-                <tr key={vr.id} className="border-b border-border last:border-0">
-                  <td className="px-5 py-2.5">
+                <tr key={vr.id}>
+                  <td>
                     <a href={`/vat/${vr.id}`} className="text-navy hover:underline">
                       {vr.period_label}
                     </a>
                   </td>
-                  <td className="px-5 py-2.5 capitalize">{vr.status.replaceAll("_", " ")}</td>
-                  <td className="px-5 py-2.5">{vr.net_payable}</td>
+                  <td className="text-text-secondary capitalize">{vr.status.replaceAll("_", " ")}</td>
+                  <td className="col-amount">{formatEUR(vr.net_payable)}</td>
                 </tr>
               ))}
             </tbody>

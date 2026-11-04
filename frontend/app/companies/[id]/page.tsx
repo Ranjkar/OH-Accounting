@@ -260,26 +260,26 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
               <h2 className="font-medium text-text-primary">Financial year {fy.year}</h2>
             </div>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-text-secondary border-b border-border-subtle">
-                  <th className="px-5 py-2 font-medium">Period</th>
-                  <th className="px-5 py-2 font-medium">Start</th>
-                  <th className="px-5 py-2 font-medium">End</th>
-                  <th className="px-5 py-2 font-medium">Filing deadline</th>
-                  <th className="px-5 py-2 font-medium">Payment deadline</th>
-                  <th className="px-5 py-2 font-medium">Status</th>
+                <tr>
+                  <th>Period</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Filing deadline</th>
+                  <th>Payment deadline</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {fy.vat_periods.map((p) => (
-                  <tr key={p.id} className="border-b border-border last:border-0">
-                    <td className="px-5 py-2.5">{p.label}</td>
-                    <td className="px-5 py-2.5">{p.start_date}</td>
-                    <td className="px-5 py-2.5">{p.end_date}</td>
-                    <td className="px-5 py-2.5">{p.filing_deadline}</td>
-                    <td className="px-5 py-2.5">{p.payment_deadline}</td>
-                    <td className="px-5 py-2.5">
+                  <tr key={p.id}>
+                    <td className="text-text-primary">{p.label}</td>
+                    <td className="text-text-secondary">{p.start_date}</td>
+                    <td className="text-text-secondary">{p.end_date}</td>
+                    <td className="text-text-secondary">{p.filing_deadline}</td>
+                    <td className="text-text-secondary">{p.payment_deadline}</td>
+                    <td>
                       <StatusBadge status={p.status} />
                     </td>
                   </tr>

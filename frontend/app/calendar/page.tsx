@@ -101,32 +101,32 @@ function TaxCalendarContent() {
       ) : view === "list" ? (
         <div className="card-v2 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-5 py-2 font-medium">Company</th>
-                <th className="px-5 py-2 font-medium">Period</th>
-                <th className="px-5 py-2 font-medium">Frequency</th>
-                <th className="px-5 py-2 font-medium">Filing deadline</th>
-                <th className="px-5 py-2 font-medium">Payment deadline</th>
-                <th className="px-5 py-2 font-medium">Status</th>
+              <tr>
+                <th>Company</th>
+                <th>Period</th>
+                <th>Frequency</th>
+                <th>Filing deadline</th>
+                <th>Payment deadline</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((e) => (
-                <tr key={e.vat_period_id} className="border-b border-border last:border-0 hover:bg-muted">
-                  <td className="px-5 py-2.5">
+                <tr key={e.vat_period_id} className="hover:bg-muted">
+                  <td>
                     <Link href={`/companies/${e.company_id}/workspace`} className="text-navy hover:underline">
                       {e.company_name}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">
+                  <td className="text-text-secondary">
                     {e.financial_year} {e.period_label}
                   </td>
-                  <td className="px-5 py-2.5 capitalize">{e.vat_frequency}</td>
-                  <td className="px-5 py-2.5">{e.filing_deadline}</td>
-                  <td className="px-5 py-2.5">{e.payment_deadline}</td>
-                  <td className="px-5 py-2.5">
+                  <td className="text-text-secondary capitalize">{e.vat_frequency}</td>
+                  <td className="text-text-secondary">{e.filing_deadline}</td>
+                  <td className="text-text-secondary">{e.payment_deadline}</td>
+                  <td>
                     {e.vat_return_id ? (
                       <Link href={`/vat/${e.vat_return_id}`}>
                         <CalendarStatusBadge status={e.calendar_status} />
@@ -145,12 +145,12 @@ function TaxCalendarContent() {
         <div className="space-y-4">
           {[...byMonth.entries()].sort().map(([month, monthEntries]) => (
             <div key={month} className="card-v2">
-              <div className="px-5 py-3 border-b border-border-subtle font-medium text-navy">{month}</div>
+              <div className="px-5 py-3 border-b border-border-subtle font-medium text-text-primary">{month}</div>
               <div className="divide-y divide-border">
                 {monthEntries.map((e) => (
                   <div key={e.vat_period_id} className="px-5 py-3 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-navy">{e.company_name}</p>
+                      <p className="text-sm font-medium text-text-primary">{e.company_name}</p>
                       <p className="text-xs text-text-secondary">
                         {e.financial_year} {e.period_label} · due {e.filing_deadline}
                       </p>

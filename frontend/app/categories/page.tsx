@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, CategorizationRule, CategorizationRuleType, CategorySuggestion, Company, Transaction } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const EXPENSE_CATEGORIES = [
   "Office expenses", "Travel", "Fuel", "Software subscriptions", "Telecommunications",
@@ -126,18 +127,18 @@ function CategoriesContent() {
               </button>
             </form>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-v3">
               <tbody>
                 {rules.map((r) => (
-                  <tr key={r.id} className="border-t border-border">
-                    <td className="py-1.5 text-xs text-text-secondary">{r.rule_type}</td>
-                    <td className="py-1.5">{r.match_value}</td>
-                    <td className="py-1.5 font-medium">{r.category}</td>
+                  <tr key={r.id}>
+                    <td className="text-xs text-text-secondary">{r.rule_type}</td>
+                    <td className="text-text-primary">{r.match_value}</td>
+                    <td className="font-medium text-text-primary">{r.category}</td>
                   </tr>
                 ))}
                 {rules.length === 0 && (
                   <tr>
-                    <td className="py-2 text-text-secondary">No rules yet for this company.</td>
+                    <td className="text-text-secondary">No rules yet for this company.</td>
                   </tr>
                 )}
               </tbody>
@@ -148,36 +149,36 @@ function CategoriesContent() {
           <div className="card-v2 overflow-hidden">
             <h2 className="font-medium text-text-primary p-4 pb-0">Purchase transactions</h2>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-text-secondary border-b border-border-subtle">
-                  <th className="px-4 py-2 font-medium">Invoice</th>
-                  <th className="px-4 py-2 font-medium">Counterparty</th>
-                  <th className="px-4 py-2 font-medium">Amount</th>
-                  <th className="px-4 py-2 font-medium">Suggestion</th>
-                  <th className="px-4 py-2 font-medium">Category</th>
-                  <th className="px-4 py-2 font-medium" />
+                <tr>
+                  <th>Invoice</th>
+                  <th>Counterparty</th>
+                  <th className="text-right">Amount</th>
+                  <th>Suggestion</th>
+                  <th>Category</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {uncategorized.map((t) => (
-                  <tr key={t.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5">{t.invoice_number ?? `#${t.id}`}</td>
-                    <td className="px-4 py-2.5">{t.counterparty_name ?? "—"}</td>
-                    <td className="px-4 py-2.5 font-mono">{t.net_amount}</td>
-                    <td className="px-4 py-2.5">
+                  <tr key={t.id}>
+                    <td className="text-text-primary">{t.invoice_number ?? `#${t.id}`}</td>
+                    <td className="text-text-secondary">{t.counterparty_name ?? "—"}</td>
+                    <td className="col-amount">{formatEUR(t.net_amount)}</td>
+                    <td>
                       {suggestions[t.id] ? (
                         <span className="text-xs text-text-secondary">
                           {suggestions[t.id].suggested_category} ({Math.round(suggestions[t.id].confidence * 100)}%)
                           {suggestions[t.id].requires_accountant_review && " · review"}
                         </span>
                       ) : (
-                        <button onClick={() => suggest(t.id)} className="text-xs text-navy underline">
+                        <button onClick={() => suggest(t.id)} className="text-xs text-navy hover:underline">
                           Suggest
                         </button>
                       )}
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td>
                       <select
                         value={chosenCategory[t.id] ?? ""}
                         onChange={(e) => setChosenCategory((prev) => ({ ...prev, [t.id]: e.target.value }))}
@@ -191,7 +192,7 @@ function CategoriesContent() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td>
                       <button
                         onClick={() => categorize(t.id, true)}
                         disabled={!chosenCategory[t.id]}
@@ -204,7 +205,7 @@ function CategoriesContent() {
                 ))}
                 {uncategorized.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-4 text-text-secondary">
+                    <td colSpan={6} className="text-text-secondary">
                       No purchase transactions to categorize.
                     </td>
                   </tr>
