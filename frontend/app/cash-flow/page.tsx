@@ -104,7 +104,7 @@ function CashFlowContent() {
             <p className="text-sm font-medium text-navy">Net change in cash: <span className="font-mono">{statement.net_change_in_cash}</span></p>
           </div>
           <div className="card-v2 p-4">
-            <h2 className="font-medium text-navy mb-2">Accrual vs cash reconciliation</h2>
+            <h2 className="font-medium text-text-primary mb-2">Accrual vs cash reconciliation</h2>
             <p className="text-sm">Net profit (accrual): <span className="font-mono">{statement.accrual_vs_cash_reconciliation.net_profit_accrual}</span></p>
             <p className="text-sm">+ Depreciation addback: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.depreciation_addback}</span></p>
             <p className="text-sm">- Increase in AR: <span className="font-mono">{statement.accrual_vs_cash_reconciliation.increase_in_accounts_receivable}</span></p>
@@ -150,7 +150,7 @@ function CashFlowContent() {
 
           <div className="card-v2 overflow-hidden">
             <div className="p-4 pb-0 flex items-center justify-between">
-              <h2 className="font-medium text-navy">Monthly projection</h2>
+              <h2 className="font-medium text-text-primary">Monthly projection</h2>
               <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">Estimate, not a confirmed balance</span>
             </div>
             <div className="overflow-x-auto">

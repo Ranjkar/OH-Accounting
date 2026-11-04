@@ -64,7 +64,7 @@ function ForecastsContent() {
         <>
           <div className="card-v2 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-navy">Revenue / expense / profit trend</h2>
+              <h2 className="font-medium text-text-primary">Revenue / expense / profit trend</h2>
               <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">Estimate</span>
             </div>
             {months.map((m) => (
@@ -87,13 +87,13 @@ function ForecastsContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Outstanding invoices (confirmed, not estimated)</h2>
+              <h2 className="font-medium text-text-primary mb-2">Outstanding invoices (confirmed, not estimated)</h2>
               <p className="text-sm">Receivables outstanding: <span className="font-mono">{forecast.outstanding_invoices.confirmed_receivables_outstanding}</span></p>
               <p className="text-sm">Payables outstanding: <span className="font-mono">{forecast.outstanding_invoices.confirmed_payables_outstanding}</span></p>
               <p className="text-sm">Net working capital: <span className="font-mono">{forecast.outstanding_invoices.net_working_capital_from_trade}</span></p>
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Upcoming VAT payments</h2>
+              <h2 className="font-medium text-text-primary mb-2">Upcoming VAT payments</h2>
               {forecast.vat_payments.upcoming_vat_payments.map((p: JsonReport) => (
                 <p key={p.vat_period_id} className="text-sm">
                   {p.period_label} (due {p.payment_deadline}): <span className="font-mono">{p.estimated_net_payable}</span>{" "}
@@ -105,7 +105,7 @@ function ForecastsContent() {
           </div>
 
           <div className="card-v2 p-4">
-            <h2 className="font-medium text-navy mb-2">Cash flow forecast (Phase 6 engine, reused)</h2>
+            <h2 className="font-medium text-text-primary mb-2">Cash flow forecast (Phase 6 engine, reused)</h2>
             <p className="text-xs text-amber-600">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
             <div className="overflow-x-auto">
             <table className="w-full text-sm mt-2">

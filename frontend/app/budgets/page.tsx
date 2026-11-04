@@ -124,7 +124,7 @@ function BudgetsContent() {
 
       {companyId && financialYearId && (
         <div className="card-v2 p-4 space-y-3">
-          <h2 className="font-medium text-navy">Create a budget</h2>
+          <h2 className="font-medium text-text-primary">Create a budget</h2>
           <button onClick={getSuggestion} className="text-xs text-navy underline">
             Get AI suggestion from last year&apos;s actuals
           </button>
@@ -217,7 +217,7 @@ function BudgetsContent() {
         <div className="card-v2 p-4">
           {variance && selected ? (
             <div className="space-y-2 text-sm">
-              <h3 className="font-medium text-navy">{variance.budget_name} -- actual vs budget</h3>
+              <h3 className="font-medium text-text-primary">{variance.budget_name} -- actual vs budget</h3>
               {variance.lines.length === 0 && <p className="text-text-secondary">No lines in this budget.</p>}
               {variance.lines.map((l: JsonReport, i: number) => (
                 <div key={i} className="flex items-center justify-between border-b border-slate-100 py-1">

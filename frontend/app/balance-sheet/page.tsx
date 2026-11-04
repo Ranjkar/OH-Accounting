@@ -107,7 +107,7 @@ function BalanceSheetContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Assets</h2>
+              <h2 className="font-medium text-text-primary mb-2">Assets</h2>
               <Row label="Cash and bank" value={bs.assets.cash_and_bank} />
               <Row label="Accounts receivable" value={bs.assets.accounts_receivable} />
               <Row label="Inventory" value={bs.assets.inventory} />
@@ -117,7 +117,7 @@ function BalanceSheetContent() {
               <Row label="Total assets" value={bs.assets.total} highlight />
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Liabilities</h2>
+              <h2 className="font-medium text-text-primary mb-2">Liabilities</h2>
               <Row label="Accounts payable" value={bs.liabilities.accounts_payable} />
               <Row label="Loans" value={bs.liabilities.loans} />
               <Row label="Other liabilities" value={bs.liabilities.other_liabilities} />
@@ -125,7 +125,7 @@ function BalanceSheetContent() {
               <Row label="Total liabilities" value={bs.liabilities.total} highlight />
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Equity</h2>
+              <h2 className="font-medium text-text-primary mb-2">Equity</h2>
               <Row label="Contributed / other equity" value={bs.equity.contributed_and_other_equity} />
               <Row label="Retained earnings" value={bs.equity.retained_earnings} />
               <Row label="Total equity" value={bs.equity.total} highlight />
@@ -136,7 +136,7 @@ function BalanceSheetContent() {
 
       {companyId && (
         <div className="card-v2 p-4 space-y-3">
-          <h2 className="font-medium text-navy">Manual balance-sheet items</h2>
+          <h2 className="font-medium text-text-primary">Manual balance-sheet items</h2>
           <form onSubmit={addItem} className="flex items-end gap-3 flex-wrap">
             <select value={category} aria-label="Category" onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="input-v2 px-2 py-2 text-sm">
               {CATEGORIES.map((c) => (

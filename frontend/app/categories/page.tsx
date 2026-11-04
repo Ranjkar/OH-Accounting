@@ -100,7 +100,7 @@ function CategoriesContent() {
       {companyId && (
         <>
           <div className="card-v2 p-4 space-y-3">
-            <h2 className="font-medium text-navy">Rules</h2>
+            <h2 className="font-medium text-text-primary">Rules</h2>
             <form onSubmit={createRule} className="flex items-end gap-3">
               <select value={ruleType} aria-label="Rule Type" onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="input-v2 px-2 py-2 text-sm">
                 <option value="SUPPLIER_NAME">Supplier name contains</option>
@@ -146,7 +146,7 @@ function CategoriesContent() {
           </div>
 
           <div className="card-v2 overflow-hidden">
-            <h2 className="font-medium text-navy p-4 pb-0">Purchase transactions</h2>
+            <h2 className="font-medium text-text-primary p-4 pb-0">Purchase transactions</h2>
             <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -140,7 +140,7 @@ function BankTransactionsContent() {
         <div className="card-v2 p-4">
           {detail ? (
             <div className="space-y-3 text-sm">
-              <h3 className="font-medium text-navy">Transaction #{detail.id}</h3>
+              <h3 className="font-medium text-text-primary">Transaction #{detail.id}</h3>
               <p>Amount: <span className="font-mono">{detail.amount}</span></p>
               <p>Status: {detail.reconciliation_status}</p>
               <p>Counterparty: {detail.counterparty_name ?? "—"}</p>

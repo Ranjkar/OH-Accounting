@@ -72,7 +72,7 @@ function WorkingCapitalContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Customer payment behavior</h2>
+              <h2 className="font-medium text-text-primary mb-2">Customer payment behavior</h2>
               {customerBehavior.length === 0 && <p className="text-sm text-text-secondary">No fully-settled invoices yet.</p>}
               {customerBehavior.map((c) => (
                 <p key={c.counterparty_name} className="text-sm">
@@ -81,7 +81,7 @@ function WorkingCapitalContent() {
               ))}
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Supplier payment trends</h2>
+              <h2 className="font-medium text-text-primary mb-2">Supplier payment trends</h2>
               {supplierTrends.length === 0 && <p className="text-sm text-text-secondary">No fully-settled purchase invoices yet.</p>}
               {supplierTrends.map((s) => (
                 <p key={s.counterparty_name} className="text-sm">
@@ -92,7 +92,7 @@ function WorkingCapitalContent() {
           </div>
 
           <div className="card-v2 p-4">
-            <h2 className="font-medium text-navy mb-2">Working capital trend (6 months)</h2>
+            <h2 className="font-medium text-text-primary mb-2">Working capital trend (6 months)</h2>
             <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -119,7 +119,7 @@ function WorkingCapitalContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Cash conversion cycle</h2>
+              <h2 className="font-medium text-text-primary mb-2">Cash conversion cycle</h2>
               {ccc && (
                 <>
                   <p className="text-sm">DSO: <span className="font-mono">{ccc.days_sales_outstanding ?? "n/a"}</span></p>
@@ -130,7 +130,7 @@ function WorkingCapitalContent() {
               )}
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Customer concentration</h2>
+              <h2 className="font-medium text-text-primary mb-2">Customer concentration</h2>
               {customerConcentration?.top_customers?.map((c: JsonReport) => (
                 <p key={c.counterparty_name} className="text-sm">
                   {c.counterparty_name}: {c.pct_of_total}%
@@ -139,7 +139,7 @@ function WorkingCapitalContent() {
               {customerConcentration?.missing_data && <p className="text-xs text-amber-600">{customerConcentration.missing_data}</p>}
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-navy mb-2">Supplier dependency</h2>
+              <h2 className="font-medium text-text-primary mb-2">Supplier dependency</h2>
               {supplierDependency?.top_expense_categories?.map((c: JsonReport) => (
                 <p key={c.category} className="text-sm">
                   {c.category}: {c.pct_of_total}%

@@ -257,7 +257,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
         {years.map((fy) => (
           <div key={fy.id} className="card-v2">
             <div className="px-5 py-4 border-b border-border-subtle">
-              <h2 className="font-medium text-navy">Financial year {fy.year}</h2>
+              <h2 className="font-medium text-text-primary">Financial year {fy.year}</h2>
             </div>
             <div className="overflow-x-auto">
             <table className="w-full text-sm">

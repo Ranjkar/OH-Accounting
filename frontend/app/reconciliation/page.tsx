@@ -148,7 +148,7 @@ function ReconciliationContent() {
         {queue.length === 0 && <p className="text-sm text-text-secondary">Nothing awaiting review right now.</p>}
       </div>
 
-      <h2 className="text-lg font-semibold text-navy mt-8">Approved matches (reversible)</h2>
+      <h2 className="text-lg font-semibold text-text-primary mt-8">Approved matches (reversible)</h2>
       <div className="space-y-4">
         {approvedQueue.map((tx) => (
           <div key={tx.id} className="card-v2 p-4 space-y-2">

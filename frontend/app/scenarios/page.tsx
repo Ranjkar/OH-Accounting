@@ -91,7 +91,7 @@ function ScenariosContent() {
 
       {companyId && (
         <div className="card-v2 p-4 space-y-3">
-          <h2 className="font-medium text-navy">New scenario</h2>
+          <h2 className="font-medium text-text-primary">New scenario</h2>
           <form onSubmit={createScenario} className="space-y-3">
             <div className="flex items-center gap-3">
               <input required value={name} aria-label="Name" onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="input-v2 px-3 py-2 text-sm w-56" />
@@ -171,7 +171,7 @@ function ScenariosContent() {
 
       {comparison && (
         <div className="card-v2 p-4">
-          <h2 className="font-medium text-navy mb-2">Comparison</h2>
+          <h2 className="font-medium text-text-primary mb-2">Comparison</h2>
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
