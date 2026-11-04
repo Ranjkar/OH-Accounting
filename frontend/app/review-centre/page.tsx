@@ -13,6 +13,7 @@ import GlassLoadingState, { GlassErrorState } from "@/components/glass/GlassLoad
 import { useAuth } from "@/lib/auth-context";
 import { useCompany } from "@/lib/company-context";
 import { api, AnomalyFlag, BankTransaction, DocumentSummary } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function AcknowledgeDismiss({ anomaly, onChange }: { anomaly: AnomalyFlag; onChange: (a: AnomalyFlag) => void }) {
   const { token } = useAuth();
@@ -140,7 +141,7 @@ function ReviewCentreContent() {
               emptyMessage="No suggested matches awaiting approval."
               columns={[
                 { key: "date", header: "Date", render: (t) => t.booking_date },
-                { key: "amount", header: "Amount", render: (t) => <span className="font-mono text-xs">{t.amount} {t.currency}</span> },
+                { key: "amount", header: "Amount", render: (t) => <span className="font-mono text-xs">{formatEUR(t.amount)} {t.currency}</span> },
                 { key: "counterparty", header: "Counterparty", render: (t) => t.counterparty_name ?? "—" },
                 { key: "action", header: "", render: () => <Link href="/reconciliation" className="text-xs text-brand-purple-600 hover:underline">Review in Reconciliation →</Link> },
               ]}

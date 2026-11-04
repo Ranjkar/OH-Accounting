@@ -87,15 +87,15 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Sales (net)</p>
-          <p className="text-lg font-semibold text-navy mt-1">{reconciliation.sales_total_net}</p>
+          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(reconciliation.sales_total_net)}</p>
         </div>
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Purchases (net)</p>
-          <p className="text-lg font-semibold text-navy mt-1">{reconciliation.purchases_total_net}</p>
+          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(reconciliation.purchases_total_net)}</p>
         </div>
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Net VAT payable (5a − 5b)</p>
-          <p className="text-lg font-semibold text-navy mt-1">{vatReturn.net_payable}</p>
+          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(vatReturn.net_payable)}</p>
         </div>
       </div>
 

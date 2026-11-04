@@ -99,7 +99,7 @@ function BalanceSheetContent() {
         <>
           {!bs.is_balanced && (
             <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">
-              Balance sheet does not balance -- off by {bs.imbalance_amount}. {bs.missing_opening_balance_warning}
+              Balance sheet does not balance -- off by {formatEUR(bs.imbalance_amount)}. {bs.missing_opening_balance_warning}
             </div>
           )}
           {bs.is_balanced && bs.missing_opening_balance_warning && (

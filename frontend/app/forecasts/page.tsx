@@ -73,7 +73,7 @@ function ForecastsContent() {
                 <div className="flex items-center justify-between text-xs text-text-secondary">
                   <span>{m.month}</span>
                   <span>
-                    Revenue {m.forecast_revenue} · Profit {m.forecast_profit} (range {m.low_estimate_profit} to {m.high_estimate_profit})
+                    Revenue {formatEUR(m.forecast_revenue)} · Profit {formatEUR(m.forecast_profit)} (range {formatEUR(m.low_estimate_profit)} to {formatEUR(m.high_estimate_profit)})
                   </span>
                 </div>
                 <Bar value={Number(m.forecast_revenue)} max={maxValue} color="bg-navy-solid" />
@@ -89,15 +89,15 @@ function ForecastsContent() {
           <div className="grid grid-cols-2 gap-4">
             <div className="card-v2 p-4">
               <h2 className="font-medium text-text-primary mb-2">Outstanding invoices (confirmed, not estimated)</h2>
-              <p className="text-sm">Receivables outstanding: <span className="font-mono">{forecast.outstanding_invoices.confirmed_receivables_outstanding}</span></p>
-              <p className="text-sm">Payables outstanding: <span className="font-mono">{forecast.outstanding_invoices.confirmed_payables_outstanding}</span></p>
-              <p className="text-sm">Net working capital: <span className="font-mono">{forecast.outstanding_invoices.net_working_capital_from_trade}</span></p>
+              <p className="text-sm">Receivables outstanding: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</span></p>
+              <p className="text-sm">Payables outstanding: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</span></p>
+              <p className="text-sm">Net working capital: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.net_working_capital_from_trade)}</span></p>
             </div>
             <div className="card-v2 p-4">
               <h2 className="font-medium text-text-primary mb-2">Upcoming VAT payments</h2>
               {forecast.vat_payments.upcoming_vat_payments.map((p: JsonReport) => (
                 <p key={p.vat_period_id} className="text-sm">
-                  {p.period_label} (due {p.payment_deadline}): <span className="font-mono">{p.estimated_net_payable}</span>{" "}
+                  {p.period_label} (due {p.payment_deadline}): <span className="font-mono">{formatEUR(p.estimated_net_payable)}</span>{" "}
                   {!p.is_final && <span className="text-amber-600 text-xs">(estimate)</span>}
                 </p>
               ))}

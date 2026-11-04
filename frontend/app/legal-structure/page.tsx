@@ -5,14 +5,15 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function OptionCard({ title, total_tax, net_result, highlight }: { title: string; total_tax: string; net_result: string; highlight: boolean }) {
   return (
     <div className={`card-v2 p-4 ${highlight ? "border-2 border-brand-purple-500" : ""}`}>
       <p className="text-xs text-text-secondary">{title}</p>
-      <p className="text-2xl font-semibold text-text-primary font-mono">{total_tax}</p>
+      <p className="text-2xl font-semibold text-text-primary font-mono">{formatEUR(total_tax)}</p>
       <p className="text-xs text-text-secondary">estimated tax</p>
-      <p className="text-sm font-mono mt-2">{net_result}</p>
+      <p className="text-sm font-mono mt-2">{formatEUR(net_result)}</p>
       <p className="text-xs text-text-secondary">net result</p>
       {highlight && <p className="text-xs text-brand-purple-600 mt-2 font-medium">Lowest estimated tax</p>}
     </div>
@@ -75,12 +76,12 @@ function LegalStructureContent() {
           </div>
           <div className="card-v2 p-4">
             <h2 className="font-medium text-text-primary mb-2">BV detail</h2>
-            <p className="text-sm">DGA salary used: <span className="font-mono">{result.bv.dga_salary_used}</span></p>
+            <p className="text-sm">DGA salary used: <span className="font-mono">{formatEUR(result.bv.dga_salary_used)}</span></p>
             <p className="text-sm">
-              Salary compliant with gebruikelijk loon: {result.bv.dga_salary_check.compliant ? "Yes" : `No -- required minimum ${result.bv.dga_salary_check.required_minimum}`}
+              Salary compliant with gebruikelijk loon: {result.bv.dga_salary_check.compliant ? "Yes" : `No -- required minimum ${formatEUR(result.bv.dga_salary_check.required_minimum)}`}
             </p>
-            <p className="text-sm">Corporate tax: <span className="font-mono">{result.bv.corporate_tax}</span></p>
-            <p className="text-sm">Retained profit after corporate tax: <span className="font-mono">{result.bv.retained_profit_after_corporate_tax}</span></p>
+            <p className="text-sm">Corporate tax: <span className="font-mono">{formatEUR(result.bv.corporate_tax)}</span></p>
+            <p className="text-sm">Retained profit after corporate tax: <span className="font-mono">{formatEUR(result.bv.retained_profit_after_corporate_tax)}</span></p>
           </div>
           <p className="text-xs text-amber-600">{result.disclaimer}</p>
         </>

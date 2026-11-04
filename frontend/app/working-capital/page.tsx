@@ -57,14 +57,14 @@ function WorkingCapitalContent() {
       {companyId && (
         <>
           {alerts.length > 0 && (
-            <div className="bg-white rounded-lg border border-red-200 p-4">
+            <div className="card-v2 rounded-lg border border-red-200 p-4">
               <h2 className="font-medium text-error mb-2">Payment delay alerts</h2>
               {alerts.map((a) => (
                 <div key={a.transaction_id} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
                   <span>
                     {a.counterparty_name} -- invoice #{a.transaction_id} ({a.days_overdue} days overdue)
                   </span>
-                  <span className="font-mono">{a.remaining_balance}</span>
+                  <span className="font-mono">{formatEUR(a.remaining_balance)}</span>
                   <span className="text-xs text-text-secondary">{a.alert_reason}</span>
                 </div>
               ))}

@@ -141,7 +141,7 @@ function BankTransactionsContent() {
           {detail ? (
             <div className="space-y-3 text-sm">
               <h3 className="font-medium text-text-primary">Transaction #{detail.id}</h3>
-              <p>Amount: <span className="font-mono">{detail.amount}</span></p>
+              <p>Amount: <span className="font-mono">{formatEUR(detail.amount)}</span></p>
               <p>Status: {detail.reconciliation_status}</p>
               <p>Counterparty: {detail.counterparty_name ?? "—"}</p>
               <p>IBAN: {detail.counterparty_iban ?? "—"}</p>
@@ -150,7 +150,7 @@ function BankTransactionsContent() {
               {detail.matches.map((m) => (
                 <div key={m.id} className="rounded-md border border-border-subtle p-2">
                   <p>Invoice #{m.accounting_transaction_id} · {m.confidence_level} ({m.confidence_score})</p>
-                  <p className="text-xs text-text-secondary">Allocated: {m.allocated_amount} · Status: {m.status}</p>
+                  <p className="text-xs text-text-secondary">Allocated: {formatEUR(m.allocated_amount)} · Status: {m.status}</p>
                 </div>
               ))}
               {detail.reconciliation_status !== "EXCLUDED" && (

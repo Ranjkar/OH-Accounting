@@ -139,7 +139,7 @@ function BudgetsContent() {
             <div className="bg-muted rounded-md p-3 text-xs space-y-1">
               {suggestion.ai_suggestion.suggestions.map((s: JsonReport) => (
                 <p key={s.category}>
-                  <span className="font-medium">{s.category}</span>: {s.suggested_monthly_amount}/mo -- {s.reasoning}
+                  <span className="font-medium">{s.category}</span>: {formatEUR(s.suggested_monthly_amount)}/mo -- {s.reasoning}
                 </p>
               ))}
               <p className="text-text-secondary">AI suggestions always require review before use -- never auto-applied.</p>
@@ -165,7 +165,7 @@ function BudgetsContent() {
               <ul className="text-xs text-text-secondary space-y-0.5">
                 {draftLines.map((l, i) => (
                   <li key={i}>
-                    {l.category} / month {l.month}: {l.amount}
+                    {l.category} / month {l.month}: {formatEUR(l.amount)}
                   </li>
                 ))}
               </ul>

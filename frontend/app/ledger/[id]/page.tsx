@@ -81,13 +81,13 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Net / VAT / Gross</p>
           <p className="text-lg font-semibold text-navy mt-1">
-            {transaction.net_amount} / {transaction.vat_amount} / {transaction.gross_amount} {transaction.currency}
+            {formatEUR(transaction.net_amount)} / {formatEUR(transaction.vat_amount)} / {formatEUR(transaction.gross_amount)} {transaction.currency}
           </p>
         </div>
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">Paid / Remaining</p>
           <p className="text-lg font-semibold text-navy mt-1">
-            {transaction.amount_paid} / {transaction.remaining_balance}
+            {formatEUR(transaction.amount_paid)} / {formatEUR(transaction.remaining_balance)}
           </p>
         </div>
         <div className="card-v2 p-4">

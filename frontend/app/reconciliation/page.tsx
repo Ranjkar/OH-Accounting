@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, BankTransactionDetail, Company } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function ReconciliationContent() {
   const { token } = useAuth();
@@ -120,7 +121,7 @@ function ReconciliationContent() {
           <div key={tx.id} className="card-v2 p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span>
-                Bank tx #{tx.id} · {tx.booking_date} · <span className="font-mono">{tx.amount}</span> · {tx.counterparty_name ?? "—"}
+                Bank tx #{tx.id} · {tx.booking_date} · <span className="font-mono">{formatEUR(tx.amount)}</span> · {tx.counterparty_name ?? "—"}
               </span>
             </div>
             {tx.matches
@@ -131,7 +132,7 @@ function ReconciliationContent() {
                     <p>
                       Invoice #{m.accounting_transaction_id} · <span className="font-semibold">{m.confidence_level}</span> ({m.confidence_score})
                     </p>
-                    <p className="text-xs text-text-secondary">Allocated: {m.allocated_amount}</p>
+                    <p className="text-xs text-text-secondary">Allocated: {formatEUR(m.allocated_amount)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => approve(m.id)} className="btn-primary-v2 px-3 py-1.5 text-xs">
@@ -153,14 +154,14 @@ function ReconciliationContent() {
         {approvedQueue.map((tx) => (
           <div key={tx.id} className="card-v2 p-4 space-y-2">
             <div className="text-sm">
-              Bank tx #{tx.id} · {tx.booking_date} · <span className="font-mono">{tx.amount}</span> · {tx.counterparty_name ?? "—"}
+              Bank tx #{tx.id} · {tx.booking_date} · <span className="font-mono">{formatEUR(tx.amount)}</span> · {tx.counterparty_name ?? "—"}
             </div>
             {tx.matches
               .filter((m) => m.status === "APPROVED")
               .map((m) => (
                 <div key={m.id} className="rounded-md border border-border-subtle p-3 flex items-center justify-between gap-3 text-sm">
                   <p>
-                    Invoice #{m.accounting_transaction_id} · allocated {m.allocated_amount}
+                    Invoice #{m.accounting_transaction_id} · allocated {formatEUR(m.allocated_amount)}
                   </p>
                   <div className="flex items-center gap-2">
                     <input

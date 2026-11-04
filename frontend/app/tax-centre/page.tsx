@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const LEGAL_FORMS = ["EENMANSZAAK", "VOF", "MAATSCHAP", "CV", "BV", "NV", "COOPERATIE", "OWM", "STICHTING", "VERENIGING", "VVE", "REDERIJ", "OTHER"];
 
@@ -106,7 +107,7 @@ function TaxCentreContent() {
                 <div key={row.period_label} className="flex items-center justify-between text-sm py-1 border-b border-border-subtle last:border-0">
                   <span>{row.period_label}</span>
                   <span className="pill-v2 bg-surface-page px-2 py-0.5 text-xs">{row.status}</span>
-                  <span className="font-mono">{row.net_payable}</span>
+                  <span className="font-mono">{formatEUR(row.net_payable)}</span>
                 </div>
               ))}
             </div>
