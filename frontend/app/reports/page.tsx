@@ -65,7 +65,7 @@ function ReportsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Reports</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Reports</h1>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
@@ -106,7 +106,7 @@ function ReportsContent() {
         <>
           <div className="card-v2 p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-navy">Financial Overview Report</h2>
+              <h2 className="text-sm font-medium text-text-primary">Financial Overview Report</h2>
               <DownloadButtons onDownload={downloadFinancialOverview} />
             </div>
             <p className="text-xs text-text-secondary">
@@ -117,7 +117,7 @@ function ReportsContent() {
           {comparison && (
             <div className="card-v2">
               <div className="px-5 py-3 border-b border-border-subtle">
-                <h2 className="text-sm font-medium text-navy">Period comparison — financial year {comparison.financial_year}</h2>
+                <h2 className="text-sm font-medium text-text-primary">Period comparison — financial year {comparison.financial_year}</h2>
               </div>
               <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -147,7 +147,7 @@ function ReportsContent() {
           )}
 
           <div className="card-v2 p-5 space-y-3">
-            <h2 className="text-sm font-medium text-navy">VAT Return Reports</h2>
+            <h2 className="text-sm font-medium text-text-primary">VAT Return Reports</h2>
             <p className="text-xs text-text-secondary">Open a period&apos;s VAT return from the VAT Returns or Tax Calendar page to download its report.</p>
           </div>
         </>

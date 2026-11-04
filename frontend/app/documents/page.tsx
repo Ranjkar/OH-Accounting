@@ -65,7 +65,7 @@ function DocumentsContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Documents</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Documents</h1>
         <label className="btn-primary-v2 px-4 py-2 text-sm cursor-pointer">
           {uploading ? "Uploading…" : "Upload document"}
           <input
@@ -102,7 +102,7 @@ function DocumentsContent() {
               className={`rounded-full px-3 py-1 ${
                 statusFilter === f.value
                   ? "bg-navy text-white"
-                  : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
+                  : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
               {f.label}

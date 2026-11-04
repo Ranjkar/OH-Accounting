@@ -48,7 +48,7 @@ function CompaniesContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Companies</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Companies</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="btn-primary-v2 px-4 py-2 text-sm"

@@ -30,7 +30,7 @@ function BatchesContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Batch Processing</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Batch Processing</h1>
         <div className="flex gap-2">
           <Link href="/sales/upload" className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors">
             Upload sales invoices
@@ -57,7 +57,7 @@ function BatchesContent() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600"}`}
+              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary"}`}
             >
               {c === "all" ? "All" : c}
             </button>

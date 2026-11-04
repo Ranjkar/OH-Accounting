@@ -6,7 +6,7 @@ export default function GlassLoadingState({ rows = 3 }: { rows?: number }) {
   return (
     <div className="glass-panel p-5 space-y-3" role="status" aria-label="Loading">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-4 rounded-full bg-white/40 animate-pulse" style={{ width: `${85 - i * 12}%` }} />
+        <div key={i} className="h-4 rounded-full bg-muted animate-pulse" style={{ width: `${85 - i * 12}%` }} />
       ))}
     </div>
   );

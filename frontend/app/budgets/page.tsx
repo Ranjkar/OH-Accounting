@@ -99,7 +99,7 @@ function BudgetsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Budgets</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Budgets</h1>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 

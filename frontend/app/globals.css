@@ -464,6 +464,19 @@ body {
   box-shadow: 0 0 0 3px var(--brand-purple-100);
 }
 
+/* Native <select> elements otherwise keep the OS's own chrome (different
+   font/height/arrow) even with the background/border/colour above
+   applied -- normalise it to a custom, theme-aware chevron so a select
+   looks like part of this design system, not a browser default. */
+select.input-v2 {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+}
+
 /* ---- Semantic value colouring (financial figures) ----
    Never the sole indicator of status in this app -- see
    StatusBadge/TransactionBadges/DocumentStatusBadge/

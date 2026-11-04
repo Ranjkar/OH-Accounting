@@ -55,7 +55,7 @@ function KpisContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Financial KPIs</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Financial KPIs</h1>
       <p className="text-sm text-text-secondary">
         Every KPI shows its formula and source; where the underlying data doesn&apos;t exist, the KPI says so instead
         of showing a misleading number.

@@ -4,7 +4,18 @@ import { useEffect, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
+import { formatEUR } from "@/lib/format";
 import { api, BankTransaction, BankTransactionDetail, Company, ReconciliationStatus } from "@/lib/api";
+
+const STATUS_PILL_CLASS: Record<ReconciliationStatus, string> = {
+  IMPORTED: "status-pill-neutral",
+  UNMATCHED: "status-pill-warning",
+  SUGGESTED_MATCH: "status-pill-info",
+  MATCHED: "status-pill-success",
+  PARTIALLY_MATCHED: "status-pill-warning",
+  MANUALLY_RECONCILED: "status-pill-success",
+  EXCLUDED: "status-pill-neutral",
+};
 
 const STATUS_FILTERS: { value: ReconciliationStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -59,7 +70,7 @@ function BankTransactionsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Bank Transactions</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Bank Transactions</h1>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
@@ -82,7 +93,7 @@ function BankTransactionsContent() {
               key={f.value}
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
+                statusFilter === f.value ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
               {f.label}
@@ -94,24 +105,24 @@ function BankTransactionsContent() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="col-span-2 card-v2 overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-4 py-2 font-medium">Date</th>
-                <th className="px-4 py-2 font-medium">Amount</th>
-                <th className="px-4 py-2 font-medium">Counterparty</th>
-                <th className="px-4 py-2 font-medium">Reference</th>
-                <th className="px-4 py-2 font-medium">Status</th>
+              <tr>
+                <th>Date</th>
+                <th className="text-right">Amount</th>
+                <th>Counterparty</th>
+                <th>Reference</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {transactions.map((t) => (
-                <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => openDetail(t.id)}>
-                  <td className="px-4 py-2.5">{t.booking_date}</td>
-                  <td className={`px-4 py-2.5 font-mono ${Number(t.amount) < 0 ? "text-error" : "text-green-700"}`}>{t.amount}</td>
-                  <td className="px-4 py-2.5">{t.counterparty_name ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-text-secondary">{t.payment_reference ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-xs">{t.reconciliation_status}</td>
+                <tr key={t.id} className="cursor-pointer hover:bg-muted" onClick={() => openDetail(t.id)}>
+                  <td className="text-text-secondary">{t.booking_date}</td>
+                  <td className={`col-amount font-medium ${Number(t.amount) < 0 ? "value-negative" : "value-positive"}`}>{formatEUR(t.amount)}</td>
+                  <td className="text-text-primary">{t.counterparty_name ?? "—"}</td>
+                  <td className="text-xs text-text-secondary">{t.payment_reference ?? "—"}</td>
+                  <td><span className={`status-pill ${STATUS_PILL_CLASS[t.reconciliation_status]}`}>{t.reconciliation_status.replace(/_/g, " ").toLowerCase()}</span></td>
                 </tr>
               ))}
               {transactions.length === 0 && (

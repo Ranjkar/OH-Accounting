@@ -28,7 +28,7 @@ export default function GlassTable<T>({ columns, rows, rowKey, onRowClick, empty
     <>
       <table className="w-full text-sm hidden sm:table">
         <thead>
-          <tr className="text-left text-text-secondary border-b border-white/40">
+          <tr className="text-left text-text-secondary border-b border-border">
             {columns.map((c) => (
               <th key={c.key} className={`px-5 py-2.5 font-medium whitespace-nowrap ${c.className ?? ""}`}>
                 {c.header}
@@ -44,7 +44,7 @@ export default function GlassTable<T>({ columns, rows, rowKey, onRowClick, empty
               onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               role={onRowClick ? "button" : undefined}
-              className={`border-b border-white/30 last:border-0 ${onRowClick ? "cursor-pointer hover:bg-white/40" : ""}`}
+              className={`border-b border-border last:border-0 ${onRowClick ? "cursor-pointer hover:bg-muted" : ""}`}
             >
               {columns.map((c) => (
                 <td key={c.key} className={`px-5 py-3 ${c.className ?? ""}`}>
@@ -65,7 +65,7 @@ export default function GlassTable<T>({ columns, rows, rowKey, onRowClick, empty
             onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
             tabIndex={onRowClick ? 0 : undefined}
             role={onRowClick ? "button" : undefined}
-            className={`px-4 py-3 space-y-1 ${onRowClick ? "cursor-pointer active:bg-white/40" : ""}`}
+            className={`px-4 py-3 space-y-1 ${onRowClick ? "cursor-pointer active:bg-muted" : ""}`}
           >
             {columns.map((c) => (
               <div key={c.key} className="flex items-center justify-between gap-3 text-xs">

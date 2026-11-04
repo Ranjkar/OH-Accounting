@@ -37,7 +37,7 @@ function ForecastsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Financial Forecasts</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Financial Forecasts</h1>
       <p className="text-sm text-text-secondary">
         Revenue, expense, and profit forecasts are a simple trend projection from recent actuals -- never a guaranteed
         outcome. Outstanding-invoice and VAT figures are confirmed amounts already on the books, not projections.

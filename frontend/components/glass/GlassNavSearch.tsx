@@ -56,7 +56,7 @@ export default function GlassNavSearch() {
               role="option"
               aria-selected={false}
               onMouseDown={() => go(m.href!)}
-              className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/60 flex items-center justify-between gap-2"
+              className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-muted flex items-center justify-between gap-2"
             >
               <span className="text-text-primary">{m.label}</span>
               <span className="text-xs text-text-secondary">{m.group}</span>

@@ -100,7 +100,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle flex items-center justify-between">
-          <h2 className="text-sm font-medium text-navy">Declaration preview</h2>
+          <h2 className="text-sm font-medium text-text-primary">Declaration preview</h2>
           <div className="flex gap-2">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
               <button
@@ -161,7 +161,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       </div>
 
       <div className="card-v2 p-5 space-y-3">
-        <h2 className="text-sm font-medium text-navy">Reconciliation checks</h2>
+        <h2 className="text-sm font-medium text-text-primary">Reconciliation checks</h2>
         {reconciliation.pending_documents.length === 0 &&
         reconciliation.duplicate_documents.length === 0 &&
         reconciliation.validation_errors.length === 0 &&

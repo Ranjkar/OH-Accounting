@@ -69,14 +69,14 @@ export default function GlassModal({ open, onClose, title, children, footer }: G
         aria-label={title}
         className="glass-panel-elevated relative w-full max-w-lg max-h-[85vh] overflow-y-auto"
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/40 sticky top-0 bg-inherit">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-inherit">
           <h2 className="text-card-heading">{title}</h2>
           <button onClick={onClose} aria-label="Close dialog" className="text-text-secondary hover:text-text-primary p-1 rounded-md">
             <IconX size={18} />
           </button>
         </div>
         <div className="p-5">{children}</div>
-        {footer && <div className="px-5 py-4 border-t border-white/40 flex justify-end gap-2">{footer}</div>}
+        {footer && <div className="px-5 py-4 border-t border-border flex justify-end gap-2">{footer}</div>}
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ function AssistantContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Accountant Assistant</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Accountant Assistant</h1>
       <p className="text-sm text-text-secondary max-w-2xl">
         The assistant explains and summarizes using the figures already computed by the accounting engine. It
         cannot change, approve, or lock any record, and it is instructed never to state a number that isn&apos;t

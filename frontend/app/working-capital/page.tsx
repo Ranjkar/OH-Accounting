@@ -38,7 +38,7 @@ function WorkingCapitalContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Working Capital</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Working Capital</h1>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">

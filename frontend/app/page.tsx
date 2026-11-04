@@ -39,23 +39,23 @@ function AssistantCard({ companyId }: { companyId: number | "" }) {
 
   return (
     <div className="glass-hero p-6 sm:p-7 h-full flex flex-col">
-      <div className="relative z-10 flex flex-col flex-1">
+      <div className="flex flex-col flex-1">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-surface-card flex items-center justify-center flex-shrink-0 text-navy">
             <IconSparkle size={20} />
           </div>
           <div>
-            <p className="font-semibold">OnHolland AI</p>
-            <p className="text-xs text-white/70">Your accounting &amp; tax assistant · live, not scripted</p>
+            <p className="font-semibold text-text-primary">OnHolland AI</p>
+            <p className="text-xs text-text-secondary">Your accounting &amp; tax assistant · live, not scripted</p>
           </div>
         </div>
-        <p className="text-sm text-white/90 max-w-md mb-4">
+        <p className="text-sm text-text-secondary max-w-md mb-4">
           Ask about profitability, cash position, tax obligations, or what-if scenarios. Answers are built only from
           this company&apos;s real financial data, never fabricated.
         </p>
 
         {!companyId ? (
-          <p className="text-sm text-white/70 mt-auto">Select a company above to ask the assistant a question.</p>
+          <p className="text-sm text-text-secondary mt-auto">Select a company above to ask the assistant a question.</p>
         ) : (
           <>
             <form onSubmit={ask} className="flex items-center gap-2 mb-3">
@@ -63,36 +63,35 @@ function AssistantCard({ companyId }: { companyId: number | "" }) {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="e.g. How is my cash position this quarter?"
-                className="flex-1 rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/50"
+                className="flex-1 rounded-lg bg-surface-card border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-navy"
               />
-              <GlassButton type="submit" disabled={loading || !question.trim()} variant="secondary" size="sm" className="!bg-white/15 !text-white !border-white/25 flex-shrink-0">
+              <GlassButton type="submit" disabled={loading || !question.trim()} variant="secondary" size="sm" className="flex-shrink-0">
                 {loading ? "Asking…" : "Ask"}
               </GlassButton>
             </form>
 
-            {error && <div className="rounded-lg bg-red-500/20 border border-red-300/30 text-white text-xs px-3 py-2 mb-2">{error}</div>}
+            {error && <div className="rounded-lg bg-red-500/10 border border-red-300/50 text-red-700 text-xs px-3 py-2 mb-2">{error}</div>}
 
             {response && (
-              <div className="rounded-lg bg-white/10 border border-white/15 p-3 text-sm text-white/95 mb-2 max-h-40 overflow-y-auto glass-scroll">
+              <div className="rounded-lg bg-surface-card border border-border p-3 text-sm text-text-primary mb-2 max-h-40 overflow-y-auto glass-scroll">
                 {response.answer}
               </div>
             )}
 
             <div className="flex items-center gap-2 flex-wrap mt-auto pt-2">
-              <Link href="/assistant" className="pill-v2 bg-white/15 hover:bg-white/25 px-3 py-1.5 text-xs transition-colors">
+              <Link href="/assistant" className="pill-v2 bg-surface-card border border-border hover:bg-muted px-3 py-1.5 text-xs text-text-primary transition-colors">
                 Open full assistant
               </Link>
-              <Link href="/tax-centre" className="pill-v2 bg-white/15 hover:bg-white/25 px-3 py-1.5 text-xs transition-colors">
+              <Link href="/tax-centre" className="pill-v2 bg-surface-card border border-border hover:bg-muted px-3 py-1.5 text-xs text-text-primary transition-colors">
                 Review my taxes
               </Link>
-              <Link href="/tax-optimization" className="pill-v2 bg-white/15 hover:bg-white/25 px-3 py-1.5 text-xs transition-colors">
+              <Link href="/tax-optimization" className="pill-v2 bg-surface-card border border-border hover:bg-muted px-3 py-1.5 text-xs text-text-primary transition-colors">
                 Find tax-saving opportunities
               </Link>
             </div>
           </>
         )}
       </div>
-      <div className="absolute -right-10 -bottom-16 w-56 h-56 rounded-full bg-accent-cyan-400/20 blur-2xl pointer-events-none" aria-hidden />
     </div>
   );
 }
@@ -127,12 +126,12 @@ function BankAccountsCard({ companyId }: { companyId: number | "" }) {
         ) : (
           <ul className="space-y-2">
             {accounts.map((a) => (
-              <li key={a.id} className="flex items-center justify-between gap-2 rounded-lg bg-white/40 px-3 py-2.5">
+              <li key={a.id} className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2.5">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">{a.account_name}</p>
                   <p className="text-xs text-text-secondary font-mono truncate">{a.iban}</p>
                 </div>
-                <span className="text-[10px] uppercase tracking-wide bg-white/60 rounded-full px-2 py-1 text-text-secondary flex-shrink-0">
+                <span className="text-[10px] uppercase tracking-wide bg-muted rounded-full px-2 py-1 text-text-secondary flex-shrink-0">
                   {a.consent_status.replace(/_/g, " ")}
                 </span>
               </li>
@@ -199,7 +198,7 @@ function TaxCalculatorCard({ companyId }: { companyId: number | "" }) {
 
           {error && <GlassErrorState message={error} />}
           {result && (
-            <div className="mt-2 rounded-lg bg-white/50 p-3 text-sm space-y-1">
+            <div className="mt-2 rounded-lg bg-muted p-3 text-sm space-y-1">
               <p className="flex justify-between"><span className="text-text-secondary">Entrepreneur deduction</span><span className="font-mono">€{String(result.entrepreneur_deduction_applied)}</span></p>
               <p className="flex justify-between"><span className="text-text-secondary">MKB-winstvrijstelling</span><span className="font-mono">€{String(result.mkb_winstvrijstelling_applied)}</span></p>
               <p className="flex justify-between"><span className="text-text-secondary">Taxable profit</span><span className="font-mono">€{String(result.taxable_profit)}</span></p>
@@ -325,7 +324,7 @@ function DashboardContent() {
         <GlassPanel title="Companies requiring attention">
           <div className="divide-y divide-white/40">
             {summary.companies_requiring_attention.map((c) => (
-              <Link key={c.company_id} href={`/companies/${c.company_id}/workspace`} className="block px-5 py-3 hover:bg-white/40">
+              <Link key={c.company_id} href={`/companies/${c.company_id}/workspace`} className="block px-5 py-3 hover:bg-muted">
                 <p className="font-medium text-text-primary">{c.company_name}</p>
                 <p className="text-sm value-warning">{c.reasons.join(" · ")}</p>
               </Link>
@@ -341,7 +340,7 @@ function DashboardContent() {
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-white/40">
+              <tr className="text-left text-text-secondary border-b border-border">
                 <th className="px-5 py-2 font-medium">Company</th>
                 <th className="px-5 py-2 font-medium">Period</th>
                 <th className="px-5 py-2 font-medium">Filing deadline</th>
@@ -351,7 +350,7 @@ function DashboardContent() {
             </thead>
             <tbody>
               {summary.upcoming_deadlines.map((d, i) => (
-                <tr key={i} className="border-b border-white/30 last:border-0">
+                <tr key={i} className="border-b border-border last:border-0">
                   <td className="px-5 py-2.5">
                     <Link href={`/companies/${d.company_id}/workspace`} className="text-brand-purple-600 hover:underline">
                       {d.company_name}

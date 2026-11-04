@@ -49,7 +49,7 @@ function AutomationContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Automation Centre</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Automation Centre</h1>
       <p className="text-sm text-text-secondary">
         Everything here is advisory. Suggestions, detections, and anomalies always wait for an accountant to review,
         approve, or correct them -- nothing is posted, paid, or filed automatically.

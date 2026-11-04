@@ -16,7 +16,7 @@ export default function GlassPanel({ title, subtitle, actions, children, classNa
   return (
     <div className={`glass-panel overflow-hidden ${className}`}>
       {(title || actions) && (
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/40">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
           <div>
             {title && <h2 className="text-card-heading">{title}</h2>}
             {subtitle && <p className="text-helper-v2 mt-0.5">{subtitle}</p>}

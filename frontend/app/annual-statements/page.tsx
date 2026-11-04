@@ -129,7 +129,7 @@ function AnnualStatementsContent() {
 
 function StatRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="rounded-lg bg-white/40 px-3 py-2">
+    <div className="rounded-lg bg-muted px-3 py-2">
       <p className="text-xs text-text-secondary">{label}</p>
       <p className={`font-mono ${strong ? "text-base font-semibold text-text-primary" : "text-sm text-text-primary"}`}>{value}</p>
     </div>

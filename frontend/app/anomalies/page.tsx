@@ -59,7 +59,7 @@ function AnomaliesContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Anomalies</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Anomalies</h1>
         <button onClick={detect} disabled={!companyId} className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
           Run anomaly detection
         </button>
@@ -93,7 +93,7 @@ function AnomaliesContent() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`rounded-full px-3 py-1 ${statusFilter === s ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600"}`}
+              className={`rounded-full px-3 py-1 ${statusFilter === s ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary"}`}
             >
               {s === "all" ? "All" : s}
             </button>

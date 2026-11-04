@@ -114,7 +114,7 @@ function GovernmentContent() {
       <GlassPanel title="Integration status">
         <div className="space-y-3">
           {INTEGRATIONS.map((i) => (
-            <div key={i.name} className="flex flex-col gap-1.5 rounded-lg border border-white/40 p-3">
+            <div key={i.name} className="flex flex-col gap-1.5 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium text-text-primary text-sm">{i.name}</span>
                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[i.status]}`}>{i.status}</span>
@@ -138,7 +138,7 @@ function GovernmentContent() {
         </form>
 
         {result && (
-          <div className="rounded-lg border border-white/40 p-4 space-y-1 text-sm">
+          <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
             {result.is_test_data && (
               <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-700 border border-amber-300/50 mb-1">
                 Sandbox test data -- not a real Handelsregister lookup

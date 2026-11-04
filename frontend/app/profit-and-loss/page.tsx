@@ -48,7 +48,7 @@ function PnlContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Profit &amp; Loss</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Profit &amp; Loss</h1>
       <p className="text-sm text-text-secondary">
         All figures are accrual-basis actuals from the ledger, never an estimate. Revenue and cost-of-sales categories
         are only split out when transactions have been tagged with that category.

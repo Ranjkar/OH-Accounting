@@ -89,7 +89,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-navy">Period completeness</h2>
+          <h2 className="text-sm font-medium text-text-primary">Period completeness</h2>
         </div>
         <div className="divide-y divide-slate-100">
           {workspace.period_completeness.map((p) => (
@@ -122,7 +122,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-navy">Notes &amp; customer questions</h2>
+          <h2 className="text-sm font-medium text-text-primary">Notes &amp; customer questions</h2>
         </div>
         <div className="divide-y divide-slate-100">
           {workspace.notes.length === 0 ? (
@@ -175,7 +175,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-navy">VAT returns</h2>
+          <h2 className="text-sm font-medium text-text-primary">VAT returns</h2>
         </div>
         {workspace.vat_returns.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">No VAT returns computed yet.</p>

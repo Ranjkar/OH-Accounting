@@ -65,7 +65,7 @@ function BalanceSheetContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Balance Sheet</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Balance Sheet</h1>
       <p className="text-sm text-text-secondary">
         Fixed assets, inventory, equity, and loans are never derived automatically -- this ledger has no chart of
         accounts. Enter them manually below; until you do, the balance sheet only reflects cash, receivables,

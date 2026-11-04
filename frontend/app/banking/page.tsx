@@ -280,7 +280,7 @@ function BankingContent() {
             </GlassButton>
           </form>
 
-          <h3 className="font-medium text-text-primary text-sm pt-2 border-t border-white/40">Import history</h3>
+          <h3 className="font-medium text-text-primary text-sm pt-2 border-t border-border">Import history</h3>
           <GlassTable
             emptyMessage="No imports yet for this account."
             columns={[

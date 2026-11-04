@@ -48,17 +48,17 @@ function TaxCalendarContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Tax Calendar</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Tax Calendar</h1>
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => setView("list")}
-            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}
+            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}
           >
             List
           </button>
           <button
             onClick={() => setView("calendar")}
-            className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}
+            className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}
           >
             Calendar
           </button>
@@ -87,7 +87,7 @@ function TaxCalendarContent() {
               key={f.value}
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-border-subtle text-slate-600 hover:bg-slate-50"
+                statusFilter === f.value ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
               {f.label}

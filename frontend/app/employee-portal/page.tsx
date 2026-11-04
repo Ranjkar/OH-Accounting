@@ -53,7 +53,7 @@ function ProfileTab() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-white/30 pb-2 last:border-0">
+    <div className="flex justify-between border-b border-border pb-2 last:border-0">
       <dt className="text-text-secondary">{label}</dt>
       <dd className="text-text-primary font-medium">{value}</dd>
     </div>
@@ -78,7 +78,7 @@ function PayslipsTab() {
       <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-text-secondary border-b border-white/40">
+          <tr className="text-left text-text-secondary border-b border-border">
             <th className="px-4 py-2 font-medium">Payslip</th>
             <th className="px-4 py-2 font-medium">Gross</th>
             <th className="px-4 py-2 font-medium">Net</th>
@@ -87,7 +87,7 @@ function PayslipsTab() {
         </thead>
         <tbody>
           {payslips.map((p) => (
-            <tr key={String(p.id)} className="border-b border-white/30 last:border-0">
+            <tr key={String(p.id)} className="border-b border-border last:border-0">
               <td className="px-4 py-2.5">
                 #{String(p.id)} {p.voided ? <span className="value-negative">(voided)</span> : null}
               </td>

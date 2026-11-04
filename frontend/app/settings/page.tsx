@@ -5,6 +5,7 @@ import Link from "next/link";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
+import ThemeToggle from "@/components/glass/ThemeToggle";
 import { api, ApiError, Company } from "@/lib/api";
 
 function MfaSection() {
@@ -60,7 +61,7 @@ function MfaSection() {
 
   return (
     <div className="card-v2 p-5 space-y-4">
-      <h2 className="text-sm font-medium text-navy">Two-factor authentication (MFA)</h2>
+      <h2 className="text-sm font-medium text-text-primary">Two-factor authentication (MFA)</h2>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
@@ -112,12 +113,12 @@ function SettingsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Settings</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Settings</h1>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="card-v2 p-5">
-        <h2 className="text-sm font-medium text-navy mb-3">Account</h2>
+        <h2 className="text-sm font-medium text-text-primary mb-3">Account</h2>
         <dl className="text-sm space-y-2">
           <div className="flex justify-between max-w-sm">
             <dt className="text-text-secondary">Name</dt>
@@ -134,11 +135,19 @@ function SettingsContent() {
         </dl>
       </div>
 
+      <div className="card-v2 p-5 space-y-3">
+        <div>
+          <h2 className="text-sm font-medium text-text-primary">Appearance</h2>
+          <p className="text-xs text-text-secondary mt-0.5">Choose how OnHolland looks on this device. System follows your operating system&apos;s setting.</p>
+        </div>
+        <ThemeToggle />
+      </div>
+
       <MfaSection />
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-navy">Company VAT settings</h2>
+          <h2 className="text-sm font-medium text-text-primary">Company VAT settings</h2>
         </div>
         <div className="divide-y divide-slate-100">
           {companies.map((c) => (

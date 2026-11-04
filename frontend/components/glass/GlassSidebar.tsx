@@ -90,9 +90,9 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   const content = (
     <>
       <div className="flex items-center gap-2 px-4 py-5 flex-shrink-0">
-        <div className="w-8 h-8 rounded-lg hero-gradient-v2 flex items-center justify-center text-sm font-bold flex-shrink-0">O</div>
-        {!collapsed && <span className="font-semibold tracking-tight text-white">OnHolland</span>}
-        <button onClick={onMobileClose} aria-label="Close navigation" className="ml-auto lg:hidden text-white/70 hover:text-white p-1">
+        <div className="w-8 h-8 rounded-lg hero-gradient-v2 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">O</div>
+        {!collapsed && <span className="font-semibold tracking-tight text-sidebar-text">OnHolland</span>}
+        <button onClick={onMobileClose} aria-label="Close navigation" className="ml-auto lg:hidden text-sidebar-text-secondary hover:text-sidebar-text p-1">
           <IconX size={18} />
         </button>
       </div>
@@ -113,16 +113,16 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
         ))}
       </nav>
 
-      <div className="px-2 pb-4 pt-2 border-t border-white/10 space-y-1 flex-shrink-0">
+      <div className="px-2 pb-4 pt-2 border-t border-sidebar-border space-y-1 flex-shrink-0">
         {user && (
           <div className={`flex items-center gap-2.5 px-3 py-2 ${collapsed ? "justify-center" : ""}`}>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-purple-500 to-accent-indigo-600 text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-navy text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
               {user.full_name.slice(0, 1).toUpperCase()}
             </div>
             {!collapsed && (
               <div className="min-w-0">
-                <p className="text-sm text-white truncate">{user.full_name}</p>
-                <p className="text-xs text-[#8b87a0] truncate capitalize">{user.role}</p>
+                <p className="text-sm text-sidebar-text truncate">{user.full_name}</p>
+                <p className="text-xs text-sidebar-text-secondary truncate capitalize">{user.role}</p>
               </div>
             )}
           </div>
@@ -147,7 +147,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
     <>
       {/* Desktop/tablet rail */}
       <aside
-        className={`nav-rail-v2 hidden lg:flex flex-col flex-shrink-0 transition-all duration-150 ${collapsed ? "w-16" : "w-64"}`}
+        className={`nav-rail-v2 hidden lg:flex flex-col flex-shrink-0 transition-all duration-150 ${collapsed ? "w-16" : "w-72"}`}
       >
         {content}
       </aside>

@@ -62,7 +62,7 @@ function TeamAccessSection({ companyId }: { companyId: number }) {
 
   return (
     <div className="card-v2 p-5 space-y-4">
-      <h2 className="text-sm font-medium text-navy">Team access</h2>
+      <h2 className="text-sm font-medium text-text-primary">Team access</h2>
       <p className="text-xs text-text-secondary">
         Invite an accountant or other team member to access this company. No email provider is configured, so the invitation
         link below must be shared with them yourself (e.g. by email or chat) -- it is never sent automatically.
@@ -182,7 +182,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-navy">{company.name}</h1>
+          <h1 className="text-2xl font-semibold text-text-primary">{company.name}</h1>
           <p className="text-sm text-text-secondary">
             {company.kvk_number ? `KVK ${company.kvk_number}` : "No KVK number"} ·{" "}
             {company.vat_number ?? "No VAT number"} · {company.vat_frequency} filing

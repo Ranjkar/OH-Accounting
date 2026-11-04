@@ -38,7 +38,7 @@ export default function GlassNavigationGroup({ label, icon: Icon, items, open, o
             until shown. group-focus-within keeps the flyout visible for as
             long as the toggle button or any item inside it has focus. */}
         <div className="absolute left-full top-0 ml-2 hidden group-hover:block group-focus-within:block z-50 min-w-[14rem] glass-panel-dark p-2">
-          <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-on-dark-secondary">{label}</p>
+          <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-text-secondary">{label}</p>
           {items.map((item) => (
             <NavLeafLink key={item.label} item={item} active={!!item.href && isActive(item.href)} onNavigate={onNavigate} />
           ))}
@@ -55,9 +55,9 @@ export default function GlassNavigationGroup({ label, icon: Icon, items, open, o
         aria-expanded={open}
         className="w-full flex items-center gap-2.5 px-3 py-2 text-left"
       >
-        <Icon size={16} className="text-text-on-dark-secondary flex-shrink-0" />
-        <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-text-on-dark-secondary truncate">{label}</span>
-        <IconChevronDown size={14} className={`text-text-on-dark-secondary transition-transform duration-150 ${open ? "" : "-rotate-90"}`} />
+        <Icon size={16} className="text-sidebar-text-secondary flex-shrink-0" />
+        <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-text-secondary truncate">{label}</span>
+        <IconChevronDown size={14} className={`text-sidebar-text-secondary transition-transform duration-150 ${open ? "" : "-rotate-90"}`} />
       </button>
       {open && (
         <div className="space-y-0.5 pb-1">
@@ -76,10 +76,10 @@ function NavLeafLink({ item, active, onNavigate }: { item: NavLeaf; active: bool
       <div
         title={item.unavailable}
         aria-disabled="true"
-        className="flex items-center gap-2.5 pl-9 pr-3 py-1.5 text-sm text-[#5b5770] cursor-not-allowed"
+        className="flex items-center gap-2.5 pl-9 pr-3 py-1.5 text-sm text-text-muted cursor-not-allowed"
       >
         <span className="truncate">{item.label}</span>
-        <span className="text-[9px] uppercase tracking-wide bg-white/5 text-[#8b87a0] rounded px-1.5 py-0.5 flex-shrink-0">Soon</span>
+        <span className="text-[9px] uppercase tracking-wide bg-muted text-text-muted rounded px-1.5 py-0.5 flex-shrink-0">Soon</span>
       </div>
     );
   }

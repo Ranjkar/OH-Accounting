@@ -33,7 +33,7 @@ function ManagementReportsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Management Reports</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Management Reports</h1>
       <p className="text-sm text-text-secondary">
         Every export includes the company, period, generation timestamp, accounting basis, and whether figures are
         actual or forecast.

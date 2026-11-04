@@ -73,7 +73,7 @@ function ScenariosContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Scenario Planning</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Scenario Planning</h1>
       <p className="text-sm text-text-secondary">
         Scenarios never touch the ledger -- every result here is recomputed on the fly from your current forecast
         plus the assumptions below.

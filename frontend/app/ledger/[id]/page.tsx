@@ -100,7 +100,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-navy">Line items</h2>
+          <h2 className="text-sm font-medium text-text-primary">Line items</h2>
         </div>
         <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -136,7 +136,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-navy">Payments</h2>
+          <h2 className="text-sm font-medium text-text-primary">Payments</h2>
         </div>
         {transaction.payments.length > 0 && (
           <div className="overflow-x-auto">

@@ -114,7 +114,7 @@ function LoonheffingenContent() {
               <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-text-secondary border-b border-white/40">
+                  <tr className="text-left text-text-secondary border-b border-border">
                     <th className="px-4 py-2 font-medium">Period</th>
                     <th className="px-4 py-2 font-medium">Status</th>
                   </tr>
@@ -127,7 +127,7 @@ function LoonheffingenContent() {
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRun(run); } }}
                       tabIndex={0}
                       role="button"
-                      className={`border-b border-white/30 last:border-0 cursor-pointer hover:bg-white/40 ${selectedRun?.id === run.id ? "bg-white/50" : ""}`}
+                      className={`border-b border-border last:border-0 cursor-pointer hover:bg-muted ${selectedRun?.id === run.id ? "bg-muted" : ""}`}
                     >
                       <td className="px-4 py-2.5">
                         {run.period_type} {run.period_number}/{run.period_year}
@@ -167,7 +167,7 @@ function LoonheffingenContent() {
                 </div>
                 {declaration.validation_errors && <GlassErrorState message={String(declaration.validation_errors)} />}
 
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-white/40">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
                   {["DRAFT", "VALIDATION"].includes(String(declaration.status)) && (
                     <GlassButton size="sm" disabled={busy} onClick={() => act(api.validateLoonheffingenDeclaration)}>
                       Run validation
@@ -186,7 +186,7 @@ function LoonheffingenContent() {
                 </div>
 
                 {declaration.status === "READY_FOR_SUBMISSION" && (
-                  <div className="flex items-end gap-2 pt-2 border-t border-white/40">
+                  <div className="flex items-end gap-2 pt-2 border-t border-border">
                     <GlassInput aria-label="Submission reference" placeholder="SBR/Digipoort kenmerk from your filing software" value={submissionRef} onChange={(e) => setSubmissionRef(e.target.value)} className="flex-1" />
                     <GlassButton
                       size="sm"
@@ -199,7 +199,7 @@ function LoonheffingenContent() {
                 )}
 
                 {declaration.status === "SUBMITTED" && (
-                  <div className="space-y-2 pt-2 border-t border-white/40">
+                  <div className="space-y-2 pt-2 border-t border-border">
                     <GlassInput aria-label="Government response reference" placeholder="Belastingdienst response reference" value={responseRef} onChange={(e) => setResponseRef(e.target.value)} />
                     <GlassInput aria-label="Rejection reason" placeholder="Rejection reason (only if rejecting)" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
                     <div className="flex gap-2">

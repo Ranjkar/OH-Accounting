@@ -217,7 +217,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
           )}
 
           <form onSubmit={handleSaveCorrections} className="card-v2 p-4 space-y-4">
-            <h2 className="text-sm font-medium text-navy">Extracted fields</h2>
+            <h2 className="text-sm font-medium text-text-primary">Extracted fields</h2>
             <div className="grid grid-cols-2 gap-3">
               <FieldInput label="Invoice number" value={form.invoice_number ?? null} onChange={(v) => setField("invoice_number", v)} />
               <FieldInput label="Invoice date" type="date" value={form.invoice_date ?? null} onChange={(v) => setField("invoice_date", v)} />
@@ -262,7 +262,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
 
           {doc.line_items.length > 0 && (
             <div className="card-v2 p-4">
-              <h2 className="text-sm font-medium text-navy mb-2">Line items</h2>
+              <h2 className="text-sm font-medium text-text-primary mb-2">Line items</h2>
               <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -292,7 +292,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
 
           {canEdit && (
             <div className="card-v2 p-4 space-y-3">
-              <h2 className="text-sm font-medium text-navy">Actions</h2>
+              <h2 className="text-sm font-medium text-text-primary">Actions</h2>
               <div className="flex flex-wrap gap-2">
                 {!isFinal && (
                   <>

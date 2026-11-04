@@ -76,7 +76,7 @@ function CategoriesContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Expense Categories</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">Expense Categories</h1>
       <p className="text-sm text-text-secondary">
         Rules are company-specific -- a rule created for one company is never applied to another. AI suggestions are
         advisory only and always require accountant confirmation before being applied.

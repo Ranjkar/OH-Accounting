@@ -97,7 +97,7 @@ function VatContent() {
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-white/40">
+              <tr className="text-left text-text-secondary border-b border-border">
                 <th className="px-5 py-2 font-medium">Period</th>
                 <th className="px-5 py-2 font-medium">Filing deadline</th>
                 <th className="px-5 py-2 font-medium">VAT due (5a)</th>
@@ -110,7 +110,7 @@ function VatContent() {
               {fy.vat_periods.map((p) => {
                 const vr = returns[p.id];
                 return (
-                  <tr key={p.id} className="border-b border-white/30 last:border-0 hover:bg-white/40">
+                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted">
                     <td className="px-5 py-2.5">
                       {vr ? (
                         <Link href={`/vat/${vr.id}`} className="text-brand-purple-600 hover:underline">

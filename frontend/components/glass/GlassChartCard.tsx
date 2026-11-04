@@ -98,12 +98,12 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.35} />
-            <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+            <stop offset="0%" stopColor="var(--navy)" stopOpacity={0.18} />
+            <stop offset="100%" stopColor="var(--navy)" stopOpacity={0} />
           </linearGradient>
         </defs>
 
-        <line x1={padding} y1={zeroY} x2={width - padding} y2={zeroY} stroke="#c7c4d6" strokeWidth={1} strokeDasharray="4 4" />
+        <line x1={padding} y1={zeroY} x2={width - padding} y2={zeroY} stroke="var(--border-subtle)" strokeWidth={1} />
 
         {kind === "bar"
           ? coords.map((c, i) => {
@@ -118,7 +118,7 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
                   width={barWidth}
                   height={Math.max(barHeight, 1)}
                   rx={3}
-                  fill={c.value >= 0 ? "#7c3aed" : "#b91c1c"}
+                  fill={c.value >= 0 ? "var(--navy)" : "var(--semantic-error)"}
                   opacity={hover === null || hover === i ? 1 : 0.45}
                   onMouseEnter={() => setHover(i)}
                   aria-hidden="true"
@@ -128,15 +128,15 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
           : (
             <>
               <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" aria-hidden="true" />
-              <path d={linePath} fill="none" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
+              <path d={linePath} fill="none" stroke="var(--navy)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
               {coords.map((c, i) => (
                 <circle
                   key={i}
                   cx={c.x}
                   cy={c.y}
                   r={hover === i ? 5 : 3}
-                  fill="#7c3aed"
-                  stroke="#fff"
+                  fill="var(--navy)"
+                  stroke="var(--surface-card)"
                   strokeWidth={1.5}
                   onMouseEnter={() => setHover(i)}
                   style={{ transition: "r 100ms ease" }}
@@ -169,7 +169,7 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
 
         {hover !== null && (
           <g aria-hidden="true">
-            <line x1={coords[hover].x} y1={padding} x2={coords[hover].x} y2={height - padding} stroke="#a78bfa" strokeWidth={1} strokeDasharray="3 3" />
+            <line x1={coords[hover].x} y1={padding} x2={coords[hover].x} y2={height - padding} stroke="var(--border-strong)" strokeWidth={1} />
           </g>
         )}
       </svg>

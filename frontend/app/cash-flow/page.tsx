@@ -37,12 +37,12 @@ function CashFlowContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Cash Flow</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Cash Flow</h1>
         <div className="flex items-center gap-2 text-sm">
-          <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}>
+          <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}>
             Forecast
           </button>
-          <button onClick={() => setTab("statement")} className={`rounded-full px-3 py-1 ${tab === "statement" ? "bg-navy text-white" : "bg-white border border-border-subtle"}`}>
+          <button onClick={() => setTab("statement")} className={`rounded-full px-3 py-1 ${tab === "statement" ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}>
             Statement (actual)
           </button>
         </div>

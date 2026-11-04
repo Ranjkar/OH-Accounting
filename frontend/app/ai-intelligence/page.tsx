@@ -202,7 +202,7 @@ function AiIntelligenceContent() {
             ) : (
               <ul className="space-y-2 text-sm">
                 {upcomingDeadlines.map((d) => (
-                  <li key={d.vat_period_id} className="flex items-center justify-between gap-3 rounded-lg border border-white/40 p-3">
+                  <li key={d.vat_period_id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
                     <span>{d.period_label}</span>
                     <span className="text-xs text-text-secondary">Filing deadline {new Date(d.filing_deadline).toLocaleDateString()}</span>
                   </li>
