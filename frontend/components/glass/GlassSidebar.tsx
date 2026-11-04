@@ -7,7 +7,7 @@ import GlassNavigationGroup from "./GlassNavigationGroup";
 import { EMPLOYEE_ROLE_NAV_GROUPS, NAV_GROUPS, PLATFORM_ADMIN_NAV_GROUP } from "./navConfig";
 import { IconCollapse, IconExpand, IconLogout, IconX } from "./icons";
 
-const OPEN_GROUPS_KEY = "onholland.nav.openGroups";
+const OPEN_GROUP_KEY = "onholland.nav.openGroup";
 const COLLAPSED_KEY = "onholland.nav.collapsed";
 
 interface GlassSidebarProps {
@@ -19,7 +19,9 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  // Single-open accordion: at most one group is expanded at a time (null =
+  // none). Opening a group closes whichever was open before it.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   const baseGroups = user?.role === "employee" ? EMPLOYEE_ROLE_NAV_GROUPS : NAV_GROUPS;
@@ -36,39 +38,42 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   useEffect(() => {
     try {
       const storedCollapsed = localStorage.getItem(COLLAPSED_KEY);
-      const storedOpen = localStorage.getItem(OPEN_GROUPS_KEY);
+      const storedOpen = localStorage.getItem(OPEN_GROUP_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (storedCollapsed) setCollapsed(storedCollapsed === "1");
       if (storedOpen) {
-        setOpenGroups(JSON.parse(storedOpen));
+        setOpenGroup(storedOpen);
       } else {
         const activeGroup = groups.find((g) => g.items.some((i) => i.href && isActive(i.href)));
-        setOpenGroups(activeGroup ? { [activeGroup.label]: true } : { [groups[0]?.label]: true });
+        setOpenGroup(activeGroup?.label ?? groups[0]?.label ?? null);
       }
     } catch {
-      // localStorage unavailable (private mode etc.) -- fall back to all-open for the active group only.
+      // localStorage unavailable (private mode etc.) -- fall back to the active group only.
     } finally {
       setHydrated(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-expand whichever group contains the current route, every navigation.
+  // Auto-expand whichever group contains the current route, every navigation
+  // -- replacing (not merging with) whatever was open before, since only one
+  // group may ever be open at a time.
   useEffect(() => {
     if (!hydrated) return;
     const activeGroup = groups.find((g) => g.items.some((i) => i.href && isActive(i.href)));
-    if (activeGroup && !openGroups[activeGroup.label]) {
+    if (activeGroup && activeGroup.label !== openGroup) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOpenGroups((prev) => ({ ...prev, [activeGroup.label]: true }));
+      setOpenGroup(activeGroup.label);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, hydrated]);
 
   function toggleGroup(label: string) {
-    setOpenGroups((prev) => {
-      const next = { ...prev, [label]: !prev[label] };
+    setOpenGroup((prev) => {
+      const next = prev === label ? null : label;
       try {
-        localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(next));
+        if (next) localStorage.setItem(OPEN_GROUP_KEY, next);
+        else localStorage.removeItem(OPEN_GROUP_KEY);
       } catch {
         /* ignore */
       }
@@ -104,7 +109,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
             label={group.label}
             icon={group.icon}
             items={group.items}
-            open={!!openGroups[group.label]}
+            open={openGroup === group.label}
             onToggle={() => toggleGroup(group.label)}
             collapsedRail={collapsed}
             isActive={isActive}
