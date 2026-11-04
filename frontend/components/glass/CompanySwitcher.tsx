@@ -20,7 +20,7 @@ export default function CompanySwitcher() {
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label="Switch active company"
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-text-primary hover:bg-white/50 transition-colors max-w-[10rem] sm:max-w-[14rem]"
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-text-primary hover:bg-muted transition-colors max-w-[10rem] sm:max-w-[14rem]"
       >
         <span className="truncate font-medium">{selectedCompany?.name ?? "Select a company"}</span>
         <IconChevronDown size={14} className="text-text-secondary flex-shrink-0" />
@@ -43,7 +43,7 @@ export default function CompanySwitcher() {
                     setSelectedCompanyId(c.id);
                     setOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/60 transition-colors ${
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors ${
                     c.id === selectedCompanyId ? "bg-brand-purple-500/10 text-brand-purple-700 font-medium" : "text-text-primary"
                   }`}
                 >

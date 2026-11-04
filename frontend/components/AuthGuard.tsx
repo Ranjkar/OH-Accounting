@@ -13,7 +13,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   }, [loading, token, router]);
 
   if (loading || !token) {
-    return <div className="flex-1 flex items-center justify-center text-slate-500">Loading…</div>;
+    return <div className="flex-1 flex items-center justify-center text-text-secondary">Loading…</div>;
   }
   return <>{children}</>;
 }
