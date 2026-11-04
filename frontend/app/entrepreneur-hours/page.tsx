@@ -114,27 +114,27 @@ function EntrepreneurHoursContent() {
 
       <div className="card-v2 overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              <th className="px-4 py-2 font-medium">Date</th>
-              <th className="px-4 py-2 font-medium">Category</th>
-              <th className="px-4 py-2 font-medium">Hours</th>
-              <th className="px-4 py-2 font-medium">Description</th>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th className="text-right">Hours</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((entry) => (
-              <tr key={entry.id} className="border-b border-border-subtle last:border-0">
-                <td className="px-4 py-2.5">{entry.entry_date}</td>
-                <td className="px-4 py-2.5">{entry.activity_category}</td>
-                <td className="px-4 py-2.5 font-mono">{entry.duration_hours}</td>
-                <td className="px-4 py-2.5 text-text-secondary">{entry.description ?? "—"}</td>
+              <tr key={entry.id}>
+                <td className="text-text-secondary">{entry.entry_date}</td>
+                <td className="text-text-primary">{entry.activity_category}</td>
+                <td className="text-right font-mono tabular-nums">{entry.duration_hours}</td>
+                <td className="text-text-secondary">{entry.description ?? "—"}</td>
               </tr>
             ))}
             {entries.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-text-secondary">
+                <td colSpan={4} className="text-text-secondary">
                   No hours logged yet.
                 </td>
               </tr>

@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function EmployeesContent() {
   const { token } = useAuth();
@@ -101,29 +102,29 @@ function EmployeesContent() {
 
       <div className="card-v2 overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-text-secondary border-b border-border-subtle">
-              <th className="px-4 py-2 font-medium">Number</th>
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">BSN</th>
-              <th className="px-4 py-2 font-medium">Salary</th>
-              <th className="px-4 py-2 font-medium">DGA</th>
+            <tr>
+              <th>Number</th>
+              <th>Name</th>
+              <th>BSN</th>
+              <th className="text-right">Salary</th>
+              <th>DGA</th>
             </tr>
           </thead>
           <tbody>
             {employees.map((emp) => (
-              <tr key={emp.id} className="border-b border-border-subtle last:border-0">
-                <td className="px-4 py-2.5">{emp.employee_number}</td>
-                <td className="px-4 py-2.5">{emp.full_name}</td>
-                <td className="px-4 py-2.5 font-mono text-xs">{emp.bsn_masked ?? "—"}</td>
-                <td className="px-4 py-2.5 font-mono">{emp.salary_basis === "MONTHLY" ? emp.monthly_salary : `${emp.hourly_rate}/hr`}</td>
-                <td className="px-4 py-2.5">{emp.is_dga ? "Yes" : ""}</td>
+              <tr key={emp.id}>
+                <td className="text-text-secondary">{emp.employee_number}</td>
+                <td className="text-text-primary">{emp.full_name}</td>
+                <td className="font-mono text-xs text-text-secondary">{emp.bsn_masked ?? "—"}</td>
+                <td className="col-amount">{emp.salary_basis === "MONTHLY" ? formatEUR(emp.monthly_salary) : `${formatEUR(emp.hourly_rate)}/hr`}</td>
+                <td>{emp.is_dga ? "Yes" : ""}</td>
               </tr>
             ))}
             {employees.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-4 text-text-secondary">
+                <td colSpan={5} className="text-text-secondary">
                   No employees yet.
                 </td>
               </tr>

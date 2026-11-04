@@ -6,6 +6,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function Tile({ label, value, href, suffix }: { label: string; value: string; href: string; suffix?: string }) {
   return (
@@ -51,26 +52,30 @@ function FinancialOverviewContent() {
           <h2 className="text-lg font-medium text-text-primary">Portfolio ({portfolio.portfolio.length} companies)</h2>
           <div className="card-v2 overflow-hidden">
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-text-secondary border-b border-border-subtle">
-                  <th className="px-4 py-2 font-medium">Company</th>
-                  <th className="px-4 py-2 font-medium">Revenue (month)</th>
-                  <th className="px-4 py-2 font-medium">Net profit (month)</th>
-                  <th className="px-4 py-2 font-medium">VAT payable</th>
-                  <th className="px-4 py-2 font-medium">Unreconciled</th>
-                  <th className="px-4 py-2 font-medium">Balanced</th>
+                <tr>
+                  <th>Company</th>
+                  <th className="text-right">Revenue (month)</th>
+                  <th className="text-right">Net profit (month)</th>
+                  <th className="text-right">VAT payable</th>
+                  <th className="text-right">Unreconciled</th>
+                  <th>Balanced</th>
                 </tr>
               </thead>
               <tbody>
                 {portfolio.portfolio.map((row: JsonReport) => (
-                  <tr key={row.company_id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5">{row.company_name}</td>
-                    <td className="px-4 py-2.5 font-mono">{row.current_month_revenue}</td>
-                    <td className="px-4 py-2.5 font-mono">{row.current_month_net_profit}</td>
-                    <td className="px-4 py-2.5 font-mono">{row.vat_payable}</td>
-                    <td className="px-4 py-2.5">{row.unreconciled_bank_transactions}</td>
-                    <td className="px-4 py-2.5">{row.balance_sheet_balanced ? "Yes" : "No"}</td>
+                  <tr key={row.company_id}>
+                    <td className="text-text-primary">{row.company_name}</td>
+                    <td className="col-amount">{formatEUR(row.current_month_revenue)}</td>
+                    <td className="col-amount">{formatEUR(row.current_month_net_profit)}</td>
+                    <td className="col-amount">{formatEUR(row.vat_payable)}</td>
+                    <td className="text-right">{row.unreconciled_bank_transactions}</td>
+                    <td>
+                      <span className={`status-pill ${row.balance_sheet_balanced ? "status-pill-success" : "status-pill-warning"}`}>
+                        {row.balance_sheet_balanced ? "Yes" : "No"}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

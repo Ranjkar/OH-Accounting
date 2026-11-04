@@ -7,6 +7,7 @@ import Shell from "@/components/Shell";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, DocumentDetail, ExtractedFields, ValidationResult } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 const SEVERITY_STYLES: Record<ValidationResult["severity"], string> = {
   error: "bg-red-50 text-error border-red-200",
@@ -264,24 +265,24 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
             <div className="card-v2 p-4">
               <h2 className="text-sm font-medium text-text-primary mb-2">Line items</h2>
               <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="table-v3">
                 <thead>
-                  <tr className="text-left text-text-secondary border-b border-border-subtle">
-                    <th className="py-1.5 font-medium">#</th>
-                    <th className="py-1.5 font-medium">Description</th>
-                    <th className="py-1.5 font-medium">Net</th>
-                    <th className="py-1.5 font-medium">VAT</th>
-                    <th className="py-1.5 font-medium">Gross</th>
+                  <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th className="text-right">Net</th>
+                    <th className="text-right">VAT</th>
+                    <th className="text-right">Gross</th>
                   </tr>
                 </thead>
                 <tbody>
                   {doc.line_items.map((li) => (
-                    <tr key={li.line_number} className="border-b border-border last:border-0">
-                      <td className="py-1.5">{li.line_number}</td>
-                      <td className="py-1.5">{li.description ?? "—"}</td>
-                      <td className="py-1.5">{li.net_amount ?? "—"}</td>
-                      <td className="py-1.5">{li.vat_amount ?? "—"}</td>
-                      <td className="py-1.5">{li.gross_amount ?? "—"}</td>
+                    <tr key={li.line_number}>
+                      <td className="text-text-secondary">{li.line_number}</td>
+                      <td className="text-text-primary">{li.description ?? "—"}</td>
+                      <td className="col-amount">{li.net_amount != null ? formatEUR(li.net_amount) : "—"}</td>
+                      <td className="col-amount">{li.vat_amount != null ? formatEUR(li.vat_amount) : "—"}</td>
+                      <td className="col-amount font-medium">{li.gross_amount != null ? formatEUR(li.gross_amount) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

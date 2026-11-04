@@ -14,6 +14,7 @@ import GlassLoadingState, { GlassErrorState } from "@/components/glass/GlassLoad
 import { IconDocuments, IconClock } from "@/components/glass/icons";
 import { useAuth } from "@/lib/auth-context";
 import { api, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 type Tab = "profile" | "payslips" | "statement" | "hours";
 
@@ -76,25 +77,25 @@ function PayslipsTab() {
   return (
     <GlassPanel title="My Payslips">
       <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="table-v3">
         <thead>
-          <tr className="text-left text-text-secondary border-b border-border">
-            <th className="px-4 py-2 font-medium">Payslip</th>
-            <th className="px-4 py-2 font-medium">Gross</th>
-            <th className="px-4 py-2 font-medium">Net</th>
-            <th className="px-4 py-2 font-medium"></th>
+          <tr>
+            <th>Payslip</th>
+            <th className="text-right">Gross</th>
+            <th className="text-right">Net</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {payslips.map((p) => (
-            <tr key={String(p.id)} className="border-b border-border last:border-0">
-              <td className="px-4 py-2.5">
+            <tr key={String(p.id)}>
+              <td className="text-text-primary">
                 #{String(p.id)} {p.voided ? <span className="value-negative">(voided)</span> : null}
               </td>
-              <td className="px-4 py-2.5 font-mono">€{String(p.gross_salary)}</td>
-              <td className="px-4 py-2.5 font-mono">€{String(p.net_salary)}</td>
-              <td className="px-4 py-2.5">
-                <a href={api.myPayslipPdfUrl(Number(p.id))} target="_blank" rel="noreferrer" className="text-brand-purple-600 hover:underline text-xs">
+              <td className="col-amount">{formatEUR(String(p.gross_salary))}</td>
+              <td className="col-amount font-medium">{formatEUR(String(p.net_salary))}</td>
+              <td>
+                <a href={api.myPayslipPdfUrl(Number(p.id))} target="_blank" rel="noreferrer" className="text-navy hover:underline text-xs">
                   PDF
                 </a>
               </td>
