@@ -13,6 +13,7 @@ from app.models.company import Company
 from app.models.financial_year import FinancialYear
 from app.models.user import User
 from app.reporting import financial_report, management_report, vat_report
+from app.reporting.pdf_i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -44,8 +45,21 @@ def _render(fmt: str, filename: str, renderers: dict) -> Response:
 
 @router.get("/vat-return/{vat_return_id}")
 def vat_return_report(
-    vat_return_id: int, format: str = "pdf", db: Session = Depends(get_db), user: User = Depends(get_current_user)
+    vat_return_id: int,
+    format: str = "pdf",
+    document_language: str = DEFAULT_LOCALE,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
+    """`document_language` only affects the PDF (report prose/labels --
+    see pdf_i18n.py); it's independent of the viewer's own UI language
+    preference, since a report may need to be generated in a language
+    other than the one the requesting user currently has their UI in
+    (e.g. for a non-Dutch-speaking stakeholder). xlsx/csv exports are
+    not affected -- not in scope for this pass, see the Phase 16.1
+    report's known limitations."""
+    if document_language not in SUPPORTED_LOCALES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported document_language: {document_language}")
     vat_return = db.get(VatReturn, vat_return_id)
     if vat_return is None or vat_return.tenant_id != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="VAT return not found")
@@ -56,7 +70,7 @@ def vat_return_report(
         format,
         f"vat-return-{company.id}-{vat_return.vat_period_id}",
         {
-            "pdf": lambda: vat_report.render_pdf(data),
+            "pdf": lambda: vat_report.render_pdf(data, locale=document_language),
             "xlsx": lambda: vat_report.render_xlsx(data),
             "csv": lambda: vat_report.render_csv(data),
         },
