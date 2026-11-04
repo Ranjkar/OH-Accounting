@@ -101,7 +101,7 @@ function DocumentsContent() {
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
                 statusFilter === f.value
-                  ? "bg-navy text-white"
+                  ? "bg-navy-solid text-white"
                   : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >

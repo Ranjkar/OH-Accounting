@@ -75,7 +75,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
           <span
             key={step}
             className={`rounded-full px-3 py-1 ${
-              i <= stepIndex ? "bg-navy text-white" : "bg-slate-100 text-text-secondary"
+              i <= stepIndex ? "bg-navy-solid text-white" : "bg-slate-100 text-text-secondary"
             }`}
           >
             {step.replaceAll("_", " ")}
@@ -149,7 +149,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
               <td className="px-5 py-2"></td>
               <td className="px-5 py-2">{vatReturn.box_5b_vat}</td>
             </tr>
-            <tr className="bg-navy text-white font-medium">
+            <tr className="bg-navy-solid text-white font-medium">
               <td className="px-5 py-2">5g</td>
               <td className="px-5 py-2">Final total (5a − 5b)</td>
               <td className="px-5 py-2"></td>

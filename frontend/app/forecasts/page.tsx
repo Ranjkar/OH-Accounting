@@ -75,7 +75,7 @@ function ForecastsContent() {
                     Revenue {m.forecast_revenue} · Profit {m.forecast_profit} (range {m.low_estimate_profit} to {m.high_estimate_profit})
                   </span>
                 </div>
-                <Bar value={Number(m.forecast_revenue)} max={maxValue} color="bg-navy" />
+                <Bar value={Number(m.forecast_revenue)} max={maxValue} color="bg-navy-solid" />
               </div>
             ))}
             <ul className="text-xs text-text-secondary list-disc pl-4">

@@ -17,6 +17,16 @@
      backgrounds/gradients/hero sections). */
   --navy: #7c3aed;
   --navy-light: #8b5cf6;
+  /* A separate, theme-INVARIANT token for solid fills with white text
+     (buttons, active pills, avatars) -- --navy itself must get lighter
+     in dark mode so it stays legible as plain text/icons/links against
+     a dark page background, but that same lighter value fails WCAG AA
+     for white text on top of it (measured 2.72:1, needs 4.5:1). Button
+     fills don't have that constraint -- a vivid purple reads fine
+     against a dark page in either theme -- so they keep the original
+     saturated value always. */
+  --navy-solid: #7c3aed;
+  --navy-solid-hover: #6d28d9;
   --status-approved: #15803d;
   --status-pending: #b45309;
   --status-error: #b91c1c;
@@ -187,6 +197,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-navy: var(--navy);
+  --color-navy-solid: var(--navy-solid);
+  --color-navy-solid-hover: var(--navy-solid-hover);
   --color-navy-light: var(--navy-light);
   --color-approved: var(--status-approved);
   --color-pending: var(--status-pending);
@@ -330,7 +342,7 @@ body {
 }
 
 .hero-gradient-v2 {
-  background: var(--navy);
+  background: var(--navy-solid);
   border-radius: var(--radius-card);
   color: #ffffff;
 }
@@ -340,14 +352,14 @@ body {
 }
 
 .btn-primary-v2 {
-  background: var(--navy);
+  background: var(--navy-solid);
   color: #ffffff;
   border-radius: 0.5rem;
   font-weight: 500;
   transition: background 150ms ease, transform 100ms ease;
 }
 .btn-primary-v2:hover {
-  background: var(--brand-purple-700);
+  background: var(--navy-solid-hover);
 }
 .btn-primary-v2:active {
   transform: translateY(1px);

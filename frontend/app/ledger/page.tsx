@@ -6,6 +6,7 @@ import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
 import { useAuth } from "@/lib/auth-context";
+import { formatEUR } from "@/lib/format";
 import {
   api,
   Company,
@@ -306,7 +307,7 @@ function LedgerContent() {
               key={f.value}
               onClick={() => setTypeFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                typeFilter === f.value ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
+                typeFilter === f.value ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
               {f.label}
@@ -320,36 +321,36 @@ function LedgerContent() {
           <p className="px-5 py-4 text-sm text-text-secondary">No transactions yet.</p>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-text-secondary border-b border-border-subtle">
-                <th className="px-5 py-2 font-medium">Date</th>
-                <th className="px-5 py-2 font-medium">Type</th>
-                <th className="px-5 py-2 font-medium">Counterparty</th>
-                <th className="px-5 py-2 font-medium">Net</th>
-                <th className="px-5 py-2 font-medium">VAT</th>
-                <th className="px-5 py-2 font-medium">Gross</th>
-                <th className="px-5 py-2 font-medium">Payment</th>
-                <th className="px-5 py-2 font-medium">Approval</th>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Counterparty</th>
+                <th className="text-right">Net</th>
+                <th className="text-right">VAT</th>
+                <th className="text-right">Gross</th>
+                <th>Payment</th>
+                <th>Approval</th>
               </tr>
             </thead>
             <tbody>
               {transactions.map((t) => (
-                <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="px-5 py-2.5">
+                <tr key={t.id} className="hover:bg-muted">
+                  <td>
                     <Link href={`/ledger/${t.id}`} className="text-navy hover:underline">
                       {t.invoice_date}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">{t.transaction_type.replaceAll("_", " ")}</td>
-                  <td className="px-5 py-2.5">{t.counterparty_name ?? "—"}</td>
-                  <td className="px-5 py-2.5">{t.net_amount}</td>
-                  <td className="px-5 py-2.5">{t.vat_amount}</td>
-                  <td className="px-5 py-2.5">{t.gross_amount}</td>
-                  <td className="px-5 py-2.5">
+                  <td className="text-text-secondary">{t.transaction_type.replaceAll("_", " ")}</td>
+                  <td className="text-text-primary">{t.counterparty_name ?? "—"}</td>
+                  <td className="col-amount">{formatEUR(t.net_amount)}</td>
+                  <td className="col-amount text-text-secondary">{formatEUR(t.vat_amount)}</td>
+                  <td className="col-amount font-medium">{formatEUR(t.gross_amount)}</td>
+                  <td>
                     <PaymentBadge status={t.payment_status} />
                   </td>
-                  <td className="px-5 py-2.5">
+                  <td>
                     <ApprovalBadge status={t.approval_status} />
                   </td>
                 </tr>

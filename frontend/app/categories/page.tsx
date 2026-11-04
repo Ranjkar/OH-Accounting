@@ -121,7 +121,7 @@ function CategoriesContent() {
                   </option>
                 ))}
               </select>
-              <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
+              <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
                 Add rule
               </button>
             </form>
@@ -195,7 +195,7 @@ function CategoriesContent() {
                       <button
                         onClick={() => categorize(t.id, true)}
                         disabled={!chosenCategory[t.id]}
-                        className="rounded-md bg-navy text-white px-3 py-1 text-xs disabled:opacity-50"
+                        className="rounded-md bg-navy-solid text-white px-3 py-1 text-xs disabled:opacity-50"
                       >
                         Apply &amp; remember
                       </button>

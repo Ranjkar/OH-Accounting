@@ -57,7 +57,7 @@ function BatchesContent() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy text-white" : "bg-surface-card border border-border text-text-secondary"}`}
+              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary"}`}
             >
               {c === "all" ? "All" : c}
             </button>

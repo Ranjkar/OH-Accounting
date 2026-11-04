@@ -163,7 +163,7 @@ function BudgetsContent() {
                 ))}
               </ul>
             )}
-            <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
+            <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
               Create budget
             </button>
           </form>

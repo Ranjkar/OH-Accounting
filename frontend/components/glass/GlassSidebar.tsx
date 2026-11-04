@@ -116,7 +116,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
       <div className="px-2 pb-4 pt-2 border-t border-sidebar-border space-y-1 flex-shrink-0">
         {user && (
           <div className={`flex items-center gap-2.5 px-3 py-2 ${collapsed ? "justify-center" : ""}`}>
-            <div className="w-7 h-7 rounded-full bg-navy text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-navy-solid text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
               {user.full_name.slice(0, 1).toUpperCase()}
             </div>
             {!collapsed && (

@@ -148,7 +148,7 @@ function BalanceSheetContent() {
             <input required value={label} aria-label="Label" onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Delivery van)" className="input-v2 px-3 py-2 text-sm" />
             <input required value={amount} aria-label="Amount" onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="input-v2 px-3 py-2 text-sm w-32" />
             <input type="date" value={itemDate} aria-label="Item Date" onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-            <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
+            <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
               Add
             </button>
           </form>

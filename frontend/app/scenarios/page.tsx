@@ -113,7 +113,7 @@ function ScenariosContent() {
                 />
               ))}
             </div>
-            <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
+            <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
               Create scenario
             </button>
           </form>
@@ -159,7 +159,7 @@ function ScenariosContent() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={compare} disabled={selectedIds.length < 2} className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+        <button onClick={compare} disabled={selectedIds.length < 2} className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
           Compare selected
         </button>
         {companyId && selectedIds.length >= 2 && (

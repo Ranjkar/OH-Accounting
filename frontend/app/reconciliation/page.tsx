@@ -87,7 +87,7 @@ function ReconciliationContent() {
         <button
           onClick={bulkApprove}
           disabled={!companyId}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           Bulk-approve HIGH-confidence matches
         </button>

@@ -170,7 +170,7 @@ export default function BulkUploadScreen({ category, title, description, acceptH
         <button
           onClick={handleUpload}
           disabled={uploading || files.length === 0}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors disabled:opacity-50"
+          className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium hover:bg-navy-solid-hover transition-colors disabled:opacity-50"
         >
           {uploading ? "Uploading…" : `Upload ${files.length || ""} file${files.length === 1 ? "" : "s"}`}
         </button>
