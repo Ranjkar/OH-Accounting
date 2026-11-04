@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.deps import get_current_user
 from app.core.mfa_crypto import decrypt_mfa_secret, encrypt_mfa_secret
 from app.core.rate_limit import enforce as enforce_rate_limit
+from app.core.request_context import get_request_id
 from app.core.security import (
     create_access_token,
     generate_password_reset_token,
@@ -65,10 +66,14 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
 
     if not verify_password(payload.password, user.hashed_password):
         user.failed_login_attempts += 1
+        db.add(AuditLog(
+            tenant_id=user.tenant_id, user_id=user.id, action="login_failed", entity_type="user", entity_id=user.id,
+            after={"failed_login_attempts": user.failed_login_attempts}, request_id=get_request_id(),
+        ))
         if user.failed_login_attempts >= settings.max_failed_login_attempts:
             user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=settings.account_lockout_minutes)
             user.failed_login_attempts = 0
-            db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="account_locked", entity_type="user", entity_id=user.id, after={"reason": "repeated failed logins"}))
+            db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="account_locked", entity_type="user", entity_id=user.id, after={"reason": "repeated failed logins"}, request_id=get_request_id()))
         db.commit()
         raise invalid_credentials
 
@@ -81,8 +86,12 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
             return TokenResponse(mfa_required=True)
         secret = decrypt_mfa_secret(user.mfa_secret_encrypted)
         if not verify_code(secret, payload.mfa_code):
+            db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="login_failed", entity_type="user", entity_id=user.id, after={"reason": "invalid_mfa_code"}, request_id=get_request_id()))
+            db.commit()
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
 
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="login_success", entity_type="user", entity_id=user.id, request_id=get_request_id()))
+    db.commit()
     token = create_access_token(subject=user.email, token_version=user.token_version)
     return TokenResponse(access_token=token)
 
@@ -108,7 +117,7 @@ def mfa_enable(payload: MfaEnableRequest, user: User = Depends(get_current_user)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid code -- check your authenticator app and try again")
     user.mfa_secret_encrypted = encrypt_mfa_secret(payload.secret)
     user.mfa_enabled = True
-    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="mfa_enabled", entity_type="user", entity_id=user.id))
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="mfa_enabled", entity_type="user", entity_id=user.id, request_id=get_request_id()))
     db.commit()
 
 
@@ -121,7 +130,7 @@ def mfa_disable(payload: MfaDisableRequest, user: User = Depends(get_current_use
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid MFA code")
     user.mfa_enabled = False
     user.mfa_secret_encrypted = None
-    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="mfa_disabled", entity_type="user", entity_id=user.id))
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="mfa_disabled", entity_type="user", entity_id=user.id, request_id=get_request_id()))
     db.commit()
 
 
@@ -133,7 +142,7 @@ def logout(user: User = Depends(get_current_user), db: Session = Depends(get_db)
     "log out everywhere," not "log out this one session." A stateless JWT
     cannot otherwise be un-issued before it expires."""
     user.token_version += 1
-    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="logout", entity_type="user", entity_id=user.id))
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="logout", entity_type="user", entity_id=user.id, request_id=get_request_id()))
     db.commit()
 
 
@@ -184,7 +193,7 @@ def confirm_password_reset(payload: PasswordResetConfirm, db: Session = Depends(
     user.failed_login_attempts = 0
     user.locked_until = None
     reset_row.used_at = datetime.now(timezone.utc)
-    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="password_reset", entity_type="user", entity_id=user.id))
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="password_reset", entity_type="user", entity_id=user.id, request_id=get_request_id()))
     db.commit()
 
 
@@ -219,7 +228,7 @@ def export_my_data(user: User = Depends(get_current_user), db: Session = Depends
             {"entry_date": e.entry_date.isoformat(), "entry_type": e.entry_type.value, "hours": str(e.hours), "status": e.status.value}
             for e in timesheet_entries
         ]
-    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="data_export", entity_type="user", entity_id=user.id))
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="data_export", entity_type="user", entity_id=user.id, request_id=get_request_id()))
     db.commit()
     return data
 
@@ -236,5 +245,5 @@ def deactivate_my_account(user: User = Depends(get_current_user), db: Session = 
     See docs/gdpr-data-governance.md."""
     user.is_active = False
     user.token_version += 1
-    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="account_deactivated", entity_type="user", entity_id=user.id))
+    db.add(AuditLog(tenant_id=user.tenant_id, user_id=user.id, action="account_deactivated", entity_type="user", entity_id=user.id, request_id=get_request_id()))
     db.commit()

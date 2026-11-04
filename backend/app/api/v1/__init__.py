@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     assistant,
+    audit_log,
     auth,
     automation,
     banking,
@@ -23,6 +24,7 @@ from app.api.v1 import (
     tax_calendar,
     tax_centre,
     transactions,
+    users,
     vat_returns,
     workspace,
 )
@@ -52,3 +54,5 @@ router.include_router(loonheffingen.router)
 router.include_router(tax_centre.router)
 router.include_router(kvk.router)
 router.include_router(billing.router)
+router.include_router(users.router)
+router.include_router(audit_log.router)

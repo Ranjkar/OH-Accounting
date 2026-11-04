@@ -2,9 +2,22 @@ import enum
 
 
 class UserRole(str, enum.Enum):
+    # Phase 15: tenant-wide super-role, strictly additive -- every check that
+    # previously treated `admin` as "full access" now treats `owner` the same
+    # (see app.core.deps.ADMIN_ROLES), so no existing admin loses anything.
+    # Owner exists above admin specifically for user-management authority
+    # (granting/revoking owner or admin itself, last-owner protection) --
+    # see app.api.v1.users for the exact rules.
+    owner = "owner"
     admin = "admin"
     accountant = "accountant"
     viewer = "viewer"
+    # Legacy/specialised roles, unchanged by Phase 15: `customer` is the
+    # existing "business owner of one company" persona (see
+    # app.api.v1.companies._require_company_owner); `employee` is the
+    # self-service-portal-only role (app.core.deps.get_current_employee).
+    # Neither is assignable through the new Phase 15 role-management
+    # endpoints -- they have their own dedicated flows.
     customer = "customer"
     employee = "employee"
 

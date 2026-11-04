@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.accounting import subscription_service
-from app.core.deps import get_current_user, require_admin, require_company_access, require_editor
+from app.core.deps import ADMIN_ROLES, get_current_user, require_admin, require_company_access, require_editor
 from app.core.security import generate_password_reset_token, hash_reset_token
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
@@ -38,13 +38,13 @@ def _require_company_owner(company_id: int, user: User, db: Session) -> None:
     accountant who happens to have access, since inviting further access
     is a company-ownership decision, not a bookkeeping one."""
     require_company_access(company_id, user, db)
-    if user.role not in (UserRole.admin, UserRole.customer):
+    if user.role not in (*ADMIN_ROLES, UserRole.customer):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only an admin or the company owner can manage company access")
 
 
 def _accessible_companies_query(db: Session, user: User):
     query = db.query(Company).filter(Company.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         company_ids = [c.id for c in user.companies]
         query = query.filter(Company.id.in_(company_ids))
     return query
@@ -61,7 +61,7 @@ def create_company(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     try:
         subscription_service.enforce_company_limit(db, user.tenant_id)
@@ -103,7 +103,7 @@ def update_company(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     company = db.get(Company, company_id)
     if company is None or company.tenant_id != user.tenant_id:

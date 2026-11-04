@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.deps import get_current_user, require_company_access, require_editor, require_uploader
+from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access, require_editor, require_uploader
 from app.core.rate_limit import enforce as enforce_rate_limit
 from app.db.session import SessionLocal, get_db
 from app.models.audit_log import AuditLog
@@ -102,7 +102,7 @@ def list_documents(
     user: User = Depends(get_current_user),
 ):
     query = db.query(Document).filter(Document.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         query = query.filter(Document.company_id.in_(accessible_ids))
     if company_id is not None:

@@ -10,6 +10,16 @@ from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
+# Phase 15: `owner` (UserRole.owner, the new tenant super-role) is treated
+# identically to `admin` everywhere `admin` previously meant "full tenant
+# access, bypasses company-membership checks" -- purely additive, no
+# existing admin's privileges change. Not to be confused with
+# `require_editor_or_owner` below, whose "owner" means the pre-existing
+# `customer` role (the "business owner of one company" persona) -- a
+# different, older concept kept under its original name for backward
+# compatibility.
+ADMIN_ROLES = (UserRole.owner, UserRole.admin)
+
 
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
@@ -35,13 +45,13 @@ def get_current_user(
 
 
 def require_admin(user: User = Depends(get_current_user)) -> User:
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     return user
 
 
 def require_editor(user: User = Depends(get_current_user)) -> User:
-    if user.role not in (UserRole.admin, UserRole.accountant):
+    if user.role not in (*ADMIN_ROLES, UserRole.accountant):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin or accountant role required"
         )
@@ -53,7 +63,7 @@ def require_uploader(user: User = Depends(get_current_user)) -> User:
     access, plus customers uploading their own company's invoices. Approval,
     rejection, locking, and every other mutating accounting action stay
     require_editor-only -- customers can upload, never approve."""
-    if user.role not in (UserRole.admin, UserRole.accountant, UserRole.customer):
+    if user.role not in (*ADMIN_ROLES, UserRole.accountant, UserRole.customer):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin, accountant, or customer role required"
         )
@@ -66,8 +76,10 @@ def require_editor_or_owner(user: User = Depends(get_current_user)) -> User:
     (the business-owner persona in this system) for their own company --
     checked separately via require_company_access. Viewers can still read
     every Phase 8 report through get_current_user + require_company_access,
-    just never mutate one."""
-    if user.role not in (UserRole.admin, UserRole.accountant, UserRole.customer):
+    just never mutate one. NOTE: "owner" in this function's name predates
+    Phase 15's UserRole.owner and refers to UserRole.customer -- see the
+    ADMIN_ROLES comment above."""
+    if user.role not in (*ADMIN_ROLES, UserRole.accountant, UserRole.customer):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin, accountant, or business-owner role required"
         )
@@ -88,7 +100,7 @@ def get_current_employee(user: User = Depends(get_current_user), db: Session = D
 
 
 def require_company_access(company_id: int, user: User, db: Session) -> None:
-    if user.role == UserRole.admin:
+    if user.role in ADMIN_ROLES:
         return
     has_access = any(c.id == company_id for c in user.companies)
     if not has_access:

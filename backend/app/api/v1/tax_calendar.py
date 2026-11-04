@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, require_company_access
+from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access
 from app.db.session import get_db
 from app.models.accounting import VatReturn
 from app.models.company import Company
@@ -23,7 +23,7 @@ def get_tax_calendar(
     user: User = Depends(get_current_user),
 ):
     companies_query = db.query(Company).filter(Company.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         companies_query = companies_query.filter(Company.id.in_(accessible_ids))
     if company_id is not None:

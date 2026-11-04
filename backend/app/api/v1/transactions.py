@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.accounting import ledger_service, payment_engine
 from app.accounting.period_assignment import determine_vat_period
-from app.core.deps import get_current_user, require_company_access, require_editor
+from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access, require_editor
 from app.db.session import get_db
 from app.models.accounting import AccountingTransaction, Payment, TransactionLineItem
 from app.models.audit_log import AuditLog
@@ -57,7 +57,7 @@ def list_transactions(
     user: User = Depends(get_current_user),
 ):
     query = db.query(AccountingTransaction).filter(AccountingTransaction.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         query = query.filter(AccountingTransaction.company_id.in_(accessible_ids))
     if company_id is not None:

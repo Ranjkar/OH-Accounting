@@ -4,21 +4,21 @@ import os
 import time
 import uuid
 from contextlib import asynccontextmanager
-from contextvars import ContextVar
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.api.v1 import router as api_v1_router
+from app.core.request_context import request_id_ctx as _request_id_ctx
 from app.db.session import SessionLocal, engine
 
 logger = logging.getLogger(__name__)
 
 # ---- Phase 12: structured logging with request correlation ----
-# contextvars (not a global/thread-local) so each concurrent request's log
-# lines carry its own id, even under asyncio concurrency on one thread.
-_request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
+# contextvar definition lives in app.core.request_context (moved there in
+# Phase 15 so AuditLog writers can read it too) -- imported here under its
+# original local name so the rest of this file is unchanged.
 
 
 class _JsonLogFormatter(logging.Formatter):
