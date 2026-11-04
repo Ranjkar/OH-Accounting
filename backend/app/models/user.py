@@ -58,7 +58,24 @@ class User(Base):
     # self-signup-to-admin path.
     is_platform_admin: Mapped[bool] = mapped_column(default=False)
 
+    # ---- Phase 16: internationalisation ----
+    # Short code (nl/en/fa/ar), nullable -- null means "use this user's
+    # tenant's default_locale" (app.models.tenant.Tenant.default_locale),
+    # non-null means an explicit personal override that always wins over
+    # the tenant default. This is how "a default language for new users"
+    # and "override the organisation's default with a personal
+    # preference" both work from a single nullable column instead of
+    # needing a separate has_custom_locale flag.
+    locale: Mapped[str | None] = mapped_column(String(5), nullable=True)
+
     tenant: Mapped["Tenant"] = relationship(back_populates="users")
     companies: Mapped[list["Company"]] = relationship(
         secondary=user_companies, back_populates="users"
     )
+
+    @property
+    def tenant_default_locale(self) -> str:
+        """Convenience passthrough so UserOut (Pydantic, from_attributes)
+        can read `user.tenant_default_locale` directly without every
+        caller needing to join/select Tenant separately."""
+        return self.tenant.default_locale

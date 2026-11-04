@@ -31,6 +31,7 @@ from app.schemas.auth import (
     PasswordResetConfirm,
     PasswordResetRequest,
     TokenResponse,
+    UpdateLocaleRequest,
     UserOut,
 )
 
@@ -148,6 +149,29 @@ def logout(user: User = Depends(get_current_user), db: Session = Depends(get_db)
 
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
+    return user
+
+
+# Kept in sync by hand with frontend/i18n/config.ts's LOCALES short codes --
+# intentionally not shared code between the two languages/runtimes; the
+# frontend's own translation-parity test (messages/__tests__/parity.test.ts)
+# is what actually guards the dictionaries, this just validates the value
+# going into the database.
+SUPPORTED_LOCALES = {"nl", "en", "fa", "ar"}
+
+
+@router.patch("/me/locale", response_model=UserOut)
+def update_my_locale(payload: UpdateLocaleRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Sets (or, with locale=null, clears) this user's personal language
+    override. Never touches tenant.default_locale -- changing your own
+    preference never changes what a brand-new teammate sees by default.
+    Persisted immediately so the choice survives logout/login and follows
+    the user to a new device, per the brief's explicit requirement."""
+    if payload.locale is not None and payload.locale not in SUPPORTED_LOCALES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"locale must be one of {sorted(SUPPORTED_LOCALES)} or null")
+    user.locale = payload.locale
+    db.commit()
+    db.refresh(user)
     return user
 
 
