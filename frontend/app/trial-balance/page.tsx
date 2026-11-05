@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -11,6 +12,8 @@ import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
 
 function TrialBalanceContent() {
+  const t = useTranslations("trialBalance");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -33,42 +36,39 @@ function TrialBalanceContent() {
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader
-        title="Trial Balance"
-        subtitle="A best-effort trial balance derived from this single-entry invoice ledger -- not a formal double-entry trial balance. Any imbalance is reported, never forced to zero."
-      />
+      <GlassPageHeader title={t("title")} subtitle={t("subtitle")} />
       {error && <GlassErrorState message={error} />}
 
       <div className="flex flex-wrap items-end gap-3">
-        <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
-          <option value="">Select a company</option>
+        <GlassSelect aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </GlassSelect>
-        <GlassSelect aria-label="Period type" value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)}>
-          <option value="MONTHLY">Monthly</option>
-          <option value="QUARTERLY">Quarterly</option>
-          <option value="ANNUAL">Annual</option>
+        <GlassSelect aria-label={t("periodType")} value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)}>
+          <option value="MONTHLY">{t("monthly")}</option>
+          <option value="QUARTERLY">{t("quarterly")}</option>
+          <option value="ANNUAL">{t("annual")}</option>
         </GlassSelect>
-        <GlassInput aria-label="Reference date" type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} />
+        <GlassInput aria-label={t("referenceDate")} type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} />
       </div>
 
       {!companyId ? (
-        <p className="text-sm text-text-secondary">Select a company to view its trial balance.</p>
+        <p className="text-sm text-text-secondary">{t("selectCompanyPrompt")}</p>
       ) : !report ? (
         <GlassLoadingState rows={4} />
       ) : (
         <>
           {!report.is_balanced && (
             <div className="rounded-lg bg-amber-500/10 border border-amber-300/50 text-amber-700 text-sm px-4 py-3">
-              Debits and credits differ by €{String(report.difference)} -- this is reported honestly, not forced to balance.
+              {t("imbalanceWarning", { amount: String(report.difference) })}
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <GlassPanel title="Debits" actions={<span className="text-sm font-mono text-text-primary">€{String(report.total_debits)}</span>}>
+            <GlassPanel title={t("debits")} actions={<span className="text-sm font-mono text-text-primary">€{String(report.total_debits)}</span>}>
               <ul className="divide-y divide-white/30">
                 {Object.entries(report.debits as Record<string, string>)
                   .filter(([, v]) => Number(v) !== 0)
@@ -80,7 +80,7 @@ function TrialBalanceContent() {
                   ))}
               </ul>
             </GlassPanel>
-            <GlassPanel title="Credits" actions={<span className="text-sm font-mono text-text-primary">€{String(report.total_credits)}</span>}>
+            <GlassPanel title={t("credits")} actions={<span className="text-sm font-mono text-text-primary">€{String(report.total_credits)}</span>}>
               <ul className="divide-y divide-white/30">
                 {Object.entries(report.credits as Record<string, string>)
                   .filter(([, v]) => Number(v) !== 0)

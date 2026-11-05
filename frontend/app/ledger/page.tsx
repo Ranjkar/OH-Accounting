@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
@@ -18,13 +19,15 @@ import {
   VatTreatment,
 } from "@/lib/api";
 
-const TYPE_FILTERS: { value: TransactionType | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "SALES_INVOICE", label: "Sales invoices" },
-  { value: "PURCHASE_INVOICE", label: "Purchase invoices" },
-  { value: "CREDIT_NOTE", label: "Credit notes" },
-  { value: "RECEIPT", label: "Receipts" },
-  { value: "MANUAL_ENTRY", label: "Manual entries" },
+/** labelKey resolved against the "ledger" namespace at render time --
+ * this is a plain module-level array, not a component. */
+const TYPE_FILTERS: { value: TransactionType | "all"; labelKey: string }[] = [
+  { value: "all", labelKey: "allTypes" },
+  { value: "SALES_INVOICE", labelKey: "salesInvoices" },
+  { value: "PURCHASE_INVOICE", labelKey: "purchaseInvoices" },
+  { value: "CREDIT_NOTE", labelKey: "creditNotes" },
+  { value: "RECEIPT", labelKey: "receipts" },
+  { value: "MANUAL_ENTRY", labelKey: "manualEntries" },
 ];
 
 interface LineForm {
@@ -40,6 +43,8 @@ function emptyLine(): LineForm {
 }
 
 function LedgerContent() {
+  const t = useTranslations("ledger");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -87,7 +92,7 @@ function LedgerContent() {
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     if (!token || !companyId || !financialYearId) {
-      setError("Select a company and financial year first.");
+      setError(t("selectCompanyAndYearFirst"));
       return;
     }
     setError(null);
@@ -114,19 +119,19 @@ function LedgerContent() {
       setDueDate("");
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create entry");
+      setError(err instanceof Error ? err.message : t("createEntryFailed"));
     }
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">Accounting Ledger</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="btn-primary-v2 px-4 py-2 text-sm"
         >
-          {showForm ? "Cancel" : "New manual entry"}
+          {showForm ? tCommon("cancel") : t("newManualEntry")}
         </button>
       </div>
 
@@ -136,14 +141,14 @@ function LedgerContent() {
         <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label htmlFor="ledger-form-company" className="text-xs font-medium text-text-secondary">Company</label>
+              <label htmlFor="ledger-form-company" className="text-xs font-medium text-text-secondary">{tCommon("company")}</label>
               <select
                 id="ledger-form-company"
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
-                <option value="">Select…</option>
+                <option value="">{t("selectEllipsis")}</option>
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -152,14 +157,14 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label htmlFor="ledger-form-fy" className="text-xs font-medium text-text-secondary">Financial year</label>
+              <label htmlFor="ledger-form-fy" className="text-xs font-medium text-text-secondary">{t("financialYearLabel")}</label>
               <select
                 id="ledger-form-fy"
                 value={financialYearId}
                 onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
-                <option value="">Select…</option>
+                <option value="">{t("selectEllipsis")}</option>
                 {financialYears.map((fy) => (
                   <option key={fy.id} value={fy.id}>
                     {fy.year}
@@ -168,19 +173,19 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label htmlFor="ledger-form-side" className="text-xs font-medium text-text-secondary">Ledger side</label>
+              <label htmlFor="ledger-form-side" className="text-xs font-medium text-text-secondary">{t("ledgerSide")}</label>
               <select
                 id="ledger-form-side"
                 value={ledgerSide}
                 onChange={(e) => setLedgerSide(e.target.value as LedgerSide)}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
-                <option value="SALES">Sales</option>
-                <option value="PURCHASES">Purchases</option>
+                <option value="SALES">{t("salesOption")}</option>
+                <option value="PURCHASES">{t("purchasesOption")}</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label htmlFor="ledger-form-counterparty" className="text-xs font-medium text-text-secondary">Counterparty</label>
+              <label htmlFor="ledger-form-counterparty" className="text-xs font-medium text-text-secondary">{t("counterparty")}</label>
               <input
                 id="ledger-form-counterparty"
                 value={counterpartyName}
@@ -192,7 +197,7 @@ function LedgerContent() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label htmlFor="ledger-form-invoice-date" className="text-xs font-medium text-text-secondary">Invoice date</label>
+              <label htmlFor="ledger-form-invoice-date" className="text-xs font-medium text-text-secondary">{t("invoiceDate")}</label>
               <input
                 id="ledger-form-invoice-date"
                 type="date"
@@ -203,7 +208,7 @@ function LedgerContent() {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="ledger-form-due-date" className="text-xs font-medium text-text-secondary">Due date</label>
+              <label htmlFor="ledger-form-due-date" className="text-xs font-medium text-text-secondary">{t("dueDate")}</label>
               <input
                 id="ledger-form-due-date"
                 type="date"
@@ -215,31 +220,31 @@ function LedgerContent() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-text-secondary">Line items</label>
+            <label className="text-xs font-medium text-text-secondary">{t("lineItems")}</label>
             {lines.map((line, i) => (
               <div key={i} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
                 <input
-                  placeholder="Description"
+                  placeholder={tCommon("description")}
                   value={line.description}
                   onChange={(e) => updateLine(i, { description: e.target.value })}
                   className="col-span-2 input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
-                  placeholder="Net"
+                  placeholder={t("net")}
                   required
                   value={line.net_amount}
                   onChange={(e) => updateLine(i, { net_amount: e.target.value })}
                   className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
-                  placeholder="VAT rate %"
+                  placeholder={t("vatRatePercent")}
                   required
                   value={line.vat_rate}
                   onChange={(e) => updateLine(i, { vat_rate: e.target.value })}
                   className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
-                  placeholder="VAT amount"
+                  placeholder={t("vatAmount")}
                   required
                   value={line.vat_amount}
                   onChange={(e) => updateLine(i, { vat_amount: e.target.value })}
@@ -250,9 +255,9 @@ function LedgerContent() {
                   onChange={(e) => updateLine(i, { vat_treatment: e.target.value as VatTreatment })}
                   className="input-v2 px-2 py-1.5 text-sm"
                 >
-                  {treatmentOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t.replaceAll("_", " ")}
+                  {treatmentOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt.replaceAll("_", " ")}
                     </option>
                   ))}
                 </select>
@@ -264,7 +269,7 @@ function LedgerContent() {
                 onClick={() => setLines((prev) => [...prev, emptyLine()])}
                 className="text-sm text-navy hover:underline"
               >
-                + Add line
+                {t("addLine")}
               </button>
               {lines.length > 1 && (
                 <button
@@ -272,7 +277,7 @@ function LedgerContent() {
                   onClick={() => setLines((prev) => prev.slice(0, -1))}
                   className="text-sm text-text-secondary hover:underline"
                 >
-                  Remove last
+                  {t("removeLast")}
                 </button>
               )}
             </div>
@@ -282,19 +287,19 @@ function LedgerContent() {
             type="submit"
             className="btn-primary-v2 px-4 py-2 text-sm"
           >
-            Create entry
+            {t("createEntry")}
           </button>
         </form>
       )}
 
       <div className="flex items-center gap-4">
         <select
-          aria-label="Filter by company"
+          aria-label={t("filterByCompany")}
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">All companies</option>
+          <option value="">{tCommon("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -310,7 +315,7 @@ function LedgerContent() {
                 typeFilter === f.value ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
-              {f.label}
+              {t(f.labelKey as never)}
             </button>
           ))}
         </div>
@@ -318,40 +323,40 @@ function LedgerContent() {
 
       <div className="card-v2 overflow-hidden">
         {transactions.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-text-secondary">No transactions yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">{t("noTransactionsYet")}</p>
         ) : (
           <div className="overflow-x-auto">
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Counterparty</th>
-                <th className="text-right">Net</th>
-                <th className="text-right">VAT</th>
-                <th className="text-right">Gross</th>
-                <th>Payment</th>
-                <th>Approval</th>
+                <th>{tCommon("date")}</th>
+                <th>{t("type")}</th>
+                <th>{t("counterparty")}</th>
+                <th className="text-right">{t("net")}</th>
+                <th className="text-right">{t("vat")}</th>
+                <th className="text-right">{t("gross")}</th>
+                <th>{t("payment")}</th>
+                <th>{t("approval")}</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t) => (
-                <tr key={t.id} className="hover:bg-muted">
+              {transactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-muted">
                   <td>
-                    <Link href={`/ledger/${t.id}`} className="text-navy hover:underline">
-                      {t.invoice_date}
+                    <Link href={`/ledger/${tx.id}`} className="text-navy hover:underline">
+                      {tx.invoice_date}
                     </Link>
                   </td>
-                  <td className="text-text-secondary">{t.transaction_type.replaceAll("_", " ")}</td>
-                  <td className="text-text-primary">{t.counterparty_name ?? "—"}</td>
-                  <td className="col-amount">{formatEUR(t.net_amount)}</td>
-                  <td className="col-amount text-text-secondary">{formatEUR(t.vat_amount)}</td>
-                  <td className="col-amount font-medium">{formatEUR(t.gross_amount)}</td>
+                  <td className="text-text-secondary">{tx.transaction_type.replaceAll("_", " ")}</td>
+                  <td className="text-text-primary">{tx.counterparty_name ?? "—"}</td>
+                  <td className="col-amount">{formatEUR(tx.net_amount)}</td>
+                  <td className="col-amount text-text-secondary">{formatEUR(tx.vat_amount)}</td>
+                  <td className="col-amount font-medium">{formatEUR(tx.gross_amount)}</td>
                   <td>
-                    <PaymentBadge status={t.payment_status} />
+                    <PaymentBadge status={tx.payment_status} />
                   </td>
                   <td>
-                    <ApprovalBadge status={t.approval_status} />
+                    <ApprovalBadge status={tx.approval_status} />
                   </td>
                 </tr>
               ))}

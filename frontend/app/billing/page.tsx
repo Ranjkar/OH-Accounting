@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -10,7 +11,7 @@ import GlassButton from "@/components/glass/GlassButton";
 import GlassLoadingState, { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
 import { api, ApiError, Plan, Subscription } from "@/lib/api";
-import { formatEUR } from "@/lib/format";
+import { formatDate, formatEUR } from "@/lib/format";
 
 const STATUS_STYLE: Record<string, string> = {
   TRIALING: "status-pill-info",
@@ -20,6 +21,8 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 function BillingContent() {
+  const t = useTranslations("billing");
+  const locale = useLocale();
   const { token, user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -44,7 +47,7 @@ function BillingContent() {
       const { checkout_url } = await api.createCheckout(token, planCode);
       setCheckoutUrl(checkout_url);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to start checkout");
+      setError(e instanceof ApiError ? e.message : t("checkoutFailed"));
     } finally {
       setBusyPlan(null);
     }
@@ -57,7 +60,7 @@ function BillingContent() {
       await api.cancelSubscription(token);
       refresh();
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to cancel subscription");
+      setError(e instanceof ApiError ? e.message : t("cancelFailed"));
     }
   }
 
@@ -65,31 +68,28 @@ function BillingContent() {
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader
-        title="Billing & Subscription"
-        subtitle="Sandbox billing only -- no real payment provider is connected, and no commercial price has been set for any plan. Checkout below is a stub that never charges a card. See docs/subscription-billing.md."
-      />
+      <GlassPageHeader title={t("title")} subtitle={t("sandboxNotice")} />
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassPanel title="Current plan">
+      <GlassPanel title={t("currentPlan")}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="font-medium text-text-primary text-lg">{subscription.plan.name}</p>
             <p className="text-sm text-text-secondary">
-              {subscription.companies_used} / {subscription.plan.company_limit} companies ·{" "}
-              {subscription.users_used} / {subscription.plan.user_limit} users
+              {t("companiesUsed", { used: subscription.companies_used, limit: subscription.plan.company_limit })} ·{" "}
+              {t("usersUsed", { used: subscription.users_used, limit: subscription.plan.user_limit })}
             </p>
             {subscription.trial_ends_at && subscription.status === "TRIALING" && (
-              <p className="text-xs text-text-secondary mt-1">Trial ends {new Date(subscription.trial_ends_at).toLocaleDateString()}</p>
+              <p className="text-xs text-text-secondary mt-1">{t("trialEnds", { date: formatDate(subscription.trial_ends_at, locale) })}</p>
             )}
           </div>
-          <span className={`status-pill ${STATUS_STYLE[subscription.status]}`}>{subscription.status}</span>
+          <span className={`status-pill ${STATUS_STYLE[subscription.status]}`}>{t(`status.${subscription.status}` as never)}</span>
         </div>
         {subscription.status !== "CANCELED" && isAdmin && (
           <div className="mt-4">
             <GlassButton variant="outline" onClick={handleCancel}>
-              Cancel subscription
+              {t("cancelSubscription")}
             </GlassButton>
           </div>
         )}
@@ -97,21 +97,21 @@ function BillingContent() {
 
       {checkoutUrl && (
         <div className="rounded-md bg-amber-50 border border-amber-200 text-xs px-3 py-2 space-y-1">
-          <p className="font-medium text-pending">Sandbox checkout session created (no real redirect for a stub provider):</p>
-          <p className="font-mono break-all">{checkoutUrl}</p>
-          <p className="text-text-secondary">A real integration would redirect here; completion is simulated via the webhook endpoint, not by visiting this URL.</p>
+          <p className="font-medium text-pending">{t("sandboxCheckoutCreated")}</p>
+          <p className="font-mono break-all" dir="ltr">{checkoutUrl}</p>
+          <p className="text-text-secondary">{t("sandboxCheckoutExplanation")}</p>
         </div>
       )}
 
-      <GlassPanel title="Available plans">
+      <GlassPanel title={t("availablePlans")}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {plans.map((p) => (
             <GlassCard key={p.code} className="space-y-3">
               <h3 className="font-medium text-text-primary">{p.name}</h3>
-              <p className="text-xs text-text-secondary">{p.monthly_price_eur ? `${formatEUR(p.monthly_price_eur)}/month` : "Price not yet set -- contact sales"}</p>
+              <p className="text-xs text-text-secondary">{p.monthly_price_eur ? `${formatEUR(p.monthly_price_eur, locale)}${t("perMonth")}` : t("priceNotSet")}</p>
               <ul className="text-xs text-text-secondary space-y-1">
-                <li>Up to {p.company_limit} companies</li>
-                <li>Up to {p.user_limit} users</li>
+                <li>{t("upTo", { count: p.company_limit })}</li>
+                <li>{t("upToUsers", { count: p.user_limit })}</li>
               </ul>
               {isAdmin && (
                 <GlassButton
@@ -120,7 +120,7 @@ function BillingContent() {
                   loading={busyPlan === p.code}
                   onClick={() => handleCheckout(p.code)}
                 >
-                  {p.code === subscription.plan.code ? "Current plan" : "Start sandbox checkout"}
+                  {p.code === subscription.plan.code ? t("currentPlanButton") : t("startSandboxCheckout")}
                 </GlassButton>
               )}
             </GlassCard>

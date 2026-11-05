@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
@@ -10,6 +11,9 @@ import { api, TransactionDetail } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function TransactionDetailContent({ transactionId }: { transactionId: number }) {
+  const t = useTranslations("ledger");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token, user } = useAuth();
   const router = useRouter();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
@@ -42,7 +46,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
       setPaymentReference("");
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to record payment");
+      setError(err instanceof Error ? err.message : t("recordPaymentFailed"));
     }
   }
 
@@ -52,21 +56,21 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
       await api.approveTransaction(token, transactionId);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to approve");
+      setError(err instanceof Error ? err.message : t("approveFailed"));
     }
   }
 
-  if (!transaction) return <p className="text-text-secondary">Loading…</p>;
+  if (!transaction) return <p className="text-text-secondary">{tCommon("loading")}</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <button onClick={() => router.push("/ledger")} className="text-sm text-navy hover:underline">
-            ← Back to ledger
+            {t("backToLedger")}
           </button>
           <h1 className="text-xl font-semibold text-navy mt-1">
-            {transaction.transaction_type.replaceAll("_", " ")} · {transaction.counterparty_name ?? "No counterparty"}
+            {transaction.transaction_type.replaceAll("_", " ")} · {transaction.counterparty_name ?? t("noCounterparty")}
           </h1>
         </div>
         <div className="flex gap-2">
@@ -79,42 +83,42 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-v2 p-4">
-          <p className="text-xs text-text-secondary">Net / VAT / Gross</p>
+          <p className="text-xs text-text-secondary">{t("netVatGross")}</p>
           <p className="text-lg font-semibold text-navy mt-1">
-            {formatEUR(transaction.net_amount)} / {formatEUR(transaction.vat_amount)} / {formatEUR(transaction.gross_amount)} {transaction.currency}
+            {formatEUR(transaction.net_amount, locale)} / {formatEUR(transaction.vat_amount, locale)} / {formatEUR(transaction.gross_amount, locale)} {transaction.currency}
           </p>
         </div>
         <div className="card-v2 p-4">
-          <p className="text-xs text-text-secondary">Paid / Remaining</p>
+          <p className="text-xs text-text-secondary">{t("paidRemaining")}</p>
           <p className="text-lg font-semibold text-navy mt-1">
-            {formatEUR(transaction.amount_paid)} / {formatEUR(transaction.remaining_balance)}
+            {formatEUR(transaction.amount_paid, locale)} / {formatEUR(transaction.remaining_balance, locale)}
           </p>
         </div>
         <div className="card-v2 p-4">
-          <p className="text-xs text-text-secondary">Dates</p>
+          <p className="text-xs text-text-secondary">{tCommon("date")}</p>
           <p className="text-sm text-navy mt-1">
-            Invoice {transaction.invoice_date}
-            {transaction.due_date && <> · Due {transaction.due_date}</>}
+            {t("invoiceDateLabel", { date: transaction.invoice_date })}
+            {transaction.due_date && <> · {t("dueDateLabel", { date: transaction.due_date })}</>}
           </p>
         </div>
       </div>
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-text-primary">Line items</h2>
+          <h2 className="text-sm font-medium text-text-primary">{t("lineItems")}</h2>
         </div>
         <div className="overflow-x-auto">
         <table className="table-v3">
           <thead>
             <tr>
               <th>#</th>
-              <th>Description</th>
-              <th className="text-right">Net</th>
-              <th className="text-right">Rate</th>
-              <th className="text-right">VAT</th>
-              <th>Treatment</th>
-              <th>Eligibility</th>
-              <th className="text-right">Deductible</th>
+              <th>{tCommon("description")}</th>
+              <th className="text-right">{t("net")}</th>
+              <th className="text-right">{t("rate")}</th>
+              <th className="text-right">{t("vat")}</th>
+              <th>{t("treatment")}</th>
+              <th>{t("eligibility")}</th>
+              <th className="text-right">{t("deductible")}</th>
             </tr>
           </thead>
           <tbody>
@@ -122,12 +126,12 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
               <tr key={l.line_number}>
                 <td className="text-text-secondary">{l.line_number}</td>
                 <td className="text-text-primary">{l.description ?? "—"}</td>
-                <td className="col-amount">{formatEUR(l.net_amount)}</td>
+                <td className="col-amount">{formatEUR(l.net_amount, locale)}</td>
                 <td className="text-right text-text-secondary">{l.vat_rate}%</td>
-                <td className="col-amount">{formatEUR(l.vat_amount)}</td>
+                <td className="col-amount">{formatEUR(l.vat_amount, locale)}</td>
                 <td className="text-xs text-text-secondary">{l.vat_treatment.replaceAll("_", " ")}</td>
                 <td className="text-xs text-text-secondary">{l.input_vat_eligibility ?? "—"}</td>
-                <td className="col-amount">{l.deductible_vat_amount != null ? formatEUR(l.deductible_vat_amount) : "—"}</td>
+                <td className="col-amount">{l.deductible_vat_amount != null ? formatEUR(l.deductible_vat_amount, locale) : "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -137,7 +141,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle">
-          <h2 className="text-sm font-medium text-text-primary">Payments</h2>
+          <h2 className="text-sm font-medium text-text-primary">{t("payments")}</h2>
         </div>
         {transaction.payments.length > 0 && (
           <div className="overflow-x-auto">
@@ -146,7 +150,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
               {transaction.payments.map((p) => (
                 <tr key={p.id}>
                   <td className="text-text-secondary">{p.payment_date}</td>
-                  <td className="col-amount">{formatEUR(p.amount)}</td>
+                  <td className="col-amount">{formatEUR(p.amount, locale)}</td>
                   <td className="text-text-secondary">{p.reference ?? ""}</td>
                 </tr>
               ))}
@@ -157,7 +161,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         {canEdit && (
           <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-border">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Amount</label>
+              <label className="text-xs font-medium text-text-secondary">{tCommon("amount")}</label>
               <input
                 required
                 value={paymentAmount}
@@ -166,7 +170,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Date</label>
+              <label className="text-xs font-medium text-text-secondary">{tCommon("date")}</label>
               <input
                 type="date"
                 required
@@ -176,7 +180,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Reference</label>
+              <label className="text-xs font-medium text-text-secondary">{t("reference")}</label>
               <input
                 value={paymentReference}
                 onChange={(e) => setPaymentReference(e.target.value)}
@@ -187,7 +191,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
               type="submit"
               className="btn-primary-v2 px-4 py-2 text-sm"
             >
-              Record payment
+              {t("recordPayment")}
             </button>
           </form>
         )}
@@ -198,7 +202,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           onClick={handleApprove}
           className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors"
         >
-          Approve transaction
+          {t("approveTransaction")}
         </button>
       )}
     </div>

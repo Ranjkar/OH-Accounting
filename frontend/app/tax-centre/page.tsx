@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -10,6 +11,8 @@ import { formatEUR } from "@/lib/format";
 const LEGAL_FORMS = ["EENMANSZAAK", "VOF", "MAATSCHAP", "CV", "BV", "NV", "COOPERATIE", "OWM", "STICHTING", "VERENIGING", "VVE", "REDERIJ", "OTHER"];
 
 function TaxCentreContent() {
+  const t = useTranslations("taxCentre");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -38,7 +41,7 @@ function TaxCentreContent() {
     if (!token || !companyId) return;
     try {
       await api.setCompanyLegalForm(token, { company_id: Number(companyId), legal_form_code: legalForm, effective_from: new Date().toISOString().slice(0, 10) });
-      setMessage(`Legal form set to ${legalForm}.`);
+      setMessage(t("legalFormSetMessage", { form: legalForm }));
       refresh();
     } catch (e) {
       setError((e as Error).message);
@@ -56,16 +59,15 @@ function TaxCentreContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Tax Centre</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
       <p className="text-sm text-text-secondary">
-        BTW reuses the existing VAT engine&apos;s own return data -- there is no second VAT tracking system here.
-        Income/corporate tax are estimates only; no SBR/Digipoort filing integration exists in this environment.
+        {t("pageExplainer")}
       </p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
-      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-        <option value="">Select a company</option>
+      <select aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -79,7 +81,7 @@ function TaxCentreContent() {
 
           {!overview.current_legal_form && (
             <form onSubmit={setForm} className="card-v2 p-4 flex items-end gap-3">
-              <select aria-label="Legal form" value={legalForm} onChange={(e) => setLegalForm(e.target.value)} className="input-v2 px-3 py-2 text-sm">
+              <select aria-label={t("legalForm")} value={legalForm} onChange={(e) => setLegalForm(e.target.value)} className="input-v2 px-3 py-2 text-sm">
                 {LEGAL_FORMS.map((f) => (
                   <option key={f} value={f}>
                     {f}
@@ -87,22 +89,22 @@ function TaxCentreContent() {
                 ))}
               </select>
               <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
-                Set legal form
+                {t("setLegalForm")}
               </button>
             </form>
           )}
 
           {overview.current_legal_form && (
             <div className="card-v2 p-4">
-              <p className="text-sm text-text-secondary">Current legal form</p>
+              <p className="text-sm text-text-secondary">{t("currentLegalForm")}</p>
               <p className="text-xl font-semibold text-text-primary">{overview.current_legal_form}</p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">BTW (VAT)</h2>
-              {overview.btw.length === 0 && <p className="text-sm text-text-secondary">No VAT returns yet.</p>}
+              <h2 className="font-medium text-text-primary mb-2">{t("btwVat")}</h2>
+              {overview.btw.length === 0 && <p className="text-sm text-text-secondary">{t("noVatReturnsYet")}</p>}
               {overview.btw.map((row: JsonReport) => (
                 <div key={row.period_label} className="flex items-center justify-between text-sm py-1 border-b border-border-subtle last:border-0">
                   <span>{row.period_label}</span>
@@ -112,29 +114,29 @@ function TaxCentreContent() {
               ))}
             </div>
             <div className="card-v2 p-4 space-y-2">
-              <h2 className="font-medium text-text-primary mb-2">Other declarations</h2>
-              <p className="text-sm">ICP: <span className="text-text-secondary">{overview.icp.note}</span></p>
-              <p className="text-sm">OSS: <span className="text-text-secondary">{overview.oss.note}</span></p>
-              <p className="text-sm">Income tax: <span className="text-text-secondary">{overview.income_tax.note}</span></p>
-              <p className="text-sm">Corporate tax: <span className="text-text-secondary">{overview.corporate_income_tax.note}</span></p>
+              <h2 className="font-medium text-text-primary mb-2">{t("otherDeclarations")}</h2>
+              <p className="text-sm">{t("icpLabel")} <span className="text-text-secondary">{overview.icp.note}</span></p>
+              <p className="text-sm">{t("ossLabel")} <span className="text-text-secondary">{overview.oss.note}</span></p>
+              <p className="text-sm">{t("incomeTaxLabel")} <span className="text-text-secondary">{overview.income_tax.note}</span></p>
+              <p className="text-sm">{t("corporateTaxLabel")} <span className="text-text-secondary">{overview.corporate_income_tax.note}</span></p>
               <p className="text-xs text-pending pt-2">{overview.sbr_digipoort_integration_status}</p>
             </div>
           </div>
 
           {overview.current_legal_form && ["EENMANSZAAK", "VOF", "MAATSCHAP", "CV"].includes(overview.current_legal_form) && (
             <div className="card-v2 p-4 space-y-3">
-              <h2 className="font-medium text-text-primary">Income tax estimate</h2>
+              <h2 className="font-medium text-text-primary">{t("incomeTaxEstimate")}</h2>
               <div className="flex items-end gap-3">
-                <input aria-label="Annual profit" value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder="Annual profit" className="input-v2 px-3 py-2 text-sm w-40" />
+                <input aria-label={t("annualProfit")} value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder={t("annualProfit")} className="input-v2 px-3 py-2 text-sm w-40" />
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={hoursCriterionMet} onChange={(e) => setHoursCriterionMet(e.target.checked)} /> 1,225-hour criterion met
+                  <input type="checkbox" checked={hoursCriterionMet} onChange={(e) => setHoursCriterionMet(e.target.checked)} /> {t("hoursCriterionMet")}
                 </label>
                 <button onClick={estimateIncomeTax} className="btn-secondary-v2 px-3 py-1.5 text-sm">
-                  Estimate
+                  {t("estimate")}
                 </button>
               </div>
               {incomeEstimate && (
-                <pre className="text-xs bg-surface-page rounded-md p-3 overflow-x-auto">{JSON.stringify(incomeEstimate, null, 2)}</pre>
+                <pre className="text-xs bg-surface-page rounded-md p-3 overflow-x-auto" dir="ltr">{JSON.stringify(incomeEstimate, null, 2)}</pre>
               )}
             </div>
           )}

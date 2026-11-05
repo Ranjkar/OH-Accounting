@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Batch, Company, LedgerSide } from "@/lib/api";
 
 function BatchesContent() {
+  const t = useTranslations("batches");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -30,13 +33,13 @@ function BatchesContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">Batch Processing</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <div className="flex gap-2">
           <Link href="/sales/upload" className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors">
-            Upload sales invoices
+            {t("uploadSalesInvoices")}
           </Link>
           <Link href="/purchases/upload" className="rounded-md bg-amber-600 text-white px-4 py-2 text-sm font-medium hover:bg-amber-700 transition-colors">
-            Upload purchase invoices
+            {t("uploadPurchaseInvoices")}
           </Link>
         </div>
       </div>
@@ -44,8 +47,8 @@ function BatchesContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
-        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-          <option value="">All companies</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -59,7 +62,7 @@ function BatchesContent() {
               onClick={() => setCategory(c)}
               className={`rounded-full px-3 py-1 ${category === c ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary"}`}
             >
-              {c === "all" ? "All" : c}
+              {c === "all" ? t("categoryAll") : c}
             </button>
           ))}
         </div>
@@ -67,20 +70,20 @@ function BatchesContent() {
 
       <div className="card-v2 overflow-hidden">
         {batches.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-text-secondary">No batches yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">{t("noBatchesYet")}</p>
         ) : (
           <div className="overflow-x-auto">
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Uploaded</th>
-                <th>Category</th>
-                <th className="text-right">Total</th>
-                <th className="text-right">Extracted</th>
-                <th className="text-right">Needs review</th>
-                <th className="text-right">Duplicates</th>
-                <th className="text-right">Failed</th>
-                <th className="text-right">Approved</th>
+                <th>{t("uploaded")}</th>
+                <th>{t("category")}</th>
+                <th className="text-right">{tCommon("total")}</th>
+                <th className="text-right">{t("extracted")}</th>
+                <th className="text-right">{t("needsReview")}</th>
+                <th className="text-right">{t("duplicates")}</th>
+                <th className="text-right">{t("failed")}</th>
+                <th className="text-right">{t("approved")}</th>
               </tr>
             </thead>
             <tbody>

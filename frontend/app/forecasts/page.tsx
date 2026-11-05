@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -17,6 +18,9 @@ function Bar({ value, max, color }: { value: number; max: number; color: string 
 }
 
 function ForecastsContent() {
+  const t = useTranslations("forecasts");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -38,26 +42,23 @@ function ForecastsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Financial Forecasts</h1>
-      <p className="text-sm text-text-secondary">
-        Revenue, expense, and profit forecasts are a simple trend projection from recent actuals -- never a guaranteed
-        outcome. Outstanding-invoice and VAT figures are confirmed amounts already on the books, not projections.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("subtitle")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <select value={horizon} aria-label="Horizon" onChange={(e) => setHorizon(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm">
-          <option value={3}>3 months</option>
-          <option value={6}>6 months</option>
-          <option value={12}>12 months</option>
+        <select value={horizon} aria-label={t("horizon")} onChange={(e) => setHorizon(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm">
+          <option value={3}>{t("months", { count: 3 })}</option>
+          <option value={6}>{t("months", { count: 6 })}</option>
+          <option value={12}>{t("months", { count: 12 })}</option>
         </select>
       </div>
 
@@ -65,15 +66,20 @@ function ForecastsContent() {
         <>
           <div className="card-v2 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-text-primary">Revenue / expense / profit trend</h2>
-              <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">Estimate</span>
+              <h2 className="font-medium text-text-primary">{t("revenueExpenseProfitTrend")}</h2>
+              <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t("estimate")}</span>
             </div>
             {months.map((m) => (
               <div key={m.month} className="space-y-1">
                 <div className="flex items-center justify-between text-xs text-text-secondary">
                   <span>{m.month}</span>
                   <span>
-                    Revenue {formatEUR(m.forecast_revenue)} · Profit {formatEUR(m.forecast_profit)} (range {formatEUR(m.low_estimate_profit)} to {formatEUR(m.high_estimate_profit)})
+                    {t("monthlySummary", {
+                      revenue: formatEUR(m.forecast_revenue, locale),
+                      profit: formatEUR(m.forecast_profit, locale),
+                      low: formatEUR(m.low_estimate_profit, locale),
+                      high: formatEUR(m.high_estimate_profit, locale),
+                    })}
                   </span>
                 </div>
                 <Bar value={Number(m.forecast_revenue)} max={maxValue} color="bg-navy-solid" />
@@ -88,17 +94,17 @@ function ForecastsContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Outstanding invoices (confirmed, not estimated)</h2>
-              <p className="text-sm">Receivables outstanding: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</span></p>
-              <p className="text-sm">Payables outstanding: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</span></p>
-              <p className="text-sm">Net working capital: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.net_working_capital_from_trade)}</span></p>
+              <h2 className="font-medium text-text-primary mb-2">{t("outstandingInvoicesTitle")}</h2>
+              <p className="text-sm">{t("receivablesOutstanding")}: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding, locale)}</span></p>
+              <p className="text-sm">{t("payablesOutstanding")}: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding, locale)}</span></p>
+              <p className="text-sm">{t("netWorkingCapital")}: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.net_working_capital_from_trade, locale)}</span></p>
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Upcoming VAT payments</h2>
+              <h2 className="font-medium text-text-primary mb-2">{t("upcomingVatPayments")}</h2>
               {forecast.vat_payments.upcoming_vat_payments.map((p: JsonReport) => (
                 <p key={p.vat_period_id} className="text-sm">
-                  {p.period_label} (due {p.payment_deadline}): <span className="font-mono">{formatEUR(p.estimated_net_payable)}</span>{" "}
-                  {!p.is_final && <span className="text-pending text-xs">(estimate)</span>}
+                  {p.period_label} ({t("due", { date: p.payment_deadline })}): <span className="font-mono">{formatEUR(p.estimated_net_payable, locale)}</span>{" "}
+                  {!p.is_final && <span className="text-pending text-xs">({t("estimate").toLowerCase()})</span>}
                 </p>
               ))}
               <p className="text-xs text-text-secondary mt-2">{forecast.tax_liability.note}</p>
@@ -106,25 +112,25 @@ function ForecastsContent() {
           </div>
 
           <div className="card-v2 p-4">
-            <h2 className="font-medium text-text-primary mb-2">Cash flow forecast (Phase 6 engine, reused)</h2>
+            <h2 className="font-medium text-text-primary mb-2">{t("cashFlowForecastTitle")}</h2>
             <p className="text-xs text-pending">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
             <div className="overflow-x-auto">
             <table className="table-v3">
               <thead>
                 <tr>
-                  <th>Month</th>
-                  <th className="text-right">Incoming</th>
-                  <th className="text-right">Outgoing</th>
-                  <th className="text-right">Net</th>
+                  <th>{t("month")}</th>
+                  <th className="text-right">{t("incoming")}</th>
+                  <th className="text-right">{t("outgoing")}</th>
+                  <th className="text-right">{t("net")}</th>
                 </tr>
               </thead>
               <tbody>
                 {forecast.cash_flow.monthly_projection.map((m: JsonReport) => (
                   <tr key={m.month}>
                     <td className="text-text-secondary">{m.month}</td>
-                    <td className="col-amount value-positive">+{formatEUR(m.expected_incoming)}</td>
-                    <td className="col-amount value-negative">-{formatEUR(m.expected_outgoing)}</td>
-                    <td className="col-amount font-medium">{formatEUR(m.net)}</td>
+                    <td className="col-amount value-positive">+{formatEUR(m.expected_incoming, locale)}</td>
+                    <td className="col-amount value-negative">-{formatEUR(m.expected_outgoing, locale)}</td>
+                    <td className="col-amount font-medium">{formatEUR(m.net, locale)}</td>
                   </tr>
                 ))}
               </tbody>

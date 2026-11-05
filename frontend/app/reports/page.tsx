@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -26,6 +27,8 @@ function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void 
 }
 
 function ReportsContent() {
+  const t = useTranslations("reports");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -60,27 +63,27 @@ function ReportsContent() {
         `financial-overview.${format}`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to download report");
+      setError(err instanceof Error ? err.message : t("downloadFailed"));
     }
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Reports</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
         <select
           value={companyId}
-          aria-label="Company"
+          aria-label={tCommon("company")}
           onChange={(e) => {
             setCompanyId(e.target.value ? Number(e.target.value) : "");
             setFinancialYearId("");
           }}
           className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">Select a company…</option>
+          <option value="">{t("selectCompanyEllipsis")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -89,12 +92,12 @@ function ReportsContent() {
         </select>
         <select
           value={financialYearId}
-          aria-label="Financial Year"
+          aria-label={t("financialYear")}
           onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"
           disabled={!companyId}
         >
-          <option value="">Select a financial year…</option>
+          <option value="">{t("selectFinancialYearEllipsis")}</option>
           {financialYears.map((fy) => (
             <option key={fy.id} value={fy.id}>
               {fy.year}
@@ -107,28 +110,26 @@ function ReportsContent() {
         <>
           <div className="card-v2 p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-text-primary">Financial Overview Report</h2>
+              <h2 className="text-sm font-medium text-text-primary">{t("financialOverviewReport")}</h2>
               <DownloadButtons onDownload={downloadFinancialOverview} />
             </div>
-            <p className="text-xs text-text-secondary">
-              Income/expense overview, period-by-period comparison, payment status, and outstanding invoices.
-            </p>
+            <p className="text-xs text-text-secondary">{t("financialOverviewReportDescription")}</p>
           </div>
 
           {comparison && (
             <div className="card-v2">
               <div className="px-5 py-3 border-b border-border-subtle">
-                <h2 className="text-sm font-medium text-text-primary">Period comparison — financial year {comparison.financial_year}</h2>
+                <h2 className="text-sm font-medium text-text-primary">{t("periodComparisonHeading", { year: comparison.financial_year })}</h2>
               </div>
               <div className="overflow-x-auto">
               <table className="table-v3">
                 <thead>
                   <tr>
-                    <th>Period</th>
-                    <th className="text-right">Sales (net)</th>
-                    <th className="text-right">Purchases (net)</th>
-                    <th className="text-right">Net</th>
-                    <th className="text-right">Txns</th>
+                    <th>{t("period")}</th>
+                    <th className="text-right">{t("salesNet")}</th>
+                    <th className="text-right">{t("purchasesNet")}</th>
+                    <th className="text-right">{t("net")}</th>
+                    <th className="text-right">{t("transactionsAbbr")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -148,8 +149,8 @@ function ReportsContent() {
           )}
 
           <div className="card-v2 p-5 space-y-3">
-            <h2 className="text-sm font-medium text-text-primary">VAT Return Reports</h2>
-            <p className="text-xs text-text-secondary">Open a period&apos;s VAT return from the VAT Returns or Tax Calendar page to download its report.</p>
+            <h2 className="text-sm font-medium text-text-primary">{t("vatReturnReports")}</h2>
+            <p className="text-xs text-text-secondary">{t("vatReturnReportsDescription")}</p>
           </div>
         </>
       )}

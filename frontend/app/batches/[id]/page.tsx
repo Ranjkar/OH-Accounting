@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
@@ -19,6 +20,8 @@ function StatCard({ label, value, tone = "navy" }: { label: string; value: numbe
 }
 
 function BatchDetailContent({ batchId }: { batchId: number }) {
+  const t = useTranslations("batches");
+  const tCommon = useTranslations("common");
   const { token, user } = useAuth();
   const router = useRouter();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
@@ -57,11 +60,11 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
     try {
       const result = await api.bulkApproveDocuments(token, batchId, [...selected]);
       const failures = result.results.filter((r) => !r.success);
-      if (failures.length) setError(`${failures.length} document(s) could not be approved: ${failures[0].detail}`);
+      if (failures.length) setError(t("bulkApprovalPartialFailure", { count: failures.length, detail: failures[0].detail }));
       setSelected(new Set());
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bulk approval failed");
+      setError(err instanceof Error ? err.message : t("bulkApprovalFailed"));
     } finally {
       setBusy(false);
     }
@@ -69,7 +72,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
 
   async function handleBulkReject() {
     if (!token || selected.size === 0) return;
-    const reason = window.prompt("Reason for rejecting the selected documents:");
+    const reason = window.prompt(t("rejectReasonPrompt"));
     if (!reason) return;
     setBusy(true);
     setError(null);
@@ -78,7 +81,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
       setSelected(new Set());
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bulk rejection failed");
+      setError(err instanceof Error ? err.message : t("bulkRejectionFailed"));
     } finally {
       setBusy(false);
     }
@@ -90,7 +93,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
       await api.deleteDocument(token, documentId);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove file");
+      setError(err instanceof Error ? err.message : t("removeFailed"));
     }
   }
 
@@ -100,58 +103,58 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
       await api.reprocessDocument(token, documentId);
       setTimeout(refresh, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to retry");
+      setError(err instanceof Error ? err.message : t("retryFailed"));
     }
   }
 
-  if (!batch) return <p className="text-text-secondary">Loading…</p>;
+  if (!batch) return <p className="text-text-secondary">{tCommon("loading")}</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <button onClick={() => router.back()} className="text-sm text-navy hover:underline">
-            ← Back
+            ← {tCommon("back")}
           </button>
           <h1 className="text-xl font-semibold text-navy mt-1">
-            Batch #{batch.id} · {batch.category} · {new Date(batch.created_at).toLocaleString()}
+            {t("batchHeading", { id: batch.id, category: batch.category, date: new Date(batch.created_at).toLocaleString() })}
           </h1>
         </div>
         <a href={api.batchExportUrl(batch.id)} target="_blank" rel="noreferrer" className="text-sm text-navy hover:underline">
-          Export CSV
+          {t("exportCsv")}
         </a>
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-        <StatCard label="Total" value={batch.counts.total} />
-        <StatCard label="Extracted" value={batch.counts.extracted} tone="green" />
-        <StatCard label="Needs review" value={batch.counts.needs_review} tone="amber" />
-        <StatCard label="Duplicates" value={batch.counts.duplicates} tone="red" />
-        <StatCard label="Failed" value={batch.counts.failed} tone="red" />
-        <StatCard label="Approved" value={batch.counts.approved} tone="green" />
-        <StatCard label="Pending" value={batch.counts.pending_or_processing} />
+        <StatCard label={t("total")} value={batch.counts.total} />
+        <StatCard label={t("extracted")} value={batch.counts.extracted} tone="green" />
+        <StatCard label={t("needsReview")} value={batch.counts.needs_review} tone="amber" />
+        <StatCard label={t("duplicates")} value={batch.counts.duplicates} tone="red" />
+        <StatCard label={t("failed")} value={batch.counts.failed} tone="red" />
+        <StatCard label={t("approved")} value={batch.counts.approved} tone="green" />
+        <StatCard label={t("pending")} value={batch.counts.pending_or_processing} />
       </div>
 
       {canEdit && (
         <div className="flex items-center gap-2">
           <button onClick={toggleAllEligible} className="text-sm text-navy hover:underline">
-            Select all ready-to-approve
+            {t("selectAllReadyToApprove")}
           </button>
           <button
             onClick={handleBulkApprove}
             disabled={busy || selected.size === 0}
             className="rounded-md bg-green-600 text-white px-3 py-1.5 text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
           >
-            Approve selected ({selected.size})
+            {t("approveSelected", { count: selected.size })}
           </button>
           <button
             onClick={handleBulkReject}
             disabled={busy || selected.size === 0}
             className="rounded-md bg-red-600 text-white px-3 py-1.5 text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
           >
-            Reject selected
+            {t("rejectSelected")}
           </button>
         </div>
       )}
@@ -162,11 +165,11 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
           <thead>
             <tr>
               {canEdit && <th></th>}
-              <th>Document</th>
-              <th>Type</th>
-              <th className="text-right">Confidence</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th>{t("document")}</th>
+              <th>{t("type")}</th>
+              <th className="text-right">{t("confidence")}</th>
+              <th>{tCommon("status")}</th>
+              <th>{tCommon("actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -176,7 +179,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
                   <td>
                     <input
                       type="checkbox"
-                      aria-label={`Select document ${doc.id}`}
+                      aria-label={t("selectDocument", { id: doc.id })}
                       checked={selected.has(doc.id)}
                       onChange={() => toggle(doc.id)}
                       disabled={doc.status !== "extracted"}
@@ -198,12 +201,12 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
                 <td className="text-xs space-x-2">
                   {canEdit && doc.status === "failed" && (
                     <button onClick={() => handleRetry(doc.id)} className="text-navy hover:underline">
-                      Retry
+                      {t("retry")}
                     </button>
                   )}
                   {canEdit && doc.status !== "approved" && (
                     <button onClick={() => handleRemove(doc.id)} className="text-error hover:underline">
-                      Remove
+                      {t("remove")}
                     </button>
                   )}
                 </td>

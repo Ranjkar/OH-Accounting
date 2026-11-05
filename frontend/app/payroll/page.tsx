@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -8,6 +9,9 @@ import { api, Company, JsonReport } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function PayrollContent() {
+  const t = useTranslations("payroll");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -89,26 +93,22 @@ function PayrollContent() {
 
   async function correct(payslip: JsonReport) {
     if (!token) return;
-    const reason = window.prompt("Reason for correction?");
+    const reason = window.prompt(t("reasonForCorrection"));
     if (!reason) return;
     await api.correctPayslip(token, payslip.id, { reason, bonus_amount: "0" });
-    setMessage("Correction created -- the original payslip is voided, never deleted.");
+    setMessage(t("correctionCreatedNotice"));
     if (selectedRun) viewRun(selectedRun);
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Salarisadministratie</h1>
-      <p className="text-sm text-text-secondary">
-        Deterministic Dutch payroll calculation -- wage tax/national insurance is approximated from the same tax
-        brackets used elsewhere in this app, not an LLM. Figures are Decimal and never silently recalculated once
-        issued; corrections void the original and create a new, linked payslip.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("deterministicNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
-      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-        <option value="">Select a company</option>
+      <select aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -118,16 +118,16 @@ function PayrollContent() {
 
       {companyId && (
         <form onSubmit={createRun} className="card-v2 p-4 flex items-end gap-3">
-          <input aria-label="Period year" type="number" value={periodYear} onChange={(e) => setPeriodYear(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm w-24" />
-          <select aria-label="Period month" value={periodNumber} onChange={(e) => setPeriodNumber(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm">
+          <input aria-label={t("periodYear")} type="number" value={periodYear} onChange={(e) => setPeriodYear(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm w-24" />
+          <select aria-label={t("periodMonth")} value={periodNumber} onChange={(e) => setPeriodNumber(Number(e.target.value))} className="input-v2 px-3 py-2 text-sm">
             {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
               <option key={m} value={m}>
-                Month {m}
+                {t("monthNumber", { month: m })}
               </option>
             ))}
           </select>
           <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
-            Create payroll run
+            {t("createPayrollRun")}
           </button>
         </form>
       )}
@@ -138,8 +138,8 @@ function PayrollContent() {
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Period</th>
-                <th>Status</th>
+                <th>{t("period")}</th>
+                <th>{tCommon("status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -153,13 +153,13 @@ function PayrollContent() {
                   role="button"
                 >
                   <td className="text-text-primary">{run.period_type} {run.period_number}/{run.period_year}</td>
-                  <td className="text-text-secondary">{run.status}</td>
+                  <td className="text-text-secondary">{t(`runStatus.${run.status}` as never)}</td>
                 </tr>
               ))}
               {runs.length === 0 && (
                 <tr>
                   <td colSpan={2} className="text-text-secondary">
-                    No payroll runs yet.
+                    {t("noPayrollRunsYet")}
                   </td>
                 </tr>
               )}
@@ -172,41 +172,41 @@ function PayrollContent() {
           {selectedRun ? (
             <div className="space-y-3 text-sm">
               <h3 className="font-medium text-text-primary">
-                {selectedRun.period_type} {selectedRun.period_number}/{selectedRun.period_year} -- {selectedRun.status}
+                {selectedRun.period_type} {selectedRun.period_number}/{selectedRun.period_year} -- {t(`runStatus.${selectedRun.status}` as never)}
               </h3>
               {selectedRun.status === "DRAFT" && (
                 <div className="flex items-end gap-2">
-                  <select aria-label="Employee" value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-2 py-1.5 text-xs">
-                    <option value="">Employee</option>
+                  <select aria-label={t("employee")} value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-2 py-1.5 text-xs">
+                    <option value="">{t("employee")}</option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.full_name}
                       </option>
                     ))}
                   </select>
-                  <input aria-label="Bonus" value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder="Bonus" className="input-v2 px-2 py-1.5 text-xs w-20" />
+                  <input aria-label={t("bonus")} value={bonus} onChange={(e) => setBonus(e.target.value)} placeholder={t("bonus")} className="input-v2 px-2 py-1.5 text-xs w-20" />
                   <label className="flex items-center gap-1 text-xs">
-                    <input type="checkbox" checked={payHolidayAllowance} onChange={(e) => setPayHolidayAllowance(e.target.checked)} /> Holiday allowance
+                    <input type="checkbox" checked={payHolidayAllowance} onChange={(e) => setPayHolidayAllowance(e.target.checked)} /> {t("holidayAllowance")}
                   </label>
                   <button onClick={addPayslip} className="btn-secondary-v2 px-3 py-1.5 text-xs">
-                    Add payslip
+                    {t("addPayslip")}
                   </button>
                 </div>
               )}
               {payslips.map((p) => (
                 <div key={p.id} className="border border-border rounded-md p-2 flex items-center justify-between">
                   <span className="text-text-primary">
-                    #{p.id} {p.voided && <span className="value-negative">(voided)</span>}
-                    {p.corrects_payslip_id && <span className="text-text-secondary"> correction of #{p.corrects_payslip_id}</span>}
+                    #{p.id} {p.voided && <span className="value-negative">({t("voided")})</span>}
+                    {p.corrects_payslip_id && <span className="text-text-secondary"> {t("correctionOf", { id: p.corrects_payslip_id })}</span>}
                   </span>
-                  <span className="font-mono tabular-nums text-text-primary">{formatEUR(p.gross_salary)} → {formatEUR(p.net_salary)}</span>
+                  <span className="font-mono tabular-nums text-text-primary">{formatEUR(p.gross_salary, locale)} → {formatEUR(p.net_salary, locale)}</span>
                   <div className="flex items-center gap-2">
                     <a href={api.payslipPdfUrl(p.id)} target="_blank" rel="noreferrer" className="text-xs text-navy hover:underline">
                       PDF
                     </a>
                     {!p.voided && (
                       <button onClick={() => correct(p)} className="text-xs text-navy hover:underline">
-                        Correct
+                        {t("correct")}
                       </button>
                     )}
                   </div>
@@ -214,17 +214,17 @@ function PayrollContent() {
               ))}
               {selectedRun.status === "DRAFT" && (
                 <button onClick={approve} className="btn-primary-v2 px-3 py-1.5 text-xs">
-                  Approve run
+                  {t("approveRun")}
                 </button>
               )}
               {selectedRun.status === "APPROVED" && (
                 <button onClick={markPaid} className="btn-primary-v2 px-3 py-1.5 text-xs">
-                  Mark paid
+                  {t("markPaid")}
                 </button>
               )}
             </div>
           ) : (
-            <p className="text-sm text-text-secondary">Select a payroll run.</p>
+            <p className="text-sm text-text-secondary">{t("selectPayrollRun")}</p>
           )}
         </div>
       </div>

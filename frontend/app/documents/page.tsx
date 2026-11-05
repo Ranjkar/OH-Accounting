@@ -2,21 +2,23 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, DocumentStatus, DocumentSummary } from "@/lib/api";
 
-const STATUS_FILTERS: { value: DocumentStatus | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "needs_review", label: "Needs review" },
-  { value: "extracted", label: "Ready for review" },
-  { value: "approved", label: "Approved" },
-  { value: "failed", label: "Failed" },
+const STATUS_FILTERS: { value: DocumentStatus | "all"; key: string }[] = [
+  { value: "all", key: "all" },
+  { value: "needs_review", key: "needsReview" },
+  { value: "extracted", key: "readyForReview" },
+  { value: "approved", key: "approved" },
+  { value: "failed", key: "failed" },
 ];
 
 function DocumentsContent() {
+  const t = useTranslations("documents");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
@@ -47,7 +49,7 @@ function DocumentsContent() {
     e.target.value = "";
     if (!file || !token) return;
     if (!companyId) {
-      setError("Select a company before uploading.");
+      setError(t("selectCompanyFirst"));
       return;
     }
     setUploading(true);
@@ -56,7 +58,7 @@ function DocumentsContent() {
       await api.uploadDocument(token, file, Number(companyId));
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : t("uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -65,9 +67,9 @@ function DocumentsContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">Documents</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <label className="btn-primary-v2 px-4 py-2 text-sm cursor-pointer">
-          {uploading ? "Uploading…" : "Upload document"}
+          {uploading ? t("uploading") : t("uploadDocument")}
           <input
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.xlsx,.csv"
@@ -83,11 +85,11 @@ function DocumentsContent() {
       <div className="flex items-center gap-4">
         <select
           value={companyId}
-          aria-label="Company"
+          aria-label={t("companyLabel")}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">All companies</option>
+          <option value="">{t("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -105,7 +107,7 @@ function DocumentsContent() {
                   : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
-              {f.label}
+              {t(`statusFilters.${f.key}` as never)}
             </button>
           ))}
         </div>
@@ -114,7 +116,7 @@ function DocumentsContent() {
       <div className="card-v2 divide-y divide-border">
         {documents.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">
-            {companyId ? "No documents yet for this company." : "Select a company and upload a document to get started."}
+            {companyId ? t("noDocumentsForCompany") : t("selectAndUploadToStart")}
           </p>
         ) : (
           documents.map((doc) => (
@@ -126,9 +128,9 @@ function DocumentsContent() {
               <div>
                 <p className="font-medium text-navy">{doc.original_filename}</p>
                 <p className="text-sm text-text-secondary">
-                  {doc.document_type ?? "Unclassified"} ·{" "}
+                  {doc.document_type ?? t("unclassified")} ·{" "}
                   {new Date(doc.created_at).toLocaleString()}
-                  {doc.is_duplicate && <span className="text-error"> · duplicate</span>}
+                  {doc.is_duplicate && <span className="text-error"> · {t("duplicate")}</span>}
                 </p>
               </div>
               <DocumentStatusBadge status={doc.status} />

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassCard from "@/components/glass/GlassCard";
@@ -11,6 +12,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, ApiError, CompanyAccess } from "@/lib/api";
 
 function AcceptInvitationContent() {
+  const t = useTranslations("companyInvitations.accept");
   const { token, user } = useAuth();
   const searchParams = useSearchParams();
   const tokenParam = searchParams.get("token") ?? "";
@@ -25,31 +27,32 @@ function AcceptInvitationContent() {
     try {
       setResult(await api.acceptCompanyInvitation(token, tokenParam));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to accept invitation");
+      setError(e instanceof ApiError ? e.message : t("failed"));
     } finally {
       setBusy(false);
     }
   }
 
+  const email = user?.email ?? result?.email ?? "";
+
   return (
     <div className="max-w-lg mx-auto space-y-5">
       <GlassCard className="space-y-4">
-        <h1 className="text-lg font-semibold text-text-primary">Company access invitation</h1>
-        {!tokenParam && <p className="text-sm text-text-secondary">No invitation token was provided in this link.</p>}
+        <h1 className="text-lg font-semibold text-text-primary">{t("title")}</h1>
+        {!tokenParam && <p className="text-sm text-text-secondary">{t("noToken")}</p>}
         {error && <GlassErrorState message={error} />}
         {result ? (
           <p className="text-sm text-green-700">
-            Access granted -- signed in as {user?.email ?? result.email} now has access to this company. You can find it in your company list.
+            {t.rich("accessGranted", { email, e: (chunks) => <span dir="ltr">{chunks}</span> })}
           </p>
         ) : (
           tokenParam && (
             <>
               <p className="text-sm text-text-secondary">
-                You have been invited to access a company&apos;s books. Accept below with the account you are currently signed in as
-                ({user?.email}) -- the invitation must have been addressed to this exact email.
+                {t.rich("invitedBody", { email, e: (chunks) => <span dir="ltr">{chunks}</span> })}
               </p>
               <GlassButton onClick={handleAccept} loading={busy}>
-                Accept invitation
+                {t("acceptButton")}
               </GlassButton>
             </>
           )

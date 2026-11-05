@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -8,6 +9,8 @@ import { api, Company, JsonReport } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function EmployeesContent() {
+  const t = useTranslations("payroll");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -57,15 +60,12 @@ function EmployeesContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Employees</h1>
-      <p className="text-sm text-text-secondary">
-        BSN is encrypted at rest and only ever shown masked here -- it is never sent to the AI assistant or written
-        to a log.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("employees")}</h1>
+      <p className="text-sm text-text-secondary">{t("bsnEncryptionNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-        <option value="">Select a company</option>
+      <select aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -75,27 +75,27 @@ function EmployeesContent() {
 
       {companyId && (
         <form onSubmit={createEmployee} className="card-v2 p-4 space-y-3">
-          <h2 className="font-medium text-text-primary">Add employee</h2>
+          <h2 className="font-medium text-text-primary">{t("addEmployee")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input aria-label="Employee number" required value={employeeNumber} onChange={(e) => setEmployeeNumber(e.target.value)} placeholder="Employee number" className="input-v2 px-3 py-2 text-sm" />
-            <input aria-label="Full name" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className="input-v2 px-3 py-2 text-sm" />
-            <input aria-label="BSN (optional)" value={bsn} onChange={(e) => setBsn(e.target.value)} placeholder="BSN (optional)" className="input-v2 px-3 py-2 text-sm" />
-            <input aria-label="Employment start date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-            <select aria-label="Salary basis" value={salaryBasis} onChange={(e) => setSalaryBasis(e.target.value as "MONTHLY" | "HOURLY")} className="input-v2 px-3 py-2 text-sm">
-              <option value="MONTHLY">Monthly salary</option>
-              <option value="HOURLY">Hourly rate</option>
+            <input aria-label={t("employeeNumber")} required value={employeeNumber} onChange={(e) => setEmployeeNumber(e.target.value)} placeholder={t("employeeNumber")} className="input-v2 px-3 py-2 text-sm" />
+            <input aria-label={t("fullName")} required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("fullName")} className="input-v2 px-3 py-2 text-sm" />
+            <input aria-label={t("bsnOptional")} value={bsn} onChange={(e) => setBsn(e.target.value)} placeholder={t("bsnOptional")} className="input-v2 px-3 py-2 text-sm" />
+            <input aria-label={t("employmentStartDate")} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <select aria-label={t("salaryBasis")} value={salaryBasis} onChange={(e) => setSalaryBasis(e.target.value as "MONTHLY" | "HOURLY")} className="input-v2 px-3 py-2 text-sm">
+              <option value="MONTHLY">{t("monthlySalary")}</option>
+              <option value="HOURLY">{t("hourlyRate")}</option>
             </select>
             {salaryBasis === "MONTHLY" ? (
-              <input aria-label="Monthly salary (EUR)" required value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder="Monthly salary (EUR)" className="input-v2 px-3 py-2 text-sm" />
+              <input aria-label={t("monthlySalaryEur")} required value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder={t("monthlySalaryEur")} className="input-v2 px-3 py-2 text-sm" />
             ) : (
-              <input aria-label="Hourly rate (EUR)" required value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder="Hourly rate (EUR)" className="input-v2 px-3 py-2 text-sm" />
+              <input aria-label={t("hourlyRateEur")} required value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder={t("hourlyRateEur")} className="input-v2 px-3 py-2 text-sm" />
             )}
           </div>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={isDga} onChange={(e) => setIsDga(e.target.checked)} /> Director-shareholder (DGA)
+            <input type="checkbox" checked={isDga} onChange={(e) => setIsDga(e.target.checked)} /> {t("director")}
           </label>
           <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
-            Add employee
+            {t("addEmployee")}
           </button>
         </form>
       )}
@@ -105,11 +105,11 @@ function EmployeesContent() {
         <table className="table-v3">
           <thead>
             <tr>
-              <th>Number</th>
-              <th>Name</th>
-              <th>BSN</th>
-              <th className="text-right">Salary</th>
-              <th>DGA</th>
+              <th>{t("number")}</th>
+              <th>{tCommon("name")}</th>
+              <th>{t("bsn")}</th>
+              <th className="text-right">{t("salary")}</th>
+              <th>{t("dga")}</th>
             </tr>
           </thead>
           <tbody>
@@ -118,14 +118,14 @@ function EmployeesContent() {
                 <td className="text-text-secondary">{emp.employee_number}</td>
                 <td className="text-text-primary">{emp.full_name}</td>
                 <td className="font-mono text-xs text-text-secondary">{emp.bsn_masked ?? "—"}</td>
-                <td className="col-amount">{emp.salary_basis === "MONTHLY" ? formatEUR(emp.monthly_salary) : `${formatEUR(emp.hourly_rate)}/hr`}</td>
-                <td>{emp.is_dga ? "Yes" : ""}</td>
+                <td className="col-amount">{emp.salary_basis === "MONTHLY" ? formatEUR(emp.monthly_salary) : t("perHour", { amount: formatEUR(emp.hourly_rate) })}</td>
+                <td>{emp.is_dga ? tCommon("yes") : ""}</td>
               </tr>
             ))}
             {employees.length === 0 && (
               <tr>
                 <td colSpan={5} className="text-text-secondary">
-                  No employees yet.
+                  {t("noEmployeesYet")}
                 </td>
               </tr>
             )}

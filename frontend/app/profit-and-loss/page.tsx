@@ -1,29 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
-const PNL_LINES: { key: string; label: string; highlight?: boolean }[] = [
-  { key: "revenue", label: "Revenue" },
-  { key: "cost_of_sales", label: "Cost of sales" },
-  { key: "gross_profit", label: "Gross profit", highlight: true },
-  { key: "operating_expenses", label: "Operating expenses" },
-  { key: "uncategorized_expenses", label: "Uncategorized expenses" },
-  { key: "personnel_expenses", label: "Personnel expenses" },
-  { key: "ebitda", label: "EBITDA", highlight: true },
-  { key: "depreciation", label: "Depreciation" },
-  { key: "ebit", label: "EBIT", highlight: true },
-  { key: "interest_expense", label: "Interest expense" },
-  { key: "profit_before_tax", label: "Profit before tax" },
-  { key: "tax_expense", label: "Tax expense" },
-  { key: "net_profit", label: "Net profit", highlight: true },
+/** labelKey resolved against the "profitAndLoss" namespace at render
+ * time -- this is a plain module-level array, not a component, so it
+ * can't call useTranslations() itself (same pattern as navConfig.ts). */
+const PNL_LINES: { key: string; labelKey: string; highlight?: boolean }[] = [
+  { key: "revenue", labelKey: "revenue" },
+  { key: "cost_of_sales", labelKey: "costOfSales" },
+  { key: "gross_profit", labelKey: "grossProfit", highlight: true },
+  { key: "operating_expenses", labelKey: "operatingExpenses" },
+  { key: "uncategorized_expenses", labelKey: "uncategorizedExpenses" },
+  { key: "personnel_expenses", labelKey: "personnelExpenses" },
+  { key: "ebitda", labelKey: "ebitda", highlight: true },
+  { key: "depreciation", labelKey: "depreciation" },
+  { key: "ebit", labelKey: "ebit", highlight: true },
+  { key: "interest_expense", labelKey: "interestExpense" },
+  { key: "profit_before_tax", labelKey: "profitBeforeTax" },
+  { key: "tax_expense", labelKey: "taxExpense" },
+  { key: "net_profit", labelKey: "netProfit", highlight: true },
 ];
 
 function PnlContent() {
+  const t = useTranslations("profitAndLoss");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -49,32 +55,29 @@ function PnlContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Profit &amp; Loss</h1>
-      <p className="text-sm text-text-secondary">
-        All figures are accrual-basis actuals from the ledger, never an estimate. Revenue and cost-of-sales categories
-        are only split out when transactions have been tagged with that category.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("subtitle")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <select value={periodType} aria-label="Period Type" onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
-          <option value="MONTHLY">Monthly</option>
-          <option value="QUARTERLY">Quarterly</option>
-          <option value="ANNUAL">Annual</option>
+        <select value={periodType} aria-label={t("periodType")} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
+          <option value="MONTHLY">{t("monthly")}</option>
+          <option value="QUARTERLY">{t("quarterly")}</option>
+          <option value="ANNUAL">{t("annual")}</option>
         </select>
-        <input type="date" value={referenceDate} aria-label="Reference Date" onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-        <select value={compare} aria-label="Compare" onChange={(e) => setCompare(e.target.value as typeof compare)} className="input-v2 px-3 py-2 text-sm">
-          <option value="">No comparison</option>
-          <option value="previous">vs previous period</option>
-          <option value="year_on_year">vs same period last year</option>
+        <input type="date" value={referenceDate} aria-label={t("referenceDate")} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+        <select value={compare} aria-label={t("compare")} onChange={(e) => setCompare(e.target.value as typeof compare)} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{t("noComparison")}</option>
+          <option value="previous">{t("vsPreviousPeriod")}</option>
+          <option value="year_on_year">{t("vsSamePeriodLastYear")}</option>
         </select>
         {companyId && (
           <div className="flex items-center gap-2 ms-auto text-xs">
@@ -84,7 +87,7 @@ function PnlContent() {
                 href={api.pnlReportUrl(Number(companyId), periodType, referenceDate, fmt)}
                 className="input-v2 px-2 py-1 hover:bg-muted"
               >
-                Export {fmt.toUpperCase()}
+                {t("exportFormat", { format: fmt.toUpperCase() })}
               </a>
             ))}
           </div>
@@ -97,11 +100,11 @@ function PnlContent() {
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Line</th>
-                <th className="text-right">Current</th>
-                {comparisonKey && <th className="text-right">{compare === "previous" ? "Previous period" : "Same period last year"}</th>}
-                {comparisonKey && <th className="text-right">Change</th>}
-                {comparisonKey && <th className="text-right">% change</th>}
+                <th>{t("line")}</th>
+                <th className="text-right">{t("current")}</th>
+                {comparisonKey && <th className="text-right">{compare === "previous" ? t("previousPeriod") : t("samePeriodLastYear")}</th>}
+                {comparisonKey && <th className="text-right">{t("change")}</th>}
+                {comparisonKey && <th className="text-right">{t("percentChange")}</th>}
               </tr>
             </thead>
             <tbody>
@@ -109,13 +112,13 @@ function PnlContent() {
                 const comparison = comparisonKey ? report.comparison?.[line.key] : null;
                 return (
                   <tr key={line.key} className={line.highlight ? "bg-muted font-medium" : ""}>
-                    <td className="text-text-primary">{line.label}</td>
+                    <td className="text-text-primary">{t(line.labelKey as never)}</td>
                     <td className="col-amount">{formatEUR(report.current[line.key])}</td>
                     {comparisonKey && <td className="col-amount text-text-secondary">{formatEUR(comparison?.previous ?? 0)}</td>}
                     {comparisonKey && <td className="col-amount">{formatEUR(comparison?.change ?? 0)}</td>}
                     {comparisonKey && (
                       <td className={`col-amount ${comparison?.change_pct && Number(comparison.change_pct) < 0 ? "value-negative" : "value-positive"}`}>
-                        {comparison?.change_pct !== null && comparison?.change_pct !== undefined ? `${comparison.change_pct}%` : "n/a"}
+                        {comparison?.change_pct !== null && comparison?.change_pct !== undefined ? `${comparison.change_pct}%` : t("notApplicable")}
                       </td>
                     )}
                   </tr>

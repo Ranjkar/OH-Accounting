@@ -1,12 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, AssistantResponse, Company } from "@/lib/api";
 
 function AssistantContent() {
+  const t = useTranslations("assistant");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -26,7 +29,7 @@ function AssistantContent() {
     try {
       setResponse(await action());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "The assistant could not answer that");
+      setError(err instanceof Error ? err.message : t("couldNotAnswer"));
     } finally {
       setLoading(false);
     }
@@ -40,11 +43,9 @@ function AssistantContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Accountant Assistant</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
       <p className="text-sm text-text-secondary max-w-2xl">
-        The assistant explains and summarizes using the figures already computed by the accounting engine. It
-        cannot change, approve, or lock any record, and it is instructed never to state a number that isn&apos;t
-        in the underlying facts.
+        {t("pageExplainer")}
       </p>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
@@ -52,11 +53,11 @@ function AssistantContent() {
       <div className="card-v2 p-5 space-y-4">
         <select
           value={companyId}
-          aria-label="Company"
+          aria-label={tCommon("company")}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
           className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">Select a company…</option>
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -70,24 +71,24 @@ function AssistantContent() {
             onClick={() => companyId && run(() => api.assistantCompanySummary(token!, Number(companyId)))}
             className="input-v2 px-3 py-1.5 text-sm hover:bg-muted transition-colors disabled:opacity-50"
           >
-            Summarize financial position
+            {t("summarizeFinancialPosition")}
           </button>
           <button
             disabled={!companyId || loading}
             onClick={() => companyId && run(() => api.assistantMissingDocuments(token!, Number(companyId)))}
             className="input-v2 px-3 py-1.5 text-sm hover:bg-muted transition-colors disabled:opacity-50"
           >
-            Identify missing documents
+            {t("identifyMissingDocuments")}
           </button>
         </div>
 
         <form onSubmit={handleAsk} className="flex items-end gap-3">
           <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium text-text-secondary">Ask a question</label>
+            <label className="text-xs font-medium text-text-secondary">{t("askAQuestion")}</label>
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="e.g. Why does this company have overdue payments?"
+              placeholder={t("askExamplePlaceholder")}
               className="w-full input-v2 px-3 py-2 text-sm"
             />
           </div>
@@ -96,7 +97,7 @@ function AssistantContent() {
             disabled={!companyId || loading}
             className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50"
           >
-            {loading ? "Thinking…" : "Ask"}
+            {loading ? t("thinking") : t("ask")}
           </button>
         </form>
       </div>
@@ -108,8 +109,8 @@ function AssistantContent() {
             {response.disclaimer}
           </div>
           <details className="text-xs text-text-secondary">
-            <summary className="cursor-pointer hover:text-navy">View underlying facts (what the assistant was given)</summary>
-            <pre className="mt-2 overflow-x-auto bg-muted rounded-md p-3 text-xs">{JSON.stringify(response.facts, null, 2)}</pre>
+            <summary className="cursor-pointer hover:text-navy">{t("viewUnderlyingFacts")}</summary>
+            <pre className="mt-2 overflow-x-auto bg-muted rounded-md p-3 text-xs" dir="ltr">{JSON.stringify(response.facts, null, 2)}</pre>
           </details>
         </div>
       )}

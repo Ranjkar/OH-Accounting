@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -8,6 +9,9 @@ import { api, Company, JsonReport } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function WorkingCapitalContent() {
+  const t = useTranslations("workingCapital");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -39,32 +43,32 @@ function WorkingCapitalContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Working Capital</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <input type="date" value={asOfDate} aria-label="As Of Date" onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+        <input type="date" value={asOfDate} aria-label={t("asOfDate")} onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
       </div>
 
       {companyId && (
         <>
           {alerts.length > 0 && (
             <div className="card-v2 rounded-lg border border-red-200 p-4">
-              <h2 className="font-medium text-error mb-2">Payment delay alerts</h2>
+              <h2 className="font-medium text-error mb-2">{t("paymentDelayAlerts")}</h2>
               {alerts.map((a) => (
                 <div key={a.transaction_id} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
                   <span>
-                    {a.counterparty_name} -- invoice #{a.transaction_id} ({a.days_overdue} days overdue)
+                    {t("alertLine", { counterparty: a.counterparty_name, invoiceId: a.transaction_id, days: a.days_overdue })}
                   </span>
-                  <span className="font-mono">{formatEUR(a.remaining_balance)}</span>
+                  <span className="font-mono">{formatEUR(a.remaining_balance, locale)}</span>
                   <span className="text-xs text-text-secondary">{a.alert_reason}</span>
                 </div>
               ))}
@@ -73,44 +77,44 @@ function WorkingCapitalContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Customer payment behavior</h2>
-              {customerBehavior.length === 0 && <p className="text-sm text-text-secondary">No fully-settled invoices yet.</p>}
+              <h2 className="font-medium text-text-primary mb-2">{t("customerPaymentBehavior")}</h2>
+              {customerBehavior.length === 0 && <p className="text-sm text-text-secondary">{t("noSettledInvoicesYet")}</p>}
               {customerBehavior.map((c) => (
                 <p key={c.counterparty_name} className="text-sm">
-                  {c.counterparty_name}: <span className="font-mono">{c.average_days_to_pay}</span> days avg ({c.invoices_settled} invoices)
+                  {t("avgDaysToPay", { name: c.counterparty_name, days: c.average_days_to_pay, count: c.invoices_settled })}
                 </p>
               ))}
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Supplier payment trends</h2>
-              {supplierTrends.length === 0 && <p className="text-sm text-text-secondary">No fully-settled purchase invoices yet.</p>}
+              <h2 className="font-medium text-text-primary mb-2">{t("supplierPaymentTrends")}</h2>
+              {supplierTrends.length === 0 && <p className="text-sm text-text-secondary">{t("noSettledPurchaseInvoicesYet")}</p>}
               {supplierTrends.map((s) => (
                 <p key={s.counterparty_name} className="text-sm">
-                  {s.counterparty_name}: <span className="font-mono">{s.average_days_to_pay}</span> days avg ({s.invoices_settled} invoices)
+                  {t("avgDaysToPay", { name: s.counterparty_name, days: s.average_days_to_pay, count: s.invoices_settled })}
                 </p>
               ))}
             </div>
           </div>
 
           <div className="card-v2 p-4">
-            <h2 className="font-medium text-text-primary mb-2">Working capital trend (6 months)</h2>
+            <h2 className="font-medium text-text-primary mb-2">{t("workingCapitalTrend")}</h2>
             <div className="overflow-x-auto">
             <table className="table-v3">
               <thead>
                 <tr>
-                  <th>Month end</th>
-                  <th className="text-right">AR</th>
-                  <th className="text-right">AP</th>
-                  <th className="text-right">Net working capital</th>
+                  <th>{t("monthEnd")}</th>
+                  <th className="text-right">{t("ar")}</th>
+                  <th className="text-right">{t("ap")}</th>
+                  <th className="text-right">{t("netWorkingCapital")}</th>
                 </tr>
               </thead>
               <tbody>
-                {trend.map((t) => (
-                  <tr key={t.period_end}>
-                    <td className="text-text-secondary">{t.period_end}</td>
-                    <td className="col-amount">{formatEUR(t.accounts_receivable)}</td>
-                    <td className="col-amount">{formatEUR(t.accounts_payable)}</td>
-                    <td className="col-amount font-medium">{formatEUR(t.net_working_capital)}</td>
+                {trend.map((row) => (
+                  <tr key={row.period_end}>
+                    <td className="text-text-secondary">{row.period_end}</td>
+                    <td className="col-amount">{formatEUR(row.accounts_receivable, locale)}</td>
+                    <td className="col-amount">{formatEUR(row.accounts_payable, locale)}</td>
+                    <td className="col-amount font-medium">{formatEUR(row.net_working_capital, locale)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -120,18 +124,18 @@ function WorkingCapitalContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Cash conversion cycle</h2>
+              <h2 className="font-medium text-text-primary mb-2">{t("cashConversionCycle")}</h2>
               {ccc && (
                 <>
-                  <p className="text-sm">DSO: <span className="font-mono">{ccc.days_sales_outstanding ?? "n/a"}</span></p>
-                  <p className="text-sm">DPO: <span className="font-mono">{ccc.days_payable_outstanding ?? "n/a"}</span></p>
-                  <p className="text-sm">DIO: <span className="font-mono">n/a</span></p>
+                  <p className="text-sm">DSO: <span className="font-mono">{ccc.days_sales_outstanding ?? t("notApplicable")}</span></p>
+                  <p className="text-sm">DPO: <span className="font-mono">{ccc.days_payable_outstanding ?? t("notApplicable")}</span></p>
+                  <p className="text-sm">DIO: <span className="font-mono">{t("notApplicable")}</span></p>
                   <p className="text-xs text-pending mt-1">{ccc.missing_data}</p>
                 </>
               )}
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Customer concentration</h2>
+              <h2 className="font-medium text-text-primary mb-2">{t("customerConcentration")}</h2>
               {customerConcentration?.top_customers?.map((c: JsonReport) => (
                 <p key={c.counterparty_name} className="text-sm">
                   {c.counterparty_name}: {c.pct_of_total}%
@@ -140,7 +144,7 @@ function WorkingCapitalContent() {
               {customerConcentration?.missing_data && <p className="text-xs text-pending">{customerConcentration.missing_data}</p>}
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Supplier dependency</h2>
+              <h2 className="font-medium text-text-primary mb-2">{t("supplierDependency")}</h2>
               {supplierDependency?.top_expense_categories?.map((c: JsonReport) => (
                 <p key={c.category} className="text-sm">
                   {c.category}: {c.pct_of_total}%

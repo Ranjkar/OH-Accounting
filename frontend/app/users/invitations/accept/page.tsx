@@ -3,10 +3,12 @@
 import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
 function AcceptUserInvitationContent() {
+  const t = useTranslations("users.acceptInvitation");
   const searchParams = useSearchParams();
   const router = useRouter();
   const { login } = useAuth();
@@ -23,7 +25,7 @@ function AcceptUserInvitationContent() {
     e.preventDefault();
     if (!token) return;
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwordMismatch"));
       return;
     }
     setBusy(true);
@@ -36,7 +38,7 @@ function AcceptUserInvitationContent() {
       await login(created.email, password);
       router.push("/");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to accept this invitation");
+      setError(e instanceof ApiError ? e.message : t("failedToAcceptInvitation"));
     } finally {
       setBusy(false);
     }
@@ -46,37 +48,37 @@ function AcceptUserInvitationContent() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="card-v2 p-6 w-full max-w-sm space-y-4">
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Join OnHolland</h1>
-          <p className="text-sm text-text-secondary mt-1">You&apos;ve been invited to join an organisation. Set up your account below.</p>
+          <h1 className="text-lg font-semibold text-text-primary">{t("title")}</h1>
+          <p className="text-sm text-text-secondary mt-1">{t("subtitle")}</p>
         </div>
 
-        {!token && <p className="text-sm text-error">No invitation token was provided in this link.</p>}
+        {!token && <p className="text-sm text-error">{t("noToken")}</p>}
         {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
         {token && !done && (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
-              <label htmlFor="full-name" className="text-xs font-medium text-text-secondary">Full name</label>
+              <label htmlFor="full-name" className="text-xs font-medium text-text-secondary">{t("fullNameLabel")}</label>
               <input id="full-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="input-v2 w-full px-3 py-2 text-sm" />
             </div>
             <div className="space-y-1">
-              <label htmlFor="password" className="text-xs font-medium text-text-secondary">Password</label>
+              <label htmlFor="password" className="text-xs font-medium text-text-secondary">{t("passwordLabel")}</label>
               <input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="input-v2 w-full px-3 py-2 text-sm" />
             </div>
             <div className="space-y-1">
-              <label htmlFor="confirm-password" className="text-xs font-medium text-text-secondary">Confirm password</label>
+              <label htmlFor="confirm-password" className="text-xs font-medium text-text-secondary">{t("confirmPasswordLabel")}</label>
               <input id="confirm-password" type="password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="input-v2 w-full px-3 py-2 text-sm" />
             </div>
             <button type="submit" disabled={busy} className="btn-primary-v2 w-full px-4 py-2 text-sm disabled:opacity-50">
-              {busy ? "Creating account…" : "Create account & sign in"}
+              {busy ? t("creatingAccount") : t("createAccountButton")}
             </button>
           </form>
         )}
 
-        {done && <p className="text-sm text-green-700">Account created -- signing you in…</p>}
+        {done && <p className="text-sm text-green-700">{t("accountCreatedSigningIn")}</p>}
 
         <p className="text-xs text-text-secondary text-center">
-          Already have an account? <Link href="/login" className="text-navy hover:underline">Sign in</Link>
+          {t("alreadyHaveAccount")} <Link href="/login" className="text-navy hover:underline">{t("signIn")}</Link>
         </p>
       </div>
     </div>

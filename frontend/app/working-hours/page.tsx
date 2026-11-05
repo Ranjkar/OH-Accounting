@@ -1,12 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport } from "@/lib/api";
 
 function WorkingHoursContent() {
+  const t = useTranslations("workingHours");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -64,13 +67,13 @@ function WorkingHoursContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Working Hours</h1>
-      <p className="text-sm text-text-secondary">Employee timesheets with a submit/approve/reject audit trail.</p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("pageExplainer")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -78,8 +81,8 @@ function WorkingHoursContent() {
           ))}
         </select>
         {companyId && (
-          <select value={employeeId} aria-label="Employee" onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-            <option value="">Select an employee</option>
+          <select value={employeeId} aria-label={t("employee")} onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+            <option value="">{t("selectEmployee")}</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.full_name}
@@ -92,16 +95,16 @@ function WorkingHoursContent() {
       {employeeId && (
         <>
           <form onSubmit={createEntry} className="card-v2 p-4 flex items-end gap-3">
-            <input type="date" value={entryDate} aria-label="Entry Date" onChange={(e) => setEntryDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
-            <select value={entryType} aria-label="Entry Type" onChange={(e) => setEntryType(e.target.value)} className="input-v2 px-3 py-2 text-sm">
-              <option value="WORKED">Worked</option>
-              <option value="HOLIDAY">Holiday</option>
-              <option value="SICK">Sick</option>
-              <option value="ABSENCE">Absence</option>
+            <input type="date" value={entryDate} aria-label={t("entryDate")} onChange={(e) => setEntryDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <select value={entryType} aria-label={t("entryType")} onChange={(e) => setEntryType(e.target.value)} className="input-v2 px-3 py-2 text-sm">
+              <option value="WORKED">{t("worked")}</option>
+              <option value="HOLIDAY">{t("holiday")}</option>
+              <option value="SICK">{t("sick")}</option>
+              <option value="ABSENCE">{t("absence")}</option>
             </select>
-            <input value={hours} aria-label="Hours" onChange={(e) => setHours(e.target.value)} placeholder="Hours" className="input-v2 px-3 py-2 text-sm w-24" />
+            <input value={hours} aria-label={t("hours")} onChange={(e) => setHours(e.target.value)} placeholder={t("hours")} className="input-v2 px-3 py-2 text-sm w-24" />
             <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
-              Log entry
+              {t("logEntry")}
             </button>
           </form>
 
@@ -110,10 +113,10 @@ function WorkingHoursContent() {
             <table className="table-v3">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th className="text-right">Hours</th>
-                  <th>Status</th>
+                  <th>{tCommon("date")}</th>
+                  <th>{t("type")}</th>
+                  <th className="text-right">{t("hours")}</th>
+                  <th>{tCommon("status")}</th>
                   <th />
                 </tr>
               </thead>
@@ -127,16 +130,16 @@ function WorkingHoursContent() {
                     <td className="text-xs">
                       {entry.status === "DRAFT" && (
                         <button onClick={() => submit(entry)} className="text-navy hover:underline">
-                          Submit
+                          {t("submit")}
                         </button>
                       )}
                       {entry.status === "SUBMITTED" && (
                         <span className="flex gap-2">
                           <button onClick={() => approve(entry)} className="text-navy hover:underline">
-                            Approve
+                            {t("approve")}
                           </button>
                           <button onClick={() => reject(entry)} className="text-error hover:underline">
-                            Reject
+                            {t("reject")}
                           </button>
                         </span>
                       )}
@@ -146,7 +149,7 @@ function WorkingHoursContent() {
                 {entries.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-text-secondary">
-                      No entries yet.
+                      {t("noEntriesYet")}
                     </td>
                   </tr>
                 )}

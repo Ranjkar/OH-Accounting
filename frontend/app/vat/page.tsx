@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -14,6 +15,8 @@ import { api, Company, FinancialYear, VatReturn } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function LockControl({ companyId, fy, onChange }: { companyId: number; fy: FinancialYear; onChange: (fy: FinancialYear) => void }) {
+  const t = useTranslations("vat");
+  const tErrors = useTranslations("errors");
   const { token } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,7 @@ function LockControl({ companyId, fy, onChange }: { companyId: number; fy: Finan
       const updated = fy.is_locked ? await api.unlockFinancialYear(token, companyId, fy.id) : await api.lockFinancialYear(token, companyId, fy.id);
       onChange(updated);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed");
+      setError(e instanceof Error ? e.message : tErrors("generic"));
     } finally {
       setBusy(false);
     }
@@ -36,16 +39,18 @@ function LockControl({ companyId, fy, onChange }: { companyId: number; fy: Finan
     <div className="flex items-center gap-2">
       {error && <span className="text-xs value-negative">{error}</span>}
       <span className={`text-xs font-medium rounded-full px-2.5 py-1 ${fy.is_locked ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}>
-        {fy.is_locked ? "Locked" : "Open"}
+        {fy.is_locked ? t("locked") : t("open")}
       </span>
       <GlassButton size="sm" variant="secondary" onClick={toggle} disabled={busy}>
-        {busy ? "…" : fy.is_locked ? "Unlock" : "Lock"}
+        {busy ? "…" : fy.is_locked ? t("unlock") : t("lock")}
       </GlassButton>
     </div>
   );
 }
 
 function VatContent() {
+  const t = useTranslations("vat");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -76,12 +81,12 @@ function VatContent() {
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader title="VAT Overview" subtitle="Per financial year, per period -- locking a financial year blocks new or corrected ledger postings dated within it." />
+      <GlassPageHeader title={t("title")} subtitle={t("subtitle")} />
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
-        <option value="">Select a company</option>
+      <GlassSelect aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -92,19 +97,19 @@ function VatContent() {
       {financialYears.map((fy) => (
         <GlassPanel
           key={fy.id}
-          title={`Financial year ${fy.year}`}
+          title={t("financialYear", { year: fy.year })}
           actions={<LockControl companyId={Number(companyId)} fy={fy} onChange={(updated) => setFinancialYears((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))} />}
         >
           <div className="overflow-x-auto">
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Period</th>
-                <th>Filing deadline</th>
-                <th className="text-right">VAT due (5a)</th>
-                <th className="text-right">Deductible (5b)</th>
-                <th className="text-right">Net payable</th>
-                <th>Status</th>
+                <th>{t("period")}</th>
+                <th>{t("filingDeadline")}</th>
+                <th className="text-right">{t("vatDue")}</th>
+                <th className="text-right">{t("deductible")}</th>
+                <th className="text-right">{t("netPayable")}</th>
+                <th>{tCommon("status")}</th>
               </tr>
             </thead>
             <tbody>

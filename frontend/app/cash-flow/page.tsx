@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -8,6 +9,7 @@ import { api, CashFlowForecast, Company, JsonReport } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function CashFlowContent() {
+  const t = useTranslations("cashFlow");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -38,13 +40,13 @@ function CashFlowContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">Cash Flow</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <div className="flex items-center gap-2 text-sm">
           <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}>
-            Forecast
+            {t("forecast")}
           </button>
           <button onClick={() => setTab("statement")} className={`rounded-full px-3 py-1 ${tab === "statement" ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}>
-            Statement (actual)
+            {t("statementActual")}
           </button>
         </div>
       </div>
@@ -54,7 +56,7 @@ function CashFlowContent() {
       <div className="flex items-center gap-3">
         <select
           value={companyId}
-          aria-label="Company"
+          aria-label={t("companyLabel")}
           onChange={(e) => {
             setCompanyId(e.target.value ? Number(e.target.value) : "");
             if (!e.target.value) {
@@ -64,7 +66,7 @@ function CashFlowContent() {
           }}
           className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">Select a company</option>
+          <option value="">{t("selectCompanyOption")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -73,12 +75,12 @@ function CashFlowContent() {
         </select>
         {tab === "statement" && (
           <>
-            <select value={periodType} aria-label="Period Type" onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
-              <option value="MONTHLY">Monthly</option>
-              <option value="QUARTERLY">Quarterly</option>
-              <option value="ANNUAL">Annual</option>
+            <select value={periodType} aria-label={t("periodTypeLabel")} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
+              <option value="MONTHLY">{t("periodMonthly")}</option>
+              <option value="QUARTERLY">{t("periodQuarterly")}</option>
+              <option value="ANNUAL">{t("periodAnnual")}</option>
             </select>
-            <input type="date" value={referenceDate} aria-label="Reference Date" onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <input type="date" value={referenceDate} aria-label={t("referenceDateLabel")} onChange={(e) => setReferenceDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
           </>
         )}
       </div>
@@ -87,32 +89,32 @@ function CashFlowContent() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
-              <p className="text-xs text-text-secondary">Operating activities (net)</p>
+              <p className="text-xs text-text-secondary">{t("operatingActivitiesNet")}</p>
               <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.operating_activities.net)}</p>
-              <p className="text-xs text-text-secondary">Receipts {formatEUR(statement.operating_activities.receipts)} / Payments {formatEUR(statement.operating_activities.payments)}</p>
+              <p className="text-xs text-text-secondary">{t("receiptsPayments", { receipts: formatEUR(statement.operating_activities.receipts), payments: formatEUR(statement.operating_activities.payments) })}</p>
             </div>
             <div className="card-v2 p-4">
-              <p className="text-xs text-text-secondary">Investing activities (net)</p>
+              <p className="text-xs text-text-secondary">{t("investingActivitiesNet")}</p>
               <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.investing_activities.net)}</p>
               <p className="text-xs text-text-secondary">{statement.investing_activities.note}</p>
             </div>
             <div className="card-v2 p-4">
-              <p className="text-xs text-text-secondary">Financing activities (net)</p>
+              <p className="text-xs text-text-secondary">{t("financingActivitiesNet")}</p>
               <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.financing_activities.net)}</p>
               <p className="text-xs text-text-secondary">{statement.financing_activities.note}</p>
             </div>
           </div>
           <div className="card-v2 p-4">
-            <p className="text-sm font-medium text-navy">Net change in cash: <span className="font-mono">{formatEUR(statement.net_change_in_cash)}</span></p>
+            <p className="text-sm font-medium text-navy">{t("netChangeInCash")} <span className="font-mono">{formatEUR(statement.net_change_in_cash)}</span></p>
           </div>
           <div className="card-v2 p-4">
-            <h2 className="font-medium text-text-primary mb-2">Accrual vs cash reconciliation</h2>
-            <p className="text-sm">Net profit (accrual): <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.net_profit_accrual)}</span></p>
-            <p className="text-sm">+ Depreciation addback: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.depreciation_addback)}</span></p>
-            <p className="text-sm">- Increase in AR: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_receivable)}</span></p>
-            <p className="text-sm">+ Increase in AP: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_payable)}</span></p>
-            <p className="text-sm font-medium">≈ Approx operating cash: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.approx_operating_cash_from_accrual)}</span></p>
-            <p className="text-sm font-medium">Actual operating cash: <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.actual_operating_cash)}</span></p>
+            <h2 className="font-medium text-text-primary mb-2">{t("accrualVsCashHeading")}</h2>
+            <p className="text-sm">{t("netProfitAccrual")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.net_profit_accrual)}</span></p>
+            <p className="text-sm">{t("depreciationAddback")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.depreciation_addback)}</span></p>
+            <p className="text-sm">{t("increaseInAR")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_receivable)}</span></p>
+            <p className="text-sm">{t("increaseInAP")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_payable)}</span></p>
+            <p className="text-sm font-medium">{t("approxOperatingCash")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.approx_operating_cash_from_accrual)}</span></p>
+            <p className="text-sm font-medium">{t("actualOperatingCash")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.actual_operating_cash)}</span></p>
             <p className="text-xs text-pending mt-2">{statement.accrual_vs_cash_reconciliation.note}</p>
           </div>
         </div>
@@ -122,47 +124,47 @@ function CashFlowContent() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
-              <p className="text-xs text-text-secondary">Actual -- net bank movement to date</p>
+              <p className="text-xs text-text-secondary">{t("actualNetBankMovement")}</p>
               <p className="text-2xl font-semibold text-navy font-mono">{formatEUR(forecast.net_bank_transaction_movement)}</p>
               <p className="text-xs text-pending mt-1">{forecast.net_bank_transaction_movement_disclaimer}</p>
             </div>
             <div className="card-v2 p-4">
-              <p className="text-xs text-text-secondary">Confirmed -- outstanding invoices</p>
+              <p className="text-xs text-text-secondary">{t("confirmedOutstandingInvoices")}</p>
               <p className="text-sm">
-                {forecast.outstanding_sales_invoice_count} sales / {forecast.outstanding_purchase_invoice_count} purchase
+                {t("salesPurchaseCount", { sales: forecast.outstanding_sales_invoice_count, purchases: forecast.outstanding_purchase_invoice_count })}
               </p>
               <p className="text-sm font-mono mt-1">
                 +{formatEUR(forecast.expected_incoming_total)} / -{formatEUR(forecast.expected_outgoing_total)}
               </p>
             </div>
             <div className="card-v2 p-4">
-              <p className="text-xs text-text-secondary">AI-estimated -- recurring expenses</p>
-              <p className="text-sm font-mono">{formatEUR(forecast.recurring_expenses_monthly_equivalent)} / month</p>
-              <p className="text-xs text-text-secondary">{forecast.recurring_pattern_count} pattern(s) detected</p>
+              <p className="text-xs text-text-secondary">{t("aiEstimatedRecurringExpenses")}</p>
+              <p className="text-sm font-mono">{t("perMonth", { amount: formatEUR(forecast.recurring_expenses_monthly_equivalent) })}</p>
+              <p className="text-xs text-text-secondary">{t("patternsDetected", { count: forecast.recurring_pattern_count })}</p>
             </div>
           </div>
 
           <div className="card-v2 p-4">
-            <p className="text-sm font-medium text-navy">Forecast VAT position</p>
+            <p className="text-sm font-medium text-navy">{t("forecastVatPosition")}</p>
             <p className="text-sm font-mono mt-1">
-              Payable: {formatEUR(forecast.forecast_vat_payable)} · Refundable: {formatEUR(forecast.forecast_vat_refundable)}
+              {t("payableRefundable", { payable: formatEUR(forecast.forecast_vat_payable), refundable: formatEUR(forecast.forecast_vat_refundable) })}
             </p>
             <p className="text-xs text-pending mt-1">{forecast.forecast_vat_disclaimer}</p>
           </div>
 
           <div className="card-v2 overflow-hidden">
             <div className="p-4 pb-0 flex items-center justify-between">
-              <h2 className="font-medium text-text-primary">Monthly projection</h2>
-              <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">Estimate, not a confirmed balance</span>
+              <h2 className="font-medium text-text-primary">{t("monthlyProjection")}</h2>
+              <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t("estimateNotConfirmed")}</span>
             </div>
             <div className="overflow-x-auto">
             <table className="table-v3">
               <thead>
                 <tr>
-                  <th>Month</th>
-                  <th className="text-right">Expected incoming</th>
-                  <th className="text-right">Expected outgoing</th>
-                  <th className="text-right">Net</th>
+                  <th>{t("colMonth")}</th>
+                  <th className="text-right">{t("expectedIncoming")}</th>
+                  <th className="text-right">{t("expectedOutgoing")}</th>
+                  <th className="text-right">{t("colNet")}</th>
                 </tr>
               </thead>
               <tbody>

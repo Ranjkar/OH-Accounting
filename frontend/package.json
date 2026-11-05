@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "check:i18n": "node scripts/check-translation-parity.mjs",
+    "check:i18n-unused": "node scripts/check-unused-translations.mjs",
+    "merge:i18n-fragments": "node scripts/merge-i18n-fragments.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

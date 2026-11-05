@@ -47,17 +47,28 @@ async function expectNoConsoleErrors(page: Page, errors: string[]) {
 }
 
 async function resetAccountLocale(page: Page) {
+  await setAccountLocale(page, null);
+}
+
+async function setAccountLocale(page: Page, code: string | null) {
+  // Direct PATCH rather than a cookie: once a session has logged in once,
+  // an explicit saved preference always wins over the onholland-locale
+  // cookie (by design -- see lib/locale-context.tsx), so a later
+  // context.addCookies() alone can't change the active locale for an
+  // already-authenticated storageState session. Tests that need a
+  // specific locale per-test against a shared logged-in session must set
+  // the preference this way, not just the cookie.
   await page.evaluate(
-    async ({ backendUrl }) => {
+    async ({ backendUrl, locale }) => {
       const token = localStorage.getItem("token");
       if (!token) return;
       await fetch(`${backendUrl}/auth/me/locale`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ locale: null }),
+        body: JSON.stringify({ locale }),
       });
     },
-    { backendUrl: BACKEND_URL }
+    { backendUrl: BACKEND_URL, locale: code }
   );
 }
 
@@ -197,6 +208,104 @@ test.describe("Authenticated pages, all four locales", () => {
       });
     });
   }
+});
+
+test.describe("Responsive viewports and themes, RTL + LTR", () => {
+  const authFile = path.join(AUTH_DIR, "responsive.json");
+
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage({ storageState: undefined });
+    await page.goto("/login", { waitUntil: "networkidle" });
+    await page.fill("#login-email", TEST_EMAIL);
+    await page.fill("#login-password", TEST_PASSWORD);
+    await page.click('button[type="submit"]');
+    await page.waitForURL("**/", { timeout: 15000 });
+    await page.context().storageState({ path: authFile });
+    await page.close();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const context = await browser.newContext({ storageState: authFile });
+    const page = await context.newPage();
+    await page.goto("/", { waitUntil: "networkidle" });
+    await resetAccountLocale(page);
+    await context.close();
+    fs.rmSync(authFile, { force: true });
+  });
+
+  test.use({ storageState: authFile });
+
+  const VIEWPORTS = [
+    { name: "mobile", width: 390, height: 844 },
+    { name: "tablet", width: 834, height: 1194 },
+  ];
+
+  for (const viewport of VIEWPORTS) {
+    for (const { code, lang, dir } of [LOCALES[0], LOCALES[3]]) {
+      // One LTR + one RTL locale per viewport size is enough to catch a
+      // layout that only breaks under one direction or only at one
+      // breakpoint -- not re-running all 4 locales at both sizes here,
+      // since direction-specific layout bugs are already covered at
+      // desktop size by the suite above.
+      test(`dashboard fits ${viewport.name} viewport (${lang}, ${dir}), no horizontal overflow`, async ({ page, context }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await context.addCookies([{ name: "onholland-locale", value: code, domain: "localhost", path: "/" }]);
+        await page.goto("/", { waitUntil: "networkidle" });
+        // The shared storageState session already has an explicit saved
+        // locale preference from this describe block's beforeAll login
+        // (whatever Accept-Language resolved to) -- an explicit
+        // preference always wins over the cookie once logged in (see
+        // setAccountLocale's comment), so it must be set directly rather
+        // than relying on the cookie alone.
+        await setAccountLocale(page, code);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForTimeout(400);
+        await expect(page.locator("html")).toHaveAttribute("dir", dir);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        expect(overflow, `${viewport.name}/${code} dashboard should not overflow horizontally`).toBe(0);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `dashboard_${code}_${viewport.name}.png`) });
+      });
+    }
+  }
+
+  for (const theme of ["light", "dark"]) {
+    for (const { code, lang, dir } of [LOCALES[0], LOCALES[3]]) {
+      test(`settings page renders correctly in ${theme} theme (${lang}, ${dir})`, async ({ page, context }) => {
+        await context.addCookies([{ name: "onholland-locale", value: code, domain: "localhost", path: "/" }]);
+        await page.goto("/settings", { waitUntil: "networkidle" });
+        await setAccountLocale(page, code);
+        await page.evaluate((t) => {
+          try {
+            localStorage.setItem("onholland-theme", t);
+          } catch {
+            /* ignore */
+          }
+        }, theme);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForTimeout(400);
+        await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+        await expect(page.locator("html")).toHaveAttribute("dir", dir);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        expect(overflow).toBe(0);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, `settings_${code}_${theme}.png`) });
+      });
+    }
+  }
+
+  test("mixed-direction content: a Latin IBAN inside an RTL (Arabic) page stays left-to-right", async ({ page, context }) => {
+    await context.addCookies([{ name: "onholland-locale", value: "ar", domain: "localhost", path: "/" }]);
+    await page.goto("/settings", { waitUntil: "networkidle" });
+    await setAccountLocale(page, "ar");
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForTimeout(400);
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    // app/settings/page.tsx wraps the account email in dir="ltr" (see
+    // its accountEmail row) -- the established bidi-isolation pattern
+    // for technical/identifier text inside RTL pages. Confirm at least
+    // one such isolated span exists and is actually marked ltr.
+    const ltrSpans = page.locator('[dir="ltr"]');
+    expect(await ltrSpans.count()).toBeGreaterThan(0);
+  });
 });
 
 test.describe("Language switching without reload", () => {

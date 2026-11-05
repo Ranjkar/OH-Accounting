@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -19,6 +20,7 @@ import { formatEUR } from "@/lib/format";
 type Tab = "profile" | "payslips" | "statement" | "hours";
 
 function ProfileTab() {
+  const t = useTranslations("employeePortal");
   const { token } = useAuth();
   const [profile, setProfile] = useState<JsonReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +44,11 @@ function ProfileTab() {
         </div>
       </div>
       <dl className="space-y-2 text-sm">
-        <Row label="Job title" value={profile.job_title ? String(profile.job_title) : "—"} />
-        <Row label="Department" value={profile.department ? String(profile.department) : "—"} />
-        <Row label="Contracted hours/week" value={profile.contracted_hours_per_week ? String(profile.contracted_hours_per_week) : "—"} />
-        <Row label="Employment start" value={String(profile.employment_start_date)} />
-        <Row label="Employment end" value={profile.employment_end_date ? String(profile.employment_end_date) : "Active"} />
+        <Row label={t("jobTitle")} value={profile.job_title ? String(profile.job_title) : "—"} />
+        <Row label={t("department")} value={profile.department ? String(profile.department) : "—"} />
+        <Row label={t("contractedHoursPerWeek")} value={profile.contracted_hours_per_week ? String(profile.contracted_hours_per_week) : "—"} />
+        <Row label={t("employmentStart")} value={String(profile.employment_start_date)} />
+        <Row label={t("employmentEnd")} value={profile.employment_end_date ? String(profile.employment_end_date) : t("active")} />
       </dl>
     </GlassCard>
   );
@@ -62,6 +64,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function PayslipsTab() {
+  const t = useTranslations("employeePortal");
   const { token } = useAuth();
   const [payslips, setPayslips] = useState<JsonReport[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,17 +75,17 @@ function PayslipsTab() {
 
   if (error) return <GlassErrorState message={error} />;
   if (!payslips) return <GlassLoadingState rows={3} />;
-  if (payslips.length === 0) return <GlassEmptyState title="No payslips yet" icon={<IconDocuments size={28} />} />;
+  if (payslips.length === 0) return <GlassEmptyState title={t("noPayslipsYet")} icon={<IconDocuments size={28} />} />;
 
   return (
-    <GlassPanel title="My Payslips">
+    <GlassPanel title={t("myPayslips")}>
       <div className="overflow-x-auto">
       <table className="table-v3">
         <thead>
           <tr>
-            <th>Payslip</th>
-            <th className="text-right">Gross</th>
-            <th className="text-right">Net</th>
+            <th>{t("payslip")}</th>
+            <th className="text-right">{t("gross")}</th>
+            <th className="text-right">{t("net")}</th>
             <th></th>
           </tr>
         </thead>
@@ -90,7 +93,7 @@ function PayslipsTab() {
           {payslips.map((p) => (
             <tr key={String(p.id)}>
               <td className="text-text-primary">
-                #{String(p.id)} {p.voided ? <span className="value-negative">(voided)</span> : null}
+                #{String(p.id)} {p.voided ? <span className="value-negative">({t("voided")})</span> : null}
               </td>
               <td className="col-amount">{formatEUR(String(p.gross_salary))}</td>
               <td className="col-amount font-medium">{formatEUR(String(p.net_salary))}</td>
@@ -109,6 +112,8 @@ function PayslipsTab() {
 }
 
 function StatementTab() {
+  const t = useTranslations("employeePortal");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [taxYear, setTaxYear] = useState(new Date().getFullYear());
   const [statement, setStatement] = useState<JsonReport | null>(null);
@@ -122,7 +127,7 @@ function StatementTab() {
     try {
       setStatement(await api.myAnnualStatement(token, taxYear));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load statement");
+      setError(e instanceof Error ? e.message : t("couldNotLoadStatement"));
     } finally {
       setLoading(false);
     }
@@ -131,9 +136,9 @@ function StatementTab() {
   return (
     <GlassCard padding="lg" className="max-w-lg space-y-4">
       <div className="flex items-end gap-2">
-        <GlassInput aria-label="Tax year" type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
+        <GlassInput aria-label={t("taxYear")} type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
         <GlassButton onClick={load} disabled={loading} size="sm">
-          {loading ? "Loading…" : "View my annual statement"}
+          {loading ? tCommon("loading") : t("viewMyAnnualStatement")}
         </GlassButton>
         {statement && (
           <a href={api.myAnnualStatementPdfUrl(taxYear)} target="_blank" rel="noreferrer" className="btn-secondary-v2 px-3 py-1.5 text-xs">
@@ -144,10 +149,10 @@ function StatementTab() {
       {error && <GlassErrorState message={error} />}
       {statement && (
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Row label="Payslips included" value={String(statement.number_of_payslips)} />
-          <Row label="Gross salary" value={formatEUR(statement.gross_salary)} />
-          <Row label="Net salary paid" value={formatEUR(statement.net_salary)} />
-          <Row label="Wage tax + NI withheld" value={formatEUR(statement.wage_tax_and_national_insurance)} />
+          <Row label={t("payslipsIncluded")} value={String(statement.number_of_payslips)} />
+          <Row label={t("grossSalary")} value={formatEUR(statement.gross_salary)} />
+          <Row label={t("netSalaryPaid")} value={formatEUR(statement.net_salary)} />
+          <Row label={t("wageTaxWithheld")} value={formatEUR(statement.wage_tax_and_national_insurance)} />
         </div>
       )}
     </GlassCard>
@@ -155,6 +160,7 @@ function StatementTab() {
 }
 
 function HoursTab() {
+  const t = useTranslations("employeePortal");
   const { token } = useAuth();
   const [entries, setEntries] = useState<JsonReport[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +183,7 @@ function HoursTab() {
       await api.createMyTimesheetEntry(token, { employee_id: employeeId, entry_date: entryDate, entry_type: entryType, hours });
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit entry");
+      setError(err instanceof Error ? err.message : t("couldNotSubmitEntry"));
     }
   }
 
@@ -192,16 +198,16 @@ function HoursTab() {
       {error && <GlassErrorState message={error} />}
       <GlassCard>
         <form onSubmit={submitEntry} className="flex flex-wrap items-end gap-2">
-          <GlassInput aria-label="Entry date" type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
-          <GlassSelect aria-label="Entry type" value={entryType} onChange={(e) => setEntryType(e.target.value)}>
-            <option value="WORKED">Worked</option>
-            <option value="HOLIDAY">Holiday</option>
-            <option value="SICK">Sick</option>
-            <option value="ABSENCE">Absence</option>
+          <GlassInput aria-label={t("entryDate")} type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
+          <GlassSelect aria-label={t("entryType")} value={entryType} onChange={(e) => setEntryType(e.target.value)}>
+            <option value="WORKED">{t("entryTypeWorked")}</option>
+            <option value="HOLIDAY">{t("entryTypeHoliday")}</option>
+            <option value="SICK">{t("entryTypeSick")}</option>
+            <option value="ABSENCE">{t("entryTypeAbsence")}</option>
           </GlassSelect>
-          <GlassInput aria-label="Hours" type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} className="w-24" />
+          <GlassInput aria-label={t("hours")} type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} className="w-24" />
           <GlassButton type="submit" size="sm">
-            Log entry
+            {t("logEntry")}
           </GlassButton>
         </form>
       </GlassCard>
@@ -209,20 +215,20 @@ function HoursTab() {
       {entries === null ? (
         <GlassLoadingState rows={2} />
       ) : entries.length === 0 ? (
-        <GlassEmptyState title="No hours logged yet" icon={<IconClock size={28} />} />
+        <GlassEmptyState title={t("noHoursLoggedYet")} icon={<IconClock size={28} />} />
       ) : (
-        <GlassPanel title="My Hours">
+        <GlassPanel title={t("myHours")}>
           <ul className="divide-y divide-white/30">
             {entries.map((entry) => (
               <li key={String(entry.id)} className="flex items-center justify-between px-5 py-3 text-sm">
                 <span>
-                  {String(entry.entry_date)} · {String(entry.entry_type)} · {String(entry.hours)}h
+                  {String(entry.entry_date)} · {String(entry.entry_type)} · {t("hoursSuffix", { hours: String(entry.hours) })}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-text-secondary">{String(entry.status)}</span>
                   {entry.status === "DRAFT" && (
                     <GlassButton size="sm" variant="secondary" onClick={() => submitForApproval(Number(entry.id))}>
-                      Submit
+                      {t("submit")}
                     </GlassButton>
                   )}
                 </div>
@@ -236,17 +242,18 @@ function HoursTab() {
 }
 
 function EmployeePortalContent() {
+  const t = useTranslations("employeePortal");
   const [tab, setTab] = useState<Tab>("profile");
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader title="My Workspace" subtitle="Your own employee records only -- scoped entirely by your account, with no company-wide access." />
+      <GlassPageHeader title={t("myWorkspace")} subtitle={t("myWorkspaceSubtitle")} />
       <GlassTabs
         tabs={[
-          { value: "profile", label: "Profile" },
-          { value: "payslips", label: "Payslips" },
-          { value: "statement", label: "Annual Statement" },
-          { value: "hours", label: "My Hours" },
+          { value: "profile", label: t("profile") },
+          { value: "payslips", label: t("payslips") },
+          { value: "statement", label: t("annualStatement") },
+          { value: "hours", label: t("myHours") },
         ]}
         value={tab}
         onChange={setTab}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -30,6 +31,9 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function LoonheffingenContent() {
+  const t = useTranslations("payroll");
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -68,7 +72,7 @@ function LoonheffingenContent() {
     try {
       setDeclaration(await api.createLoonheffingenDeclaration(token, selectedRun.id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create declaration");
+      setError(e instanceof Error ? e.message : t("createDeclarationFailed"));
     } finally {
       setBusy(false);
     }
@@ -81,7 +85,7 @@ function LoonheffingenContent() {
     try {
       setDeclaration(await action(token, declaration.id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed");
+      setError(e instanceof Error ? e.message : tErrors("generic"));
     } finally {
       setBusy(false);
     }
@@ -89,15 +93,12 @@ function LoonheffingenContent() {
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader
-        title="Payroll Tax (Loonheffingen)"
-        subtitle="Draft → Validation → Accountant Review → Approved → Ready for Submission → Submitted → Accepted/Rejected. There is no live SBR/Digipoort connection -- submission and government response are only ever recorded from what you explicitly tell this system happened outside it."
-      />
+      <GlassPageHeader title={t("loonheffingenTitle")} subtitle={t("loonheffingenSubtitle")} />
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
-        <option value="">Select a company</option>
+      <GlassSelect aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -107,16 +108,16 @@ function LoonheffingenContent() {
 
       {companyId && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <GlassPanel title="Payroll runs">
+          <GlassPanel title={t("payrollRuns")}>
             {runs.length === 0 ? (
-              <GlassEmptyState title="No payroll runs yet" description="Create one from Payroll Runs & Payslips first." icon={<IconTax size={28} />} />
+              <GlassEmptyState title={t("noPayrollRunsYet")} description={t("createOneFromPayrollFirst")} icon={<IconTax size={28} />} />
             ) : (
               <div className="overflow-x-auto">
               <table className="table-v3">
                 <thead>
                   <tr>
-                    <th>Period</th>
-                    <th>Status</th>
+                    <th>{t("period")}</th>
+                    <th>{tCommon("status")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -143,80 +144,80 @@ function LoonheffingenContent() {
 
           <GlassCard>
             {!selectedRun ? (
-              <p className="text-sm text-text-secondary">Select a payroll run to view or create its declaration.</p>
+              <p className="text-sm text-text-secondary">{t("selectRunPrompt")}</p>
             ) : !declaration ? (
               <div className="space-y-3">
                 <p className="text-sm text-text-primary">
-                  Run: {selectedRun.period_type} {selectedRun.period_number}/{selectedRun.period_year}
+                  {t("runLabel", { type: selectedRun.period_type, number: selectedRun.period_number, year: selectedRun.period_year })}
                 </p>
                 <GlassButton onClick={createDeclaration} disabled={busy} size="sm">
-                  {busy ? "Creating…" : "Create declaration"}
+                  {busy ? t("creatingEllipsis") : t("createDeclaration")}
                 </GlassButton>
               </div>
             ) : (
               <div className="space-y-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-text-primary">Declaration #{declaration.id}</h3>
+                  <h3 className="font-medium text-text-primary">{t("declarationHash", { id: declaration.id })}</h3>
                   <StatusBadge status={String(declaration.status)} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <p className="flex justify-between"><span className="text-text-secondary">Gross wages</span><span className="font-mono">€{String(declaration.total_gross_wages)}</span></p>
-                  <p className="flex justify-between"><span className="text-text-secondary">Wage tax withheld</span><span className="font-mono">€{String(declaration.total_wage_tax_withheld)}</span></p>
-                  <p className="flex justify-between"><span className="text-text-secondary">Employer premiums</span><span className="font-mono">€{String(declaration.total_employer_premiums)}</span></p>
-                  <p className="flex justify-between font-medium"><span>Total payable</span><span className="font-mono">€{String(declaration.total_payable)}</span></p>
+                  <p className="flex justify-between"><span className="text-text-secondary">{t("grossWages")}</span><span className="font-mono">€{String(declaration.total_gross_wages)}</span></p>
+                  <p className="flex justify-between"><span className="text-text-secondary">{t("wageTaxWithheld")}</span><span className="font-mono">€{String(declaration.total_wage_tax_withheld)}</span></p>
+                  <p className="flex justify-between"><span className="text-text-secondary">{t("employerPremiums")}</span><span className="font-mono">€{String(declaration.total_employer_premiums)}</span></p>
+                  <p className="flex justify-between font-medium"><span>{t("totalPayable")}</span><span className="font-mono">€{String(declaration.total_payable)}</span></p>
                 </div>
                 {declaration.validation_errors && <GlassErrorState message={String(declaration.validation_errors)} />}
 
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
                   {["DRAFT", "VALIDATION"].includes(String(declaration.status)) && (
                     <GlassButton size="sm" disabled={busy} onClick={() => act(api.validateLoonheffingenDeclaration)}>
-                      Run validation
+                      {t("runValidation")}
                     </GlassButton>
                   )}
                   {declaration.status === "ACCOUNTANT_REVIEW" && (
                     <GlassButton size="sm" disabled={busy} onClick={() => act(api.approveLoonheffingenDeclaration)}>
-                      Approve
+                      {t("approveDeclaration")}
                     </GlassButton>
                   )}
                   {declaration.status === "APPROVED" && (
                     <GlassButton size="sm" disabled={busy} onClick={() => act(api.markLoonheffingenReadyForSubmission)}>
-                      Mark ready for submission
+                      {t("markReadyForSubmission")}
                     </GlassButton>
                   )}
                 </div>
 
                 {declaration.status === "READY_FOR_SUBMISSION" && (
                   <div className="flex items-end gap-2 pt-2 border-t border-border">
-                    <GlassInput aria-label="Submission reference" placeholder="SBR/Digipoort kenmerk from your filing software" value={submissionRef} onChange={(e) => setSubmissionRef(e.target.value)} className="flex-1" />
+                    <GlassInput aria-label={t("submissionReference")} placeholder={t("submissionReferencePlaceholder")} value={submissionRef} onChange={(e) => setSubmissionRef(e.target.value)} className="flex-1" />
                     <GlassButton
                       size="sm"
                       disabled={busy || !submissionRef.trim()}
-                      onClick={() => act((t, id) => api.recordLoonheffingenSubmission(t, id, submissionRef))}
+                      onClick={() => act((tok, id) => api.recordLoonheffingenSubmission(tok, id, submissionRef))}
                     >
-                      Record submission
+                      {t("recordSubmission")}
                     </GlassButton>
                   </div>
                 )}
 
                 {declaration.status === "SUBMITTED" && (
                   <div className="space-y-2 pt-2 border-t border-border">
-                    <GlassInput aria-label="Government response reference" placeholder="Belastingdienst response reference" value={responseRef} onChange={(e) => setResponseRef(e.target.value)} />
-                    <GlassInput aria-label="Rejection reason" placeholder="Rejection reason (only if rejecting)" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
+                    <GlassInput aria-label={t("governmentResponseReference")} placeholder={t("governmentResponseReferencePlaceholder")} value={responseRef} onChange={(e) => setResponseRef(e.target.value)} />
+                    <GlassInput aria-label={t("rejectionReason")} placeholder={t("rejectionReasonPlaceholder")} value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
                     <div className="flex gap-2">
                       <GlassButton
                         size="sm"
                         disabled={busy || !responseRef.trim()}
-                        onClick={() => act((t, id) => api.recordLoonheffingenGovernmentResponse(t, id, { accepted: true, response_reference: responseRef }))}
+                        onClick={() => act((tok, id) => api.recordLoonheffingenGovernmentResponse(tok, id, { accepted: true, response_reference: responseRef }))}
                       >
-                        Record accepted
+                        {t("recordAccepted")}
                       </GlassButton>
                       <GlassButton
                         variant="danger"
                         size="sm"
                         disabled={busy || !responseRef.trim() || !rejectionReason.trim()}
-                        onClick={() => act((t, id) => api.recordLoonheffingenGovernmentResponse(t, id, { accepted: false, response_reference: responseRef, rejection_reason: rejectionReason }))}
+                        onClick={() => act((tok, id) => api.recordLoonheffingenGovernmentResponse(tok, id, { accepted: false, response_reference: responseRef, rejection_reason: rejectionReason }))}
                       >
-                        Record rejected
+                        {t("recordRejected")}
                       </GlassButton>
                     </div>
                   </div>

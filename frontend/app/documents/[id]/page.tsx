@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
@@ -20,17 +21,20 @@ function FieldInput({
   value,
   onChange,
   type = "text",
+  dir,
 }: {
   label: string;
   value: string | number | null;
   onChange: (v: string) => void;
   type?: string;
+  dir?: "ltr";
 }) {
   return (
     <div className="space-y-1">
       <label className="text-xs font-medium text-text-secondary">{label}</label>
       <input
         type={type}
+        dir={dir}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         className="w-full input-v2 px-2.5 py-1.5 text-sm"
@@ -40,6 +44,9 @@ function FieldInput({
 }
 
 function DocumentReviewContent({ documentId }: { documentId: number }) {
+  const t = useTranslations("documents");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token, user } = useAuth();
   const router = useRouter();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
@@ -95,7 +102,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
       await api.updateDocumentFields(token, documentId, form);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save corrections");
+      setError(err instanceof Error ? err.message : t("saveCorrectionsFailed"));
     } finally {
       setSaving(false);
     }
@@ -107,19 +114,19 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
       await api.approveDocument(token, documentId);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to approve");
+      setError(err instanceof Error ? err.message : t("approveFailed"));
     }
   }
 
   async function handleReject() {
     if (!token) return;
-    const reason = window.prompt("Reason for rejection:");
+    const reason = window.prompt(t("reasonForRejection"));
     if (!reason) return;
     try {
       await api.rejectDocument(token, documentId, reason);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reject");
+      setError(err instanceof Error ? err.message : t("rejectFailed"));
     }
   }
 
@@ -129,7 +136,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
       await api.reprocessDocument(token, documentId);
       setTimeout(refresh, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reprocess");
+      setError(err instanceof Error ? err.message : t("reprocessFailed"));
     }
   }
 
@@ -139,11 +146,11 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
       await api.reassignDocument(token, documentId, { company_id: newCompanyId });
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reassign");
+      setError(err instanceof Error ? err.message : t("reassignFailed"));
     }
   }
 
-  if (!doc) return <p className="text-text-secondary">Loading…</p>;
+  if (!doc) return <p className="text-text-secondary">{tCommon("loading")}</p>;
 
   const isImage = doc.content_type.startsWith("image/");
   const isPdf = doc.content_type === "application/pdf";
@@ -154,7 +161,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
       <div className="flex items-center justify-between">
         <div>
           <button onClick={() => router.push("/documents")} className="text-sm text-navy hover:underline">
-            ← Back to documents
+            {t("backToDocuments")}
           </button>
           <h1 className="text-xl font-semibold text-navy mt-1">{doc.original_filename}</h1>
         </div>
@@ -165,7 +172,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
 
       {doc.error_message && (
         <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">
-          Processing error: {doc.error_message}
+          {t("processingError", { message: doc.error_message })}
         </div>
       )}
 
@@ -173,20 +180,20 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
         {/* Left: preview */}
         <div className="card-v2 overflow-hidden">
           <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
-            <span className="text-sm font-medium text-navy">Original document</span>
-            <span className="text-xs text-text-secondary">
+            <span className="text-sm font-medium text-navy">{t("originalDocument")}</span>
+            <span className="text-xs text-text-secondary" dir="ltr">
               {doc.content_type} · {(doc.file_size / 1024).toFixed(0)} KB
             </span>
           </div>
           <div className="h-[600px] bg-muted flex items-center justify-center">
-            {!fileUrl && <p className="text-sm text-text-secondary">Loading preview…</p>}
-            {fileUrl && isPdf && <iframe src={fileUrl} className="w-full h-full" title="document preview" />}
+            {!fileUrl && <p className="text-sm text-text-secondary">{t("loadingPreview")}</p>}
+            {fileUrl && isPdf && <iframe src={fileUrl} className="w-full h-full" title={t("documentPreview")} />}
             {fileUrl && isImage && (
-              <img src={fileUrl} alt="document preview" className="max-w-full max-h-full object-contain" />
+              <img src={fileUrl} alt={t("documentPreview")} className="max-w-full max-h-full object-contain" />
             )}
             {fileUrl && !isPdf && !isImage && (
               <a href={fileUrl} download className="text-navy hover:underline text-sm">
-                Download file to view
+                {t("downloadFileToView")}
               </a>
             )}
           </div>
@@ -196,12 +203,12 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
         <div className="space-y-4">
           <div className="card-v2 p-4 flex items-center justify-between">
             <div className="text-sm">
-              <span className="text-text-secondary">Classification: </span>
-              <span className="font-medium text-navy">{doc.document_type ?? "Unclassified"}</span>
+              <span className="text-text-secondary">{t("classification")}: </span>
+              <span className="font-medium text-navy">{doc.document_type ?? t("unclassified")}</span>
             </div>
             {doc.classification_confidence !== null && (
               <span className="text-xs text-text-secondary">
-                Confidence: {(doc.classification_confidence * 100).toFixed(0)}%
+                {t("confidence", { pct: (doc.classification_confidence * 100).toFixed(0) })}
               </span>
             )}
           </div>
@@ -210,7 +217,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
             <div className="space-y-1.5">
               {doc.validation_results.map((v, i) => (
                 <div key={i} className={`rounded-md border px-3 py-2 text-sm ${SEVERITY_STYLES[v.severity]}`}>
-                  <span className="font-medium uppercase text-xs me-2">{v.severity}</span>
+                  <span className="font-medium uppercase text-xs me-2">{t(`severity.${v.severity}` as never)}</span>
                   {v.message}
                 </div>
               ))}
@@ -218,30 +225,30 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
           )}
 
           <form onSubmit={handleSaveCorrections} className="card-v2 p-4 space-y-4">
-            <h2 className="text-sm font-medium text-text-primary">Extracted fields</h2>
+            <h2 className="text-sm font-medium text-text-primary">{t("extractedFields")}</h2>
             <div className="grid grid-cols-2 gap-3">
-              <FieldInput label="Invoice number" value={form.invoice_number ?? null} onChange={(v) => setField("invoice_number", v)} />
-              <FieldInput label="Invoice date" type="date" value={form.invoice_date ?? null} onChange={(v) => setField("invoice_date", v)} />
-              <FieldInput label="Due date" type="date" value={form.due_date ?? null} onChange={(v) => setField("due_date", v)} />
-              <FieldInput label="Currency" value={form.currency ?? null} onChange={(v) => setField("currency", v)} />
-              <FieldInput label="Supplier name" value={form.supplier_name ?? null} onChange={(v) => setField("supplier_name", v)} />
-              <FieldInput label="Supplier VAT number" value={form.supplier_vat_number ?? null} onChange={(v) => setField("supplier_vat_number", v)} />
-              <FieldInput label="Customer name" value={form.customer_name ?? null} onChange={(v) => setField("customer_name", v)} />
-              <FieldInput label="Customer VAT number" value={form.customer_vat_number ?? null} onChange={(v) => setField("customer_vat_number", v)} />
-              <FieldInput label="IBAN" value={form.iban ?? null} onChange={(v) => setField("iban", v)} />
-              <FieldInput label="Credit note reference" value={form.credit_note_reference ?? null} onChange={(v) => setField("credit_note_reference", v)} />
+              <FieldInput label={t("invoiceNumber")} value={form.invoice_number ?? null} onChange={(v) => setField("invoice_number", v)} />
+              <FieldInput label={t("invoiceDate")} type="date" value={form.invoice_date ?? null} onChange={(v) => setField("invoice_date", v)} />
+              <FieldInput label={t("dueDate")} type="date" value={form.due_date ?? null} onChange={(v) => setField("due_date", v)} />
+              <FieldInput label={t("currency")} value={form.currency ?? null} onChange={(v) => setField("currency", v)} dir="ltr" />
+              <FieldInput label={t("supplierName")} value={form.supplier_name ?? null} onChange={(v) => setField("supplier_name", v)} />
+              <FieldInput label={t("supplierVatNumber")} value={form.supplier_vat_number ?? null} onChange={(v) => setField("supplier_vat_number", v)} dir="ltr" />
+              <FieldInput label={t("customerName")} value={form.customer_name ?? null} onChange={(v) => setField("customer_name", v)} />
+              <FieldInput label={t("customerVatNumber")} value={form.customer_vat_number ?? null} onChange={(v) => setField("customer_vat_number", v)} dir="ltr" />
+              <FieldInput label={t("iban")} value={form.iban ?? null} onChange={(v) => setField("iban", v)} dir="ltr" />
+              <FieldInput label={t("creditNoteReference")} value={form.credit_note_reference ?? null} onChange={(v) => setField("credit_note_reference", v)} dir="ltr" />
             </div>
 
-            <h3 className="text-xs font-semibold text-text-secondary uppercase pt-2">VAT breakdown</h3>
+            <h3 className="text-xs font-semibold text-text-secondary uppercase pt-2">{t("vatBreakdown")}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <FieldInput label="Net amount" type="number" value={form.net_amount ?? null} onChange={(v) => setField("net_amount", v ? Number(v) : null)} />
-              <FieldInput label="VAT rate %" type="number" value={form.vat_rate ?? null} onChange={(v) => setField("vat_rate", v ? Number(v) : null)} />
-              <FieldInput label="VAT amount" type="number" value={form.vat_amount ?? null} onChange={(v) => setField("vat_amount", v ? Number(v) : null)} />
-              <FieldInput label="Gross amount" type="number" value={form.gross_amount ?? null} onChange={(v) => setField("gross_amount", v ? Number(v) : null)} />
+              <FieldInput label={t("netAmount")} type="number" value={form.net_amount ?? null} onChange={(v) => setField("net_amount", v ? Number(v) : null)} />
+              <FieldInput label={t("vatRatePct")} type="number" value={form.vat_rate ?? null} onChange={(v) => setField("vat_rate", v ? Number(v) : null)} />
+              <FieldInput label={t("vatAmount")} type="number" value={form.vat_amount ?? null} onChange={(v) => setField("vat_amount", v ? Number(v) : null)} />
+              <FieldInput label={t("grossAmount")} type="number" value={form.gross_amount ?? null} onChange={(v) => setField("gross_amount", v ? Number(v) : null)} />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">Description</label>
+              <label className="text-xs font-medium text-text-secondary">{tCommon("description")}</label>
               <textarea
                 value={form.description ?? ""}
                 onChange={(e) => setField("description", e.target.value)}
@@ -256,23 +263,23 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
                 disabled={saving}
                 className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save corrections"}
+                {saving ? tCommon("saving") : t("saveCorrections")}
               </button>
             )}
           </form>
 
           {doc.line_items.length > 0 && (
             <div className="card-v2 p-4">
-              <h2 className="text-sm font-medium text-text-primary mb-2">Line items</h2>
+              <h2 className="text-sm font-medium text-text-primary mb-2">{t("lineItems")}</h2>
               <div className="overflow-x-auto">
               <table className="table-v3">
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Description</th>
-                    <th className="text-right">Net</th>
-                    <th className="text-right">VAT</th>
-                    <th className="text-right">Gross</th>
+                    <th>{tCommon("description")}</th>
+                    <th className="text-right">{t("net")}</th>
+                    <th className="text-right">{t("vat")}</th>
+                    <th className="text-right">{t("gross")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -280,9 +287,9 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
                     <tr key={li.line_number}>
                       <td className="text-text-secondary">{li.line_number}</td>
                       <td className="text-text-primary">{li.description ?? "—"}</td>
-                      <td className="col-amount">{li.net_amount != null ? formatEUR(li.net_amount) : "—"}</td>
-                      <td className="col-amount">{li.vat_amount != null ? formatEUR(li.vat_amount) : "—"}</td>
-                      <td className="col-amount font-medium">{li.gross_amount != null ? formatEUR(li.gross_amount) : "—"}</td>
+                      <td className="col-amount">{li.net_amount != null ? formatEUR(li.net_amount, locale) : "—"}</td>
+                      <td className="col-amount">{li.vat_amount != null ? formatEUR(li.vat_amount, locale) : "—"}</td>
+                      <td className="col-amount font-medium">{li.gross_amount != null ? formatEUR(li.gross_amount, locale) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -293,26 +300,26 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
 
           {canEdit && (
             <div className="card-v2 p-4 space-y-3">
-              <h2 className="text-sm font-medium text-text-primary">Actions</h2>
+              <h2 className="text-sm font-medium text-text-primary">{tCommon("actions")}</h2>
               <div className="flex flex-wrap gap-2">
                 {!isFinal && (
                   <>
                     <button onClick={handleApprove} className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors">
-                      Approve
+                      {t("approve")}
                     </button>
                     <button onClick={handleReject} className="rounded-md bg-red-600 text-white px-4 py-2 text-sm font-medium hover:bg-red-700 transition-colors">
-                      Reject
+                      {t("reject")}
                     </button>
                   </>
                 )}
                 {doc.status !== "approved" && (
                   <button onClick={handleReprocess} className="input-v2 px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">
-                    Reprocess
+                    {t("reprocess")}
                   </button>
                 )}
               </div>
               <div className="flex items-center gap-2 pt-1">
-                <label className="text-xs text-text-secondary">Reassign to company:</label>
+                <label className="text-xs text-text-secondary">{t("reassignToCompany")}:</label>
                 <select
                   value={doc.company_id}
                   onChange={(e) => handleReassignCompany(Number(e.target.value))}

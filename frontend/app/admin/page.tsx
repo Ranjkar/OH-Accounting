@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -11,6 +12,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, PlatformOverviewRow } from "@/lib/api";
 
 function AdminContent() {
+  const t = useTranslations("admin");
   const { token, user } = useAuth();
   const [rows, setRows] = useState<PlatformOverviewRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,28 +23,25 @@ function AdminContent() {
   }, [token]);
 
   if (!user?.is_platform_admin) {
-    return <GlassErrorState message="Platform admin only." />;
+    return <GlassErrorState message={t("platformAdminOnly")} />;
   }
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader
-        title="Platform Overview"
-        subtitle="Cross-tenant subscription, usage, and plan status for every customer account on this platform. Deliberately shows only counts -- never a customer's financial records, documents, or ledger entries."
-      />
+      <GlassPageHeader title={t("title")} subtitle={t("subtitle")} />
       {error && <GlassErrorState message={error} />}
       {!rows ? (
         <GlassLoadingState />
       ) : (
-        <GlassPanel title={`Customer accounts (${rows.length})`}>
+        <GlassPanel title={t("customerAccounts", { count: rows.length })}>
           <GlassTable
-            emptyMessage="No tenants yet."
+            emptyMessage={t("noTenantsYet")}
             columns={[
-              { key: "name", header: "Account", render: (r) => r.tenant_name },
-              { key: "plan", header: "Plan", render: (r) => r.plan_code ?? "—" },
-              { key: "status", header: "Status", render: (r) => r.subscription_status ?? "—" },
-              { key: "companies", header: "Companies", render: (r) => r.companies_used },
-              { key: "users", header: "Users", render: (r) => r.users_used },
+              { key: "name", header: t("account"), render: (r) => r.tenant_name },
+              { key: "plan", header: t("plan"), render: (r) => r.plan_code ?? "—" },
+              { key: "status", header: t("status"), render: (r) => r.subscription_status ?? "—" },
+              { key: "companies", header: t("companies"), render: (r) => r.companies_used },
+              { key: "users", header: t("users"), render: (r) => r.users_used },
             ]}
             rows={rows}
             rowKey={(r) => r.tenant_id}

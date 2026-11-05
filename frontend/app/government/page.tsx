@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -14,6 +15,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, ApiError, Company, KvkLookupResult } from "@/lib/api";
 
 function VerifyCompanyButton({ companyId }: { companyId: number }) {
+  const t = useTranslations("government");
   const { token } = useAuth();
   const [result, setResult] = useState<{ name_matches: boolean; kvk_name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ function VerifyCompanyButton({ companyId }: { companyId: number }) {
       const r = await api.verifyCompanyKvk(token, companyId);
       setResult({ name_matches: r.name_matches, kvk_name: r.kvk_name });
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Verification failed");
+      setError(e instanceof ApiError ? e.message : t("verificationFailed"));
     } finally {
       setBusy(false);
     }
@@ -36,46 +38,32 @@ function VerifyCompanyButton({ companyId }: { companyId: number }) {
   if (result) {
     return (
       <span className={`text-xs ${result.name_matches ? "text-green-700" : "text-amber-700"}`}>
-        {result.name_matches ? "Matches KVK record" : `Mismatch -- KVK has "${result.kvk_name}"`}
+        {result.name_matches ? t("matchesKvkRecord") : t("mismatch", { kvkName: result.kvk_name })}
       </span>
     );
   }
   return (
     <button onClick={handleVerify} disabled={busy} className="text-xs text-brand-purple-600 hover:underline disabled:opacity-50">
-      {busy ? "Checking…" : error ?? "Verify against KVK"}
+      {busy ? t("checking") : error ?? t("verifyAgainstKvk")}
     </button>
   );
 }
 
-type IntegrationStatus = "SANDBOX VERIFIED" | "BLOCKED BY EXTERNAL REQUIREMENT";
+type IntegrationStatus = "SANDBOX_VERIFIED" | "BLOCKED_BY_EXTERNAL_REQUIREMENT";
 
-const INTEGRATIONS: { name: string; status: IntegrationStatus; detail: string; docsLink: string }[] = [
-  {
-    name: "KVK (Handelsregister) company lookup",
-    status: "SANDBOX VERIFIED",
-    detail: "Real network calls against KVK's published, no-registration test sandbox. Never scrapes the Handelsregister and never invents company data.",
-    docsLink: "docs/government-integrations.md",
-  },
-  {
-    name: "Loonheffingen (payroll tax) submission",
-    status: "BLOCKED BY EXTERNAL REQUIREMENT",
-    detail: "Declaration lifecycle (Draft → Submitted → Acknowledged → Accepted/Rejected) is fully built -- see Payroll Tax. Actual SBR/Digipoort transmission needs a PKIoverheid/Logius test certificate this environment cannot obtain.",
-    docsLink: "docs/government-integrations.md",
-  },
-  {
-    name: "VAT (BTW) return submission",
-    status: "BLOCKED BY EXTERNAL REQUIREMENT",
-    detail: "Return calculation and filing status are tracked in VAT Returns. Direct Belastingdienst submission has the same SBR/Digipoort certificate requirement as above.",
-    docsLink: "docs/government-integrations.md",
-  },
+const INTEGRATIONS: { key: string; status: IntegrationStatus }[] = [
+  { key: "kvkLookup", status: "SANDBOX_VERIFIED" },
+  { key: "loonheffingenSubmission", status: "BLOCKED_BY_EXTERNAL_REQUIREMENT" },
+  { key: "vatSubmission", status: "BLOCKED_BY_EXTERNAL_REQUIREMENT" },
 ];
 
 const STATUS_STYLE: Record<IntegrationStatus, string> = {
-  "SANDBOX VERIFIED": "bg-green-500/10 text-green-700 border border-green-300/50",
-  "BLOCKED BY EXTERNAL REQUIREMENT": "bg-amber-500/10 text-amber-700 border border-amber-300/50",
+  SANDBOX_VERIFIED: "bg-green-500/10 text-green-700 border border-green-300/50",
+  BLOCKED_BY_EXTERNAL_REQUIREMENT: "bg-amber-500/10 text-amber-700 border border-amber-300/50",
 };
 
 function GovernmentContent() {
+  const t = useTranslations("government");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [kvkNumber, setKvkNumber] = useState("");
@@ -104,36 +92,33 @@ function GovernmentContent() {
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader
-        title="Government Integration Centre"
-        subtitle="Real status of this app's Dutch government integrations -- no fabricated connections. Declaration filing itself happens in Payroll Tax and VAT Returns; this page is the KVK lookup tool plus an honest integration status overview."
-      />
+      <GlassPageHeader title={t("title")} subtitle={t("subtitle")} />
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassPanel title="Integration status">
+      <GlassPanel title={t("integrationStatus")}>
         <div className="space-y-3">
           {INTEGRATIONS.map((i) => (
-            <div key={i.name} className="flex flex-col gap-1.5 rounded-lg border border-border p-3">
+            <div key={i.key} className="flex flex-col gap-1.5 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-text-primary text-sm">{i.name}</span>
-                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[i.status]}`}>{i.status}</span>
+                <span className="font-medium text-text-primary text-sm">{t(`integrations.${i.key}.name` as never)}</span>
+                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[i.status]}`}>{t(`statusLabel.${i.status}` as never)}</span>
               </div>
-              <p className="text-xs text-text-secondary">{i.detail}</p>
+              <p className="text-xs text-text-secondary">{t(`integrations.${i.key}.detail` as never)}</p>
             </div>
           ))}
         </div>
       </GlassPanel>
 
       <GlassCard className="space-y-4">
-        <h2 className="font-medium text-text-primary">KVK company lookup</h2>
+        <h2 className="font-medium text-text-primary">{t("kvkCompanyLookup")}</h2>
         <form onSubmit={handleLookup} className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
-            <label htmlFor="kvk-number" className="text-label-v2">KVK number</label>
-            <GlassInput id="kvk-number" required value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)} placeholder="68750110" />
+            <label htmlFor="kvk-number" className="text-label-v2">{t("kvkNumber")}</label>
+            <GlassInput id="kvk-number" required dir="ltr" value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)} placeholder="68750110" />
           </div>
           <GlassButton type="submit" loading={loading}>
-            Look up
+            {t("lookUp")}
           </GlassButton>
         </form>
 
@@ -141,32 +126,32 @@ function GovernmentContent() {
           <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
             {result.is_test_data && (
               <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-700 border border-amber-300/50 mb-1">
-                Sandbox test data -- not a real Handelsregister lookup
+                {t("sandboxTestData")}
               </span>
             )}
             <p className="font-medium text-text-primary">{result.name}</p>
-            <p className="text-text-secondary">KVK number: {result.kvk_number}</p>
-            {result.legal_form && <p className="text-text-secondary">Legal form: {result.legal_form}</p>}
-            {result.trade_names.length > 0 && <p className="text-text-secondary">Trade names: {result.trade_names.join(", ")}</p>}
-            {result.address && <p className="text-text-secondary">Address: {result.address}</p>}
-            {result.sbi_activity && <p className="text-text-secondary">SBI activity: {result.sbi_activity}</p>}
+            <p className="text-text-secondary">{t("kvkNumber")}: <span dir="ltr">{result.kvk_number}</span></p>
+            {result.legal_form && <p className="text-text-secondary">{t("legalForm")}: {result.legal_form}</p>}
+            {result.trade_names.length > 0 && <p className="text-text-secondary">{t("tradeNames")}: {result.trade_names.join(", ")}</p>}
+            {result.address && <p className="text-text-secondary">{t("address")}: {result.address}</p>}
+            {result.sbi_activity && <p className="text-text-secondary">{t("sbiActivity")}: {result.sbi_activity}</p>}
           </div>
         )}
       </GlassCard>
 
-      <GlassPanel title="Companies on file">
+      <GlassPanel title={t("companiesOnFile")}>
         <GlassTable
-          emptyMessage="No companies yet."
+          emptyMessage={t("noCompaniesYet")}
           columns={[
-            { key: "name", header: "Company", render: (c) => c.name },
+            { key: "name", header: t("companyHeader"), render: (c) => c.name },
             {
               key: "kvk",
-              header: "KVK number",
+              header: t("kvkNumber"),
               render: (c) =>
                 c.kvk_number ? (
-                  <span className="font-mono text-xs">{c.kvk_number}</span>
+                  <span className="font-mono text-xs" dir="ltr">{c.kvk_number}</span>
                 ) : (
-                  <span className="text-xs text-amber-700">No KVK number on file</span>
+                  <span className="text-xs text-amber-700">{t("noKvkNumberOnFile")}</span>
                 ),
             },
             {

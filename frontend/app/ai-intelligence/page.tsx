@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -26,6 +27,7 @@ import {
 import { formatEUR } from "@/lib/format";
 
 function AiIntelligenceContent() {
+  const t = useTranslations("aiIntelligence");
   const { token } = useAuth();
   const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const companyId = selectedCompanyId ?? "";
@@ -68,14 +70,14 @@ function AiIntelligenceContent() {
   return (
     <div className="space-y-5">
       <GlassPageHeader
-        title="AI Accounting Intelligence"
-        subtitle="Every figure below comes from the real accounting engine (ledger, VAT, forecast, anomaly-detection, automation services) -- AI only narrates and explains, it never invents a number or silently posts anything."
+        title={t("title")}
+        subtitle={t("subtitle")}
       />
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
-        <option value="">Select a company</option>
+      <GlassSelect aria-label={t("companyLabel")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <option value="">{t("selectCompanyOption")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -83,72 +85,72 @@ function AiIntelligenceContent() {
         ))}
       </GlassSelect>
 
-      {!companyId && <p className="text-sm text-text-secondary">Select a company to see its financial health, AI insights, and pending reviews.</p>}
+      {!companyId && <p className="text-sm text-text-secondary">{t("selectCompanyPrompt")}</p>}
 
       {loading && <GlassLoadingState />}
 
       {companyId && !loading && (
         <>
-          <GlassPanel title="AI insights">
+          <GlassPanel title={t("aiInsights")}>
             {insights ? (
               <div className="space-y-3">
                 <p className="text-sm text-text-primary whitespace-pre-wrap">{insights.answer}</p>
                 <p className="text-xs text-text-secondary rounded-md bg-amber-500/10 border border-amber-300/50 px-3 py-2">{insights.disclaimer}</p>
               </div>
             ) : (
-              <p className="text-sm text-text-secondary">No insights available yet.</p>
+              <p className="text-sm text-text-secondary">{t("noInsightsYet")}</p>
             )}
           </GlassPanel>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             <GlassStatCard
-              label="Open anomalies"
+              label={t("openAnomalies")}
               value={anomalies.length}
               tone={anomalies.some((a) => a.severity === "critical") ? "error" : anomalies.length > 0 ? "warning" : "success"}
               href="/anomalies"
             />
             <GlassStatCard
-              label="Awaiting categorization"
+              label={t("awaitingCategorization")}
               value={automation?.expenses_awaiting_categorization ?? 0}
               tone={(automation?.expenses_awaiting_categorization ?? 0) > 0 ? "warning" : "success"}
               href="/automation"
             />
             <GlassStatCard
-              label="Unmatched bank transactions"
+              label={t("unmatchedBankTransactions")}
               value={automation?.unmatched_transactions ?? 0}
               tone={(automation?.unmatched_transactions ?? 0) > 0 ? "warning" : "success"}
               href="/reconciliation"
             />
             <GlassStatCard
-              label="Suggested matches"
+              label={t("suggestedMatches")}
               value={automation?.suggested_matches ?? 0}
               href="/reconciliation"
             />
             <GlassStatCard
-              label="Failed import batches"
+              label={t("failedImportBatches")}
               value={automation?.failed_import_batches ?? 0}
               tone={(automation?.failed_import_batches ?? 0) > 0 ? "error" : "success"}
               href="/banking"
             />
             <GlassStatCard
-              label="Pending accountant notes"
+              label={t("pendingAccountantNotes")}
               value={automation?.pending_notes ?? 0}
               href="/companies"
             />
           </div>
 
-          <GlassPanel title="Unusual transactions">
+          <GlassPanel title={t("unusualTransactions")}>
             <GlassTable
-              emptyMessage="No open anomaly flags for this company."
+              emptyMessage={t("noOpenAnomalyFlags")}
               columns={[
-                { key: "rule", header: "Rule", render: (a) => <span className="font-mono text-xs">{a.rule_code}</span> },
+                { key: "rule", header: t("colRule"), render: (a) => <span className="font-mono text-xs" dir="ltr">{a.rule_code}</span> },
                 {
                   key: "severity",
-                  header: "Severity",
+                  header: t("colSeverity"),
                   render: (a) => <span className={a.severity === "critical" ? "value-negative" : a.severity === "warning" ? "value-warning" : "text-text-secondary"}>{a.severity}</span>,
                 },
-                { key: "message", header: "Reason", render: (a) => <span className="text-xs">{a.message}</span> },
-                { key: "when", header: "Flagged", render: (a) => <span className="text-xs text-text-secondary">{new Date(a.created_at).toLocaleDateString()}</span> },
+                { key: "message", header: t("colReason"), render: (a) => <span className="text-xs">{a.message}</span> },
+                { key: "when", header: t("colFlagged"), render: (a) => <span className="text-xs text-text-secondary">{new Date(a.created_at).toLocaleDateString()}</span> },
               ]}
               rows={anomalies.slice(0, 8)}
               rowKey={(a) => a.id}
@@ -156,7 +158,7 @@ function AiIntelligenceContent() {
             {anomalies.length > 0 && (
               <div className="mt-3">
                 <Link href="/anomalies" className="text-xs text-brand-purple-600 hover:underline">
-                  Review all anomalies →
+                  {t("reviewAllAnomalies")}
                 </Link>
               </div>
             )}
@@ -164,52 +166,52 @@ function AiIntelligenceContent() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <GlassCard className="space-y-3">
-              <h2 className="font-medium text-text-primary">Cash-flow prediction</h2>
+              <h2 className="font-medium text-text-primary">{t("cashFlowPrediction")}</h2>
               {cashFlow ? (
                 <>
                   <dl className="text-sm space-y-1.5">
-                    <div className="flex justify-between"><dt className="text-text-secondary">Expected incoming</dt><dd className="font-mono">{formatEUR(cashFlow.expected_incoming_total)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-text-secondary">Expected outgoing</dt><dd className="font-mono">{formatEUR(cashFlow.expected_outgoing_total)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-text-secondary">Forecast VAT payable</dt><dd className="font-mono">{formatEUR(cashFlow.forecast_vat_payable)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("expectedIncoming")}</dt><dd className="font-mono">{formatEUR(cashFlow.expected_incoming_total)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("expectedOutgoing")}</dt><dd className="font-mono">{formatEUR(cashFlow.expected_outgoing_total)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("forecastVatPayable")}</dt><dd className="font-mono">{formatEUR(cashFlow.forecast_vat_payable)}</dd></div>
                   </dl>
                   <p className="text-xs text-text-secondary pt-1">{cashFlow.forecast_vat_disclaimer}</p>
                 </>
               ) : (
-                <p className="text-sm text-text-secondary">No forecast available.</p>
+                <p className="text-sm text-text-secondary">{t("noForecastAvailable")}</p>
               )}
               <Link href="/cash-flow" className="text-xs text-brand-purple-600 hover:underline">
-                Full cash-flow forecast →
+                {t("fullCashFlowForecast")}
               </Link>
             </GlassCard>
 
             <GlassCard className="space-y-3">
-              <h2 className="font-medium text-text-primary">Outstanding invoices</h2>
+              <h2 className="font-medium text-text-primary">{t("outstandingInvoices")}</h2>
               {forecast?.outstanding_invoices ? (
                 <>
                   <dl className="text-sm space-y-1.5">
-                    <div className="flex justify-between"><dt className="text-text-secondary">Receivables outstanding</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-text-secondary">Payables outstanding</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("receivablesOutstanding")}</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("payablesOutstanding")}</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</dd></div>
                   </dl>
                   <p className="text-xs text-text-secondary pt-1">{forecast.outstanding_invoices.note}</p>
                 </>
               ) : (
-                <p className="text-sm text-text-secondary">No data available.</p>
+                <p className="text-sm text-text-secondary">{t("noDataAvailable")}</p>
               )}
               <Link href="/working-capital" className="text-xs text-brand-purple-600 hover:underline">
-                Full working-capital view →
+                {t("fullWorkingCapitalView")}
               </Link>
             </GlassCard>
           </div>
 
-          <GlassPanel title="Tax preparation">
+          <GlassPanel title={t("taxPreparation")}>
             {upcomingDeadlines.length === 0 ? (
-              <p className="text-sm text-text-secondary">No upcoming VAT filing deadlines on file for this company.</p>
+              <p className="text-sm text-text-secondary">{t("noUpcomingDeadlines")}</p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {upcomingDeadlines.map((d) => (
                   <li key={d.vat_period_id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
                     <span>{d.period_label}</span>
-                    <span className="text-xs text-text-secondary">Filing deadline {new Date(d.filing_deadline).toLocaleDateString()}</span>
+                    <span className="text-xs text-text-secondary">{t("filingDeadlineOn", { date: new Date(d.filing_deadline).toLocaleDateString() })}</span>
                   </li>
                 ))}
               </ul>
@@ -218,7 +220,7 @@ function AiIntelligenceContent() {
               <p className="text-xs text-text-secondary mt-3">{forecast?.vat_payments.disclaimer}</p>
             )}
             <Link href="/calendar" className="text-xs text-brand-purple-600 hover:underline mt-2 inline-block">
-              Full compliance calendar →
+              {t("fullComplianceCalendar")}
             </Link>
           </GlassPanel>
 
@@ -227,7 +229,7 @@ function AiIntelligenceContent() {
               variant="outline"
               onClick={() => companyId && token && api.assistantCompanySummary(token, Number(companyId)).then(setInsights)}
             >
-              Refresh insights
+              {t("refreshInsights")}
             </GlassButton>
           </div>
         </>

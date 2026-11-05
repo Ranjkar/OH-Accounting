@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -16,6 +17,7 @@ import { api, AnomalyFlag, BankTransaction, DocumentSummary } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 function AcknowledgeDismiss({ anomaly, onChange }: { anomaly: AnomalyFlag; onChange: (a: AnomalyFlag) => void }) {
+  const t = useTranslations("reviewCentre");
   const { token } = useAuth();
   const [busy, setBusy] = useState(false);
 
@@ -33,16 +35,18 @@ function AcknowledgeDismiss({ anomaly, onChange }: { anomaly: AnomalyFlag; onCha
   return (
     <div className="flex gap-2">
       <button disabled={busy} onClick={() => act("acknowledge")} className="text-xs text-brand-purple-600 hover:underline disabled:opacity-50">
-        Acknowledge
+        {t("acknowledge")}
       </button>
       <button disabled={busy} onClick={() => act("dismiss")} className="text-xs text-text-secondary hover:underline disabled:opacity-50">
-        Dismiss
+        {t("dismiss")}
       </button>
     </div>
   );
 }
 
 function ReviewCentreContent() {
+  const t = useTranslations("reviewCentre");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const companyId = selectedCompanyId ?? "";
@@ -83,15 +87,12 @@ function ReviewCentreContent() {
 
   return (
     <div className="space-y-5">
-      <GlassPageHeader
-        title="Review & Approval Centre"
-        subtitle="Everything in this company that is waiting on a human decision -- documents with extracted data to confirm, anomaly flags to investigate, and bank transactions with a suggested match to approve. Nothing here is approved or dismissed automatically."
-      />
+      <GlassPageHeader title={t("title")} subtitle={t("subtitle")} />
 
       {error && <GlassErrorState message={error} />}
 
-      <GlassSelect aria-label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
-        <option value="">Select a company</option>
+      <GlassSelect aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -103,32 +104,32 @@ function ReviewCentreContent() {
 
       {companyId && !loading && (
         <>
-          <GlassPanel title={`Documents awaiting review (${documents.length})`}>
+          <GlassPanel title={t("documentsAwaitingReview", { count: documents.length })}>
             <GlassTable
-              emptyMessage="No documents waiting on review for this company."
+              emptyMessage={t("noDocumentsWaitingReview")}
               columns={[
-                { key: "file", header: "File", render: (d) => d.original_filename },
-                { key: "type", header: "Type", render: (d) => d.document_type ?? "Unclassified" },
-                { key: "status", header: "Status", render: (d) => <span className="text-xs text-text-secondary">{d.status.replace(/_/g, " ")}</span> },
+                { key: "file", header: t("file"), render: (d) => d.original_filename },
+                { key: "type", header: t("type"), render: (d) => d.document_type ?? t("unclassified") },
+                { key: "status", header: tCommon("status"), render: (d) => <span className="text-xs text-text-secondary">{d.status.replace(/_/g, " ")}</span> },
                 {
                   key: "confidence",
-                  header: "Confidence",
+                  header: t("confidence"),
                   render: (d) => (d.classification_confidence != null ? `${Math.round(d.classification_confidence * 100)}%` : "—"),
                 },
-                { key: "action", header: "", render: (d) => <Link href={`/documents/${d.id}`} className="text-xs text-brand-purple-600 hover:underline">Review →</Link> },
+                { key: "action", header: "", render: (d) => <Link href={`/documents/${d.id}`} className="text-xs text-brand-purple-600 hover:underline">{t("reviewArrow")}</Link> },
               ]}
               rows={documents}
               rowKey={(d) => d.id}
             />
           </GlassPanel>
 
-          <GlassPanel title={`Anomaly flags to investigate (${anomalies.length})`}>
+          <GlassPanel title={t("anomalyFlagsToInvestigate", { count: anomalies.length })}>
             <GlassTable
-              emptyMessage="No open anomaly flags for this company."
+              emptyMessage={t("noOpenAnomalyFlags")}
               columns={[
-                { key: "rule", header: "Rule", render: (a) => <span className="font-mono text-xs">{a.rule_code}</span> },
-                { key: "severity", header: "Severity", render: (a) => <span className={a.severity === "critical" ? "value-negative" : a.severity === "warning" ? "value-warning" : "text-text-secondary"}>{a.severity}</span> },
-                { key: "message", header: "Reason", render: (a) => <span className="text-xs">{a.message}</span> },
+                { key: "rule", header: t("rule"), render: (a) => <span className="font-mono text-xs">{a.rule_code}</span> },
+                { key: "severity", header: t("severity"), render: (a) => <span className={a.severity === "critical" ? "value-negative" : a.severity === "warning" ? "value-warning" : "text-text-secondary"}>{a.severity}</span> },
+                { key: "message", header: t("reason"), render: (a) => <span className="text-xs">{a.message}</span> },
                 { key: "action", header: "", render: (a) => <AcknowledgeDismiss anomaly={a} onChange={(updated) => setAnomalies((prev) => prev.filter((x) => x.id !== updated.id))} /> },
               ]}
               rows={anomalies}
@@ -136,31 +137,31 @@ function ReviewCentreContent() {
             />
           </GlassPanel>
 
-          <GlassPanel title={`Suggested bank-transaction matches (${suggestedMatches.length})`}>
+          <GlassPanel title={t("suggestedBankMatches", { count: suggestedMatches.length })}>
             <GlassTable
-              emptyMessage="No suggested matches awaiting approval."
+              emptyMessage={t("noSuggestedMatches")}
               columns={[
-                { key: "date", header: "Date", render: (t) => t.booking_date },
-                { key: "amount", header: "Amount", render: (t) => <span className="font-mono text-xs">{formatEUR(t.amount)} {t.currency}</span> },
-                { key: "counterparty", header: "Counterparty", render: (t) => t.counterparty_name ?? "—" },
-                { key: "action", header: "", render: () => <Link href="/reconciliation" className="text-xs text-brand-purple-600 hover:underline">Review in Reconciliation →</Link> },
+                { key: "date", header: tCommon("date"), render: (tx) => tx.booking_date },
+                { key: "amount", header: tCommon("amount"), render: (tx) => <span className="font-mono text-xs">{formatEUR(tx.amount)} {tx.currency}</span> },
+                { key: "counterparty", header: t("counterparty"), render: (tx) => tx.counterparty_name ?? "—" },
+                { key: "action", header: "", render: () => <Link href="/reconciliation" className="text-xs text-brand-purple-600 hover:underline">{t("reviewInReconciliationArrow")}</Link> },
               ]}
               rows={suggestedMatches}
-              rowKey={(t) => t.id}
+              rowKey={(tx) => tx.id}
             />
           </GlassPanel>
 
-          <GlassPanel title="Other review queues">
+          <GlassPanel title={t("otherReviewQueues")}>
             <ul className="text-sm space-y-2">
-              <li><Link href="/loonheffingen" className="text-brand-purple-600 hover:underline">Payroll tax declarations</Link> -- Draft/Validation/Review/Approval lifecycle</li>
-              <li><Link href="/vat" className="text-brand-purple-600 hover:underline">VAT returns</Link> -- open vs. filed periods</li>
-              <li><Link href="/batches" className="text-brand-purple-600 hover:underline">Upload batches</Link> -- bulk document processing status</li>
+              <li><Link href="/loonheffingen" className="text-brand-purple-600 hover:underline">{t("payrollTaxDeclarations")}</Link> -- {t("payrollTaxDeclarationsDescription")}</li>
+              <li><Link href="/vat" className="text-brand-purple-600 hover:underline">{t("vatReturns")}</Link> -- {t("vatReturnsDescription")}</li>
+              <li><Link href="/batches" className="text-brand-purple-600 hover:underline">{t("uploadBatches")}</Link> -- {t("uploadBatchesDescription")}</li>
             </ul>
           </GlassPanel>
 
           <div className="flex justify-end">
             <GlassButton variant="outline" onClick={() => loadQueues(Number(companyId))}>
-              Refresh
+              {t("refresh")}
             </GlassButton>
           </div>
         </>

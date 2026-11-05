@@ -1,19 +1,20 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, BalanceSheetItemCategory, Company, JsonReport, ManualBalanceSheetItem } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
-const CATEGORIES: { value: BalanceSheetItemCategory; label: string }[] = [
-  { value: "FIXED_ASSETS", label: "Fixed assets" },
-  { value: "INVENTORY", label: "Inventory" },
-  { value: "OTHER_ASSET", label: "Other asset" },
-  { value: "EQUITY", label: "Equity / contributed capital" },
-  { value: "LOANS", label: "Loans" },
-  { value: "OTHER_LIABILITY", label: "Other liability" },
+const CATEGORY_KEYS: { value: BalanceSheetItemCategory; key: string }[] = [
+  { value: "FIXED_ASSETS", key: "fixedAssets" },
+  { value: "INVENTORY", key: "inventory" },
+  { value: "OTHER_ASSET", key: "otherAsset" },
+  { value: "EQUITY", key: "equity" },
+  { value: "LOANS", key: "loans" },
+  { value: "OTHER_LIABILITY", key: "otherLiability" },
 ];
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
@@ -26,6 +27,8 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 }
 
 function BalanceSheetContent() {
+  const t = useTranslations("balanceSheet");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -66,29 +69,25 @@ function BalanceSheetContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-primary">Balance Sheet</h1>
-      <p className="text-sm text-text-secondary">
-        Fixed assets, inventory, equity, and loans are never derived automatically -- this ledger has no chart of
-        accounts. Enter them manually below; until you do, the balance sheet only reflects cash, receivables,
-        payables, and VAT position.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("manualItemsNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} aria-label="Company" onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <input type="date" value={asOfDate} aria-label="As Of Date" onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+        <input type="date" value={asOfDate} aria-label={t("asOfDate")} onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
         {companyId && (
           <div className="flex items-center gap-2 ms-auto text-xs">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
               <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), asOfDate, fmt)} className="input-v2 px-2 py-1 hover:bg-muted">
-                Export {fmt.toUpperCase()}
+                {tCommon("export")} {fmt.toUpperCase()}
               </a>
             ))}
           </div>
@@ -99,7 +98,7 @@ function BalanceSheetContent() {
         <>
           {!bs.is_balanced && (
             <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">
-              Balance sheet does not balance -- off by {formatEUR(bs.imbalance_amount)}. {bs.missing_opening_balance_warning}
+              {t("doesNotBalance", { amount: formatEUR(bs.imbalance_amount) })} {bs.missing_opening_balance_warning}
             </div>
           )}
           {bs.is_balanced && bs.missing_opening_balance_warning && (
@@ -108,28 +107,28 @@ function BalanceSheetContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Assets</h2>
-              <Row label="Cash and bank" value={bs.assets.cash_and_bank} />
-              <Row label="Accounts receivable" value={bs.assets.accounts_receivable} />
-              <Row label="Inventory" value={bs.assets.inventory} />
-              <Row label="Fixed assets" value={bs.assets.fixed_assets} />
-              <Row label="Other assets" value={bs.assets.other_assets} />
-              <Row label="VAT receivable" value={bs.assets.vat_receivable} />
-              <Row label="Total assets" value={bs.assets.total} highlight />
+              <h2 className="font-medium text-text-primary mb-2">{t("assets")}</h2>
+              <Row label={t("cashAndBank")} value={bs.assets.cash_and_bank} />
+              <Row label={t("accountsReceivable")} value={bs.assets.accounts_receivable} />
+              <Row label={t("inventory")} value={bs.assets.inventory} />
+              <Row label={t("fixedAssets")} value={bs.assets.fixed_assets} />
+              <Row label={t("otherAssets")} value={bs.assets.other_assets} />
+              <Row label={t("vatReceivable")} value={bs.assets.vat_receivable} />
+              <Row label={t("totalAssets")} value={bs.assets.total} highlight />
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Liabilities</h2>
-              <Row label="Accounts payable" value={bs.liabilities.accounts_payable} />
-              <Row label="Loans" value={bs.liabilities.loans} />
-              <Row label="Other liabilities" value={bs.liabilities.other_liabilities} />
-              <Row label="VAT payable" value={bs.liabilities.vat_payable} />
-              <Row label="Total liabilities" value={bs.liabilities.total} highlight />
+              <h2 className="font-medium text-text-primary mb-2">{t("liabilities")}</h2>
+              <Row label={t("accountsPayable")} value={bs.liabilities.accounts_payable} />
+              <Row label={t("loans")} value={bs.liabilities.loans} />
+              <Row label={t("otherLiabilities")} value={bs.liabilities.other_liabilities} />
+              <Row label={t("vatPayable")} value={bs.liabilities.vat_payable} />
+              <Row label={t("totalLiabilities")} value={bs.liabilities.total} highlight />
             </div>
             <div className="card-v2 p-4">
-              <h2 className="font-medium text-text-primary mb-2">Equity</h2>
-              <Row label="Contributed / other equity" value={bs.equity.contributed_and_other_equity} />
-              <Row label="Retained earnings" value={bs.equity.retained_earnings} />
-              <Row label="Total equity" value={bs.equity.total} highlight />
+              <h2 className="font-medium text-text-primary mb-2">{t("equity")}</h2>
+              <Row label={t("contributedEquity")} value={bs.equity.contributed_and_other_equity} />
+              <Row label={t("retainedEarnings")} value={bs.equity.retained_earnings} />
+              <Row label={t("totalEquity")} value={bs.equity.total} highlight />
             </div>
           </div>
         </>
@@ -137,30 +136,30 @@ function BalanceSheetContent() {
 
       {companyId && (
         <div className="card-v2 p-4 space-y-3">
-          <h2 className="font-medium text-text-primary">Manual balance-sheet items</h2>
+          <h2 className="font-medium text-text-primary">{t("manualItemsHeading")}</h2>
           <form onSubmit={addItem} className="flex items-end gap-3 flex-wrap">
-            <select value={category} aria-label="Category" onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="input-v2 px-2 py-2 text-sm">
-              {CATEGORIES.map((c) => (
+            <select value={category} aria-label={tCommon("category")} onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="input-v2 px-2 py-2 text-sm">
+              {CATEGORY_KEYS.map((c) => (
                 <option key={c.value} value={c.value}>
-                  {c.label}
+                  {t(`category.${c.key}` as never)}
                 </option>
               ))}
             </select>
-            <input required value={label} aria-label="Label" onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Delivery van)" className="input-v2 px-3 py-2 text-sm" />
-            <input required value={amount} aria-label="Amount" onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="input-v2 px-3 py-2 text-sm w-32" />
-            <input type="date" value={itemDate} aria-label="Item Date" onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <input required value={label} aria-label={tCommon("name")} onChange={(e) => setLabel(e.target.value)} placeholder={t("labelPlaceholder")} className="input-v2 px-3 py-2 text-sm" />
+            <input required value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
+            <input type="date" value={itemDate} aria-label={t("itemDate")} onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
             <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
-              Add
+              {tCommon("create")}
             </button>
           </form>
           <div className="overflow-x-auto">
           <table className="table-v3">
             <thead>
               <tr>
-                <th>Category</th>
-                <th>Label</th>
-                <th className="text-right">Amount</th>
-                <th>Date</th>
+                <th>{tCommon("category")}</th>
+                <th>{tCommon("name")}</th>
+                <th className="text-right">{tCommon("amount")}</th>
+                <th>{tCommon("date")}</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +173,7 @@ function BalanceSheetContent() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-text-secondary">No manual items recorded yet.</td>
+                  <td colSpan={4} className="text-text-secondary">{t("noManualItems")}</td>
                 </tr>
               )}
             </tbody>
