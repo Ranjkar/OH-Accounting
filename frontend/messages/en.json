@@ -158,11 +158,7 @@
   },
   "language": {
     "label": "Language",
-    "description": "Choose the interface language. This does not change any company, customer, or accounting data.",
-    "nl-NL": "Nederlands",
-    "en-GB": "English",
-    "fa-IR": "فارسی",
-    "ar-SA": "العربية"
+    "description": "Choose the interface language. This does not change any company, customer, or accounting data."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -411,7 +407,16 @@
     "recentBatches": "Recent batches",
     "noBatchesYet": "No batches yet for this company.",
     "selectCompanyToSeeBatches": "Select a company to see recent batches.",
-    "acceptHint": "PDF, JPG, PNG — multiple files supported"
+    "acceptHint": "PDF, JPG, PNG — multiple files supported",
+    "selectPlaceholder": "Select…",
+    "financialYearLabel": "Financial year",
+    "filesSelected": "{count} file(s) selected",
+    "remove": "Remove",
+    "uploading": "Uploading…",
+    "uploadButton": "Upload {count} file(s)",
+    "selectRequired": "Select a company, financial year, and at least one file.",
+    "uploadFailed": "Upload failed",
+    "batchSummary": "{total} files · {extracted} extracted · {duplicates} duplicates · {failed} failed · {approved} approved"
   },
   "customers": {
     "title": "Customers",
@@ -1532,5 +1537,13 @@
     "approve": "Approve",
     "reject": "Reject",
     "noEntriesYet": "No entries yet."
+  },
+  "charts": {
+    "noDataForPeriod": "No data yet for this period.",
+    "chartAriaLabel": "{title} chart -- see the data table below for exact values",
+    "tableCaption": "{title} -- exact values by period",
+    "colPeriod": "Period",
+    "colValue": "Value",
+    "negativeSuffix": " (negative)"
   }
 }

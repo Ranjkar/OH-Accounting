@@ -19,10 +19,17 @@ from app.models.payroll import PayrollRun, Payslip
 from app.models.timesheet import EmployeeTimesheetEntry
 from app.reporting.annual_statement_report import render_annual_statement_pdf
 from app.reporting.payslip_report import render_payslip_pdf
+from app.reporting.report_i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
 from app.schemas.employee import TimesheetEntryCreate, TimesheetEntryOut
 from app.schemas.payroll import PayslipOut
 
 router = APIRouter(prefix="/me", tags=["employee-self-service"])
+
+
+def _validate_document_language(code: str) -> str:
+    if code not in SUPPORTED_LOCALES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported document_language: {code}")
+    return code
 
 
 @router.get("/profile")
@@ -57,11 +64,15 @@ def _own_payslip_or_404(db: Session, employee: Employee, payslip_id: int) -> Pay
 
 
 @router.get("/payslips/{payslip_id}/pdf")
-def my_payslip_pdf(payslip_id: int, employee: Employee = Depends(get_current_employee), db: Session = Depends(get_db)):
+def my_payslip_pdf(
+    payslip_id: int, document_language: str = DEFAULT_LOCALE,
+    employee: Employee = Depends(get_current_employee), db: Session = Depends(get_db),
+):
+    document_language = _validate_document_language(document_language)
     payslip = _own_payslip_or_404(db, employee, payslip_id)
     run = db.get(PayrollRun, payslip.payroll_run_id)
     company = db.get(Company, payslip.company_id)
-    content = render_payslip_pdf(company, employee, run, payslip)
+    content = render_payslip_pdf(company, employee, run, payslip, locale=document_language)
     return Response(
         content=content, media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="payslip-{payslip.id}.pdf"'},
@@ -74,10 +85,14 @@ def my_annual_statement(tax_year: int, employee: Employee = Depends(get_current_
 
 
 @router.get("/annual-statement/pdf")
-def my_annual_statement_pdf(tax_year: int, employee: Employee = Depends(get_current_employee), db: Session = Depends(get_db)):
+def my_annual_statement_pdf(
+    tax_year: int, document_language: str = DEFAULT_LOCALE,
+    employee: Employee = Depends(get_current_employee), db: Session = Depends(get_db),
+):
+    document_language = _validate_document_language(document_language)
     company = db.get(Company, employee.company_id)
     statement = payroll_service.build_annual_statement(db, employee, tax_year)
-    content = render_annual_statement_pdf(company, employee, statement)
+    content = render_annual_statement_pdf(company, employee, statement, locale=document_language)
     return Response(
         content=content, media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="annual-statement-{tax_year}.pdf"'},

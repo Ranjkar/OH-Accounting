@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassCard from "@/components/glass/GlassCard";
@@ -148,6 +148,7 @@ function BankAccountsCard({ companyId }: { companyId: number | "" }) {
 function TaxCalculatorCard({ companyId }: { companyId: number | "" }) {
   const { token } = useAuth();
   const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [annualProfit, setAnnualProfit] = useState("50000");
   const [hoursCriterionMet, setHoursCriterionMet] = useState(true);
   const [isStarter, setIsStarter] = useState(false);
@@ -199,10 +200,10 @@ function TaxCalculatorCard({ companyId }: { companyId: number | "" }) {
           {error && <GlassErrorState message={error} />}
           {result && (
             <div className="mt-2 rounded-lg bg-muted p-3 text-sm space-y-1">
-              <p className="flex justify-between"><span className="text-text-secondary">{t("entrepreneurDeduction")}</span><span className="font-mono">{formatEUR(String(result.entrepreneur_deduction_applied))}</span></p>
-              <p className="flex justify-between"><span className="text-text-secondary">{t("mkbWinstvrijstelling")}</span><span className="font-mono">{formatEUR(String(result.mkb_winstvrijstelling_applied))}</span></p>
-              <p className="flex justify-between"><span className="text-text-secondary">{t("taxableProfit")}</span><span className="font-mono">{formatEUR(String(result.taxable_profit))}</span></p>
-              <p className="flex justify-between font-medium"><span>{t("netIncomeTax")}</span><span className="font-mono value-negative">{formatEUR(String(result.net_income_tax))}</span></p>
+              <p className="flex justify-between"><span className="text-text-secondary">{t("entrepreneurDeduction")}</span><span className="font-mono">{formatEUR(String(result.entrepreneur_deduction_applied), locale)}</span></p>
+              <p className="flex justify-between"><span className="text-text-secondary">{t("mkbWinstvrijstelling")}</span><span className="font-mono">{formatEUR(String(result.mkb_winstvrijstelling_applied), locale)}</span></p>
+              <p className="flex justify-between"><span className="text-text-secondary">{t("taxableProfit")}</span><span className="font-mono">{formatEUR(String(result.taxable_profit), locale)}</span></p>
+              <p className="flex justify-between font-medium"><span>{t("netIncomeTax")}</span><span className="font-mono value-negative">{formatEUR(String(result.net_income_tax), locale)}</span></p>
               <p className="text-[11px] text-text-secondary pt-1">{String(result.note)}</p>
             </div>
           )}
@@ -217,6 +218,7 @@ function DashboardContent() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const tVat = useTranslations("vat");
+  const locale = useLocale();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -287,7 +289,7 @@ function DashboardContent() {
             title={t("cashFlowTitle")}
             subtitle={forecast ? t("cashFlowSubtitle", { date: forecast.as_of }) : t("aiCardSelectPrompt")}
             points={chartPoints}
-            formatValue={(v) => formatEUR(v)}
+            formatValue={(v) => formatEUR(v, locale)}
             actions={
               <Link href="/cash-flow" className="text-xs text-brand-purple-600 hover:underline flex-shrink-0 inline-flex items-center gap-0.5">
                 {t("fullForecastStatement")} <IconChevronRight size={12} className="icon-directional" />
@@ -299,17 +301,17 @@ function DashboardContent() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <GlassStatCard label={t("totalIncomeYtd")} value={pnl ? formatEUR(pnl.revenue) : "—"} tone="success" icon={<IconChart size={16} />} />
+        <GlassStatCard label={t("totalIncomeYtd")} value={pnl ? formatEUR(pnl.revenue, locale) : "—"} tone="success" icon={<IconChart size={16} />} />
         <GlassStatCard
           label={t("totalExpensesYtd")}
-          value={pnl ? formatEUR((Number(pnl.revenue) - Number(pnl.net_profit)).toFixed(2)) : "—"}
+          value={pnl ? formatEUR((Number(pnl.revenue) - Number(pnl.net_profit)).toFixed(2), locale) : "—"}
           tone="error"
           icon={<IconChart size={16} />}
         />
-        <GlassStatCard label={t("netProfitYtd")} value={pnl ? formatEUR(pnl.net_profit) : "—"} tone={pnl && Number(pnl.net_profit) >= 0 ? "success" : "error"} />
+        <GlassStatCard label={t("netProfitYtd")} value={pnl ? formatEUR(pnl.net_profit, locale) : "—"} tone={pnl && Number(pnl.net_profit) >= 0 ? "success" : "error"} />
         <GlassStatCard
           label={t("estVatPayableOpen")}
-          value={formatEUR(summary.estimated_vat_payable)}
+          value={formatEUR(summary.estimated_vat_payable, locale)}
           tone="warning"
           href="/vat"
         />

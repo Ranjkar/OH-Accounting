@@ -10,7 +10,7 @@ report) -- these tests pin both down so they can't regress silently."""
 import fitz
 
 from app.reporting.pdf_builder import RTL_FONT_FILES, is_rtl, shape_rtl
-from app.reporting.pdf_i18n import SUPPORTED_LOCALES, box_description, t
+from app.reporting.report_i18n import SUPPORTED_LOCALES, box_description, t
 from app.core.security import hash_password
 from app.models.enums import UserRole
 from app.models.tenant import Tenant
@@ -108,7 +108,7 @@ def test_vat_report_pdf_renders_real_glyphs_in_all_four_locales(client, db_sessi
         assert "1a" in extracted
 
         if locale in ("nl", "en"):
-            assert t(locale, "title") in extracted
+            assert t(locale, "vat", "title") in extracted
         else:
             # Arabic/Persian presentation-form text doesn't always
             # round-trip character-for-character through extraction (MuPDF

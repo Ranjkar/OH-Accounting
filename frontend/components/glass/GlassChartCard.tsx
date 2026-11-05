@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 export interface ChartPoint {
   label: string;
@@ -30,16 +31,18 @@ interface GlassChartCardProps {
  * hover target), so the same tooltip a mouse user sees is reachable by
  * tabbing/arrow-keying through the chart. */
 export default function GlassChartCard({ title, subtitle, points, formatValue, actions, height = 220, kind = "line" }: GlassChartCardProps) {
+  const t = useTranslations("charts");
+  const locale = useLocale();
   const gradientId = useId();
   const tableId = useId();
   const [hover, setHover] = useState<number | null>(null);
-  const fmt = formatValue ?? ((v: number) => v.toLocaleString("nl-NL", { maximumFractionDigits: 0 }));
+  const fmt = formatValue ?? ((v: number) => v.toLocaleString(locale, { maximumFractionDigits: 0 }));
 
   if (points.length === 0) {
     return (
       <div className="glass-panel p-5">
         <h3 className="text-card-heading">{title}</h3>
-        <p className="text-secondary-v2 mt-8 text-center">No data yet for this period.</p>
+        <p className="text-secondary-v2 mt-8 text-center">{t("noDataForPeriod")}</p>
       </div>
     );
   }
@@ -92,7 +95,7 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
         className="w-full"
         style={{ height }}
         role="group"
-        aria-label={`${title} chart -- see the data table below for exact values`}
+        aria-label={t("chartAriaLabel", { title })}
         aria-describedby={tableId}
         onMouseLeave={() => setHover(null)}
       >
@@ -193,18 +196,18 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
           of this chart's values, per "Provide textual summaries of important
           values" -- never relies on the SVG being interpretable. */}
       <table id={tableId} className="sr-only">
-        <caption>{title} -- exact values by period</caption>
+        <caption>{t("tableCaption", { title })}</caption>
         <thead>
           <tr>
-            <th scope="col">Period</th>
-            <th scope="col">Value</th>
+            <th scope="col">{t("colPeriod")}</th>
+            <th scope="col">{t("colValue")}</th>
           </tr>
         </thead>
         <tbody>
           {points.map((p, i) => (
             <tr key={i}>
               <td>{p.label}</td>
-              <td>{fmt(p.value)}{p.value < 0 ? " (negative)" : ""}</td>
+              <td>{fmt(p.value)}{p.value < 0 ? t("negativeSuffix") : ""}</td>
             </tr>
           ))}
         </tbody>

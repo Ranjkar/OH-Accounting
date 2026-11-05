@@ -158,11 +158,7 @@
   },
   "language": {
     "label": "Taal",
-    "description": "Kies de taal van de interface. Dit verandert geen bedrijfs-, klant- of boekhoudgegevens.",
-    "nl-NL": "Nederlands",
-    "en-GB": "English",
-    "fa-IR": "فارسی",
-    "ar-SA": "العربية"
+    "description": "Kies de taal van de interface. Dit verandert geen bedrijfs-, klant- of boekhoudgegevens."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -411,7 +407,16 @@
     "recentBatches": "Recente batches",
     "noBatchesYet": "Nog geen batches voor dit bedrijf.",
     "selectCompanyToSeeBatches": "Selecteer een bedrijf om recente batches te zien.",
-    "acceptHint": "PDF, JPG, PNG — meerdere bestanden mogelijk"
+    "acceptHint": "PDF, JPG, PNG — meerdere bestanden mogelijk",
+    "selectPlaceholder": "Selecteren…",
+    "financialYearLabel": "Boekjaar",
+    "filesSelected": "{count} bestand(en) geselecteerd",
+    "remove": "Verwijderen",
+    "uploading": "Uploaden…",
+    "uploadButton": "{count} bestand(en) uploaden",
+    "selectRequired": "Selecteer een bedrijf, boekjaar en minstens één bestand.",
+    "uploadFailed": "Uploaden mislukt",
+    "batchSummary": "{total} bestanden · {extracted} geëxtraheerd · {duplicates} duplicaten · {failed} mislukt · {approved} goedgekeurd"
   },
   "customers": {
     "title": "Klanten",
@@ -1532,5 +1537,13 @@
     "approve": "Goedkeuren",
     "reject": "Afwijzen",
     "noEntriesYet": "Nog geen registraties."
+  },
+  "charts": {
+    "noDataForPeriod": "Nog geen gegevens voor deze periode.",
+    "chartAriaLabel": "{title} grafiek -- zie de tabel hieronder voor exacte waarden",
+    "tableCaption": "{title} -- exacte waarden per periode",
+    "colPeriod": "Periode",
+    "colValue": "Waarde",
+    "negativeSuffix": " (negatief)"
   }
 }

@@ -11,9 +11,16 @@ from app.models.payroll import PayrollRun, Payslip
 from app.models.user import User
 from app.reporting.annual_statement_report import render_annual_statement_pdf
 from app.reporting.payslip_report import render_payslip_pdf
+from app.reporting.report_i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
 from app.schemas.payroll import AnnualStatementOut, PayrollRunCreate, PayrollRunOut, PayslipCorrectRequest, PayslipCreate, PayslipOut
 
 router = APIRouter(tags=["payroll"])
+
+
+def _validate_document_language(code: str) -> str:
+    if code not in SUPPORTED_LOCALES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported document_language: {code}")
+    return code
 
 
 def _get_company_or_404(db: Session, user: User, company_id: int) -> Company:
@@ -148,11 +155,15 @@ def get_annual_statement(employee_id: int, tax_year: int, db: Session = Depends(
 
 
 @router.get("/employees/{employee_id}/annual-statement/pdf")
-def get_annual_statement_pdf(employee_id: int, tax_year: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+def get_annual_statement_pdf(
+    employee_id: int, tax_year: int, document_language: str = DEFAULT_LOCALE,
+    db: Session = Depends(get_db), user: User = Depends(require_editor),
+):
+    document_language = _validate_document_language(document_language)
     employee = _get_employee_or_404(db, user, employee_id)
     company = db.get(Company, employee.company_id)
     statement = payroll_service.build_annual_statement(db, employee, tax_year)
-    content = render_annual_statement_pdf(company, employee, statement)
+    content = render_annual_statement_pdf(company, employee, statement, locale=document_language)
     return Response(
         content=content, media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="annual-statement-{employee_id}-{tax_year}.pdf"'},
@@ -160,12 +171,13 @@ def get_annual_statement_pdf(employee_id: int, tax_year: int, db: Session = Depe
 
 
 @router.get("/payslips/{payslip_id}/pdf")
-def payslip_pdf(payslip_id: int, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+def payslip_pdf(payslip_id: int, document_language: str = DEFAULT_LOCALE, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    document_language = _validate_document_language(document_language)
     payslip = _get_payslip_or_404(db, user, payslip_id)
     run = db.get(PayrollRun, payslip.payroll_run_id)
     employee = db.get(Employee, payslip.employee_id)
     company = db.get(Company, payslip.company_id)
-    content = render_payslip_pdf(company, employee, run, payslip)
+    content = render_payslip_pdf(company, employee, run, payslip, locale=document_language)
     return Response(
         content=content, media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="payslip-{payslip.id}.pdf"'},

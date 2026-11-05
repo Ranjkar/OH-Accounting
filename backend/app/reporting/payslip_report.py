@@ -7,60 +7,66 @@ from app.models.company import Company
 from app.models.employee import Employee
 from app.models.payroll import PayrollRun, Payslip
 from app.reporting.pdf_builder import PdfReportBuilder
+from app.reporting.report_i18n import DEFAULT_LOCALE, t
 
 
-def render_payslip_pdf(company: Company, employee: Employee, run: PayrollRun, payslip: Payslip) -> bytes:
-    period_label = f"{run.period_type.value} period {run.period_number}/{run.period_year}"
+def render_payslip_pdf(company: Company, employee: Employee, run: PayrollRun, payslip: Payslip, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "payrollDoc"
+    na = t(locale, "common", "na")
+    # period_type.value (e.g. "MONTHLY") is an enum identifier, kept
+    # exactly as stored -- never translated, same rule as VAT box codes.
+    period_label = f"{run.period_type.value} {t(locale, ns, 'period_label').lower()} {run.period_number}/{run.period_year}"
     pdf = PdfReportBuilder(
-        title="Loonstrook / Payslip", company_name=company.name, subtitle=period_label,
+        title=t(locale, ns, "payslip_title"), company_name=company.name, subtitle=period_label,
         generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        locale=locale,
     )
 
-    pdf.heading("Employer")
-    pdf.key_value_row("Company", company.name)
-    pdf.key_value_row("VAT number", company.vat_number or "n/a")
-    pdf.key_value_row("KVK number", company.kvk_number or "n/a")
+    pdf.heading(t(locale, ns, "employer_heading"))
+    pdf.key_value_row(t(locale, ns, "company_label"), company.name)
+    pdf.key_value_row(t(locale, ns, "vat_number_label"), company.vat_number or na)
+    pdf.key_value_row(t(locale, ns, "kvk_number_label"), company.kvk_number or na)
 
-    pdf.heading("Employee")
-    pdf.key_value_row("Name", employee.full_name)
-    pdf.key_value_row("Employee number", employee.employee_number)
-    pdf.key_value_row("Job title", employee.job_title or "n/a")
-    pdf.key_value_row("Contracted hours/week", str(employee.contracted_hours_per_week or "n/a"))
+    pdf.heading(t(locale, ns, "employee_heading"))
+    pdf.key_value_row(t(locale, ns, "name_label"), employee.full_name)
+    pdf.key_value_row(t(locale, ns, "employee_number_label"), employee.employee_number)
+    pdf.key_value_row(t(locale, ns, "job_title_label"), employee.job_title or na)
+    pdf.key_value_row(t(locale, ns, "contracted_hours_label"), str(employee.contracted_hours_per_week or na))
 
-    pdf.heading("Period")
-    pdf.key_value_row("Period", period_label)
-    pdf.key_value_row("Tax year used", str(run.tax_year))
+    pdf.heading(t(locale, ns, "period_heading"))
+    pdf.key_value_row(t(locale, ns, "period_label"), period_label)
+    pdf.key_value_row(t(locale, ns, "tax_year_used_label"), str(run.tax_year))
     if payslip.voided:
-        pdf.text(f"VOIDED -- {payslip.void_reason}", color=(0.73, 0.11, 0.11))
+        pdf.text(t(locale, ns, "voided_prefix", reason=payslip.void_reason), color=(0.73, 0.11, 0.11))
     if payslip.corrects_payslip_id:
-        pdf.text(f"Correction of payslip #{payslip.corrects_payslip_id}", size=8)
+        pdf.text(t(locale, ns, "correction_of", id=payslip.corrects_payslip_id), size=8)
 
-    pdf.heading("Earnings")
-    pdf.key_value_row("Gross salary", str(payslip.gross_salary), highlight=True)
-    pdf.key_value_row("Paid hours", str(payslip.paid_hours or "n/a"))
-    pdf.key_value_row("Overtime hours", str(payslip.overtime_hours))
-    pdf.key_value_row("Overtime amount", str(payslip.overtime_amount))
-    pdf.key_value_row("Holiday allowance", str(payslip.holiday_allowance))
-    pdf.key_value_row("Bonus", str(payslip.bonus_amount))
-    pdf.key_value_row("Expense reimbursement (untaxed)", str(payslip.expense_reimbursement))
+    pdf.heading(t(locale, ns, "earnings_heading"))
+    pdf.key_value_row(t(locale, ns, "gross_salary_label"), str(payslip.gross_salary), highlight=True)
+    pdf.key_value_row(t(locale, ns, "paid_hours_label"), str(payslip.paid_hours or na))
+    pdf.key_value_row(t(locale, ns, "overtime_hours_label"), str(payslip.overtime_hours))
+    pdf.key_value_row(t(locale, ns, "overtime_amount_label"), str(payslip.overtime_amount))
+    pdf.key_value_row(t(locale, ns, "holiday_allowance_label"), str(payslip.holiday_allowance))
+    pdf.key_value_row(t(locale, ns, "bonus_label"), str(payslip.bonus_amount))
+    pdf.key_value_row(t(locale, ns, "expense_reimbursement_label"), str(payslip.expense_reimbursement))
 
-    pdf.heading("Deductions")
-    pdf.key_value_row("Taxable wage", str(payslip.taxable_wage))
-    pdf.key_value_row("Wage tax + national insurance", str(payslip.wage_tax_and_national_insurance))
-    pdf.key_value_row("General tax credit applied", str(payslip.general_tax_credit_applied))
-    pdf.key_value_row("Labor tax credit applied", str(payslip.labor_tax_credit_applied))
-    pdf.key_value_row("Pension deduction", str(payslip.pension_deduction))
-    pdf.key_value_row("Other deductions", str(payslip.other_deductions))
+    pdf.heading(t(locale, ns, "deductions_heading"))
+    pdf.key_value_row(t(locale, ns, "taxable_wage_label"), str(payslip.taxable_wage))
+    pdf.key_value_row(t(locale, ns, "wage_tax_label"), str(payslip.wage_tax_and_national_insurance))
+    pdf.key_value_row(t(locale, ns, "general_tax_credit_label"), str(payslip.general_tax_credit_applied))
+    pdf.key_value_row(t(locale, ns, "labor_tax_credit_label"), str(payslip.labor_tax_credit_applied))
+    pdf.key_value_row(t(locale, ns, "pension_deduction_label"), str(payslip.pension_deduction))
+    pdf.key_value_row(t(locale, ns, "other_deductions_label"), str(payslip.other_deductions))
 
-    pdf.heading("Net")
-    pdf.key_value_row("Net salary", str(payslip.net_salary), highlight=True)
+    pdf.heading(t(locale, ns, "net_heading"))
+    pdf.key_value_row(t(locale, ns, "net_salary_label"), str(payslip.net_salary), highlight=True)
 
-    pdf.heading("Employer cost (informational)")
-    pdf.key_value_row("Employer Zvw levy (estimate)", str(payslip.employer_levy_zvw))
-    pdf.key_value_row("Total employer cost (estimate)", str(payslip.employer_costs_total))
+    pdf.heading(t(locale, ns, "employer_cost_heading"))
+    pdf.key_value_row(t(locale, ns, "employer_zvw_estimate_label"), str(payslip.employer_levy_zvw))
+    pdf.key_value_row(t(locale, ns, "total_employer_cost_estimate_label"), str(payslip.employer_costs_total))
 
     if payslip.calculation_notes:
-        pdf.heading("Calculation notes")
+        pdf.heading(t(locale, ns, "calculation_notes_heading"))
         pdf.text(payslip.calculation_notes, size=7, color=(0.35, 0.39, 0.46))
 
     return pdf.to_bytes()

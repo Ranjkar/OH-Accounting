@@ -13,7 +13,7 @@ from app.models.company import Company
 from app.models.financial_year import FinancialYear
 from app.models.user import User
 from app.reporting import financial_report, management_report, vat_report
-from app.reporting.pdf_i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
+from app.reporting.report_i18n import DEFAULT_LOCALE, SUPPORTED_LOCALES
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -43,6 +43,19 @@ def _render(fmt: str, filename: str, renderers: dict) -> Response:
     )
 
 
+def _validate_document_language(code: str) -> str:
+    """`document_language` affects PDF (and, where supported, XLSX)
+    report prose/labels -- see report_i18n.py; it's independent of the
+    viewer's own UI language preference, since a report may need to be
+    generated in a language other than the one the requesting user
+    currently has their UI in (e.g. for a non-Dutch-speaking
+    stakeholder). CSV headers are never affected -- see render_csv()
+    docstrings for why."""
+    if code not in SUPPORTED_LOCALES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported document_language: {code}")
+    return code
+
+
 @router.get("/vat-return/{vat_return_id}")
 def vat_return_report(
     vat_return_id: int,
@@ -51,15 +64,7 @@ def vat_return_report(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """`document_language` only affects the PDF (report prose/labels --
-    see pdf_i18n.py); it's independent of the viewer's own UI language
-    preference, since a report may need to be generated in a language
-    other than the one the requesting user currently has their UI in
-    (e.g. for a non-Dutch-speaking stakeholder). xlsx/csv exports are
-    not affected -- not in scope for this pass, see the Phase 16.1
-    report's known limitations."""
-    if document_language not in SUPPORTED_LOCALES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported document_language: {document_language}")
+    document_language = _validate_document_language(document_language)
     vat_return = db.get(VatReturn, vat_return_id)
     if vat_return is None or vat_return.tenant_id != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="VAT return not found")
@@ -71,7 +76,7 @@ def vat_return_report(
         f"vat-return-{company.id}-{vat_return.vat_period_id}",
         {
             "pdf": lambda: vat_report.render_pdf(data, locale=document_language),
-            "xlsx": lambda: vat_report.render_xlsx(data),
+            "xlsx": lambda: vat_report.render_xlsx(data, locale=document_language),
             "csv": lambda: vat_report.render_csv(data),
         },
     )
@@ -82,9 +87,11 @@ def financial_overview_report(
     company_id: int,
     financial_year_id: int,
     format: str = "pdf",
+    document_language: str = DEFAULT_LOCALE,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    document_language = _validate_document_language(document_language)
     company = _get_company(db, user, company_id)
     financial_year = db.get(FinancialYear, financial_year_id)
     if financial_year is None or financial_year.company_id != company_id:
@@ -95,8 +102,8 @@ def financial_overview_report(
         format,
         f"financial-overview-{company.id}-{financial_year.year}",
         {
-            "pdf": lambda: financial_report.render_pdf(data),
-            "xlsx": lambda: financial_report.render_xlsx(data),
+            "pdf": lambda: financial_report.render_pdf(data, locale=document_language),
+            "xlsx": lambda: financial_report.render_xlsx(data, locale=document_language),
             "csv": lambda: financial_report.render_csv(data),
         },
     )
@@ -140,8 +147,10 @@ def period_comparison_json(
 def profit_and_loss_report(
     company_id: int, period_type: fr.ReportPeriod = fr.ReportPeriod.annual, reference_date: date | None = None,
     custom_start: date | None = None, custom_end: date | None = None, format: str = "pdf",
+    document_language: str = DEFAULT_LOCALE,
     db: Session = Depends(get_db), user: User = Depends(get_current_user),
 ):
+    document_language = _validate_document_language(document_language)
     company = _get_company(db, user, company_id)
     period = fr.resolve_period(period_type, reference_date or date.today(), custom_start, custom_end)
     pnl = fr.profit_and_loss(db, company_id, period)
@@ -150,8 +159,8 @@ def profit_and_loss_report(
         format,
         f"profit-and-loss-{company.id}-{period.start}-{period.end}",
         {
-            "pdf": lambda: management_report.render_pnl_pdf(company, label, pnl),
-            "xlsx": lambda: management_report.render_pnl_xlsx(company, label, pnl),
+            "pdf": lambda: management_report.render_pnl_pdf(company, label, pnl, locale=document_language),
+            "xlsx": lambda: management_report.render_pnl_xlsx(company, label, pnl, locale=document_language),
             "csv": lambda: management_report.render_pnl_csv(pnl),
         },
     )
@@ -160,8 +169,10 @@ def profit_and_loss_report(
 @router.get("/balance-sheet")
 def balance_sheet_report(
     company_id: int, as_of_date: date | None = None, format: str = "pdf",
+    document_language: str = DEFAULT_LOCALE,
     db: Session = Depends(get_db), user: User = Depends(get_current_user),
 ):
+    document_language = _validate_document_language(document_language)
     company = _get_company(db, user, company_id)
     as_of = as_of_date or date.today()
     bs = fr.balance_sheet(db, company_id, as_of)
@@ -170,15 +181,19 @@ def balance_sheet_report(
         format,
         f"balance-sheet-{company.id}-{as_of}",
         {
-            "pdf": lambda: management_report.render_balance_sheet_pdf(company, label, bs),
-            "xlsx": lambda: management_report.render_balance_sheet_xlsx(company, label, bs),
+            "pdf": lambda: management_report.render_balance_sheet_pdf(company, label, bs, locale=document_language),
+            "xlsx": lambda: management_report.render_balance_sheet_xlsx(company, label, bs, locale=document_language),
             "csv": lambda: management_report.render_balance_sheet_csv(bs),
         },
     )
 
 
 @router.get("/budget-vs-actual/{budget_id}")
-def budget_vs_actual_report(budget_id: int, format: str = "pdf", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def budget_vs_actual_report(
+    budget_id: int, format: str = "pdf", document_language: str = DEFAULT_LOCALE,
+    db: Session = Depends(get_db), user: User = Depends(get_current_user),
+):
+    document_language = _validate_document_language(document_language)
     budget = db.get(Budget, budget_id)
     if budget is None or budget.tenant_id != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found")
@@ -188,7 +203,7 @@ def budget_vs_actual_report(budget_id: int, format: str = "pdf", db: Session = D
         format,
         f"budget-vs-actual-{budget.id}",
         {
-            "pdf": lambda: management_report.render_budget_vs_actual_pdf(company, variance),
+            "pdf": lambda: management_report.render_budget_vs_actual_pdf(company, variance, locale=document_language),
             "csv": lambda: management_report.render_budget_vs_actual_csv(variance),
         },
     )

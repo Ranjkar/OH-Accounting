@@ -16,6 +16,7 @@ from app.models.company import Company
 from app.models.enums import LedgerSide, PaymentStatus
 from app.models.financial_year import FinancialYear
 from app.reporting.pdf_builder import PdfReportBuilder
+from app.reporting.report_i18n import DEFAULT_LOCALE, t
 
 
 def build_financial_overview_data(db: Session, company: Company, financial_year: FinancialYear) -> dict:
@@ -75,46 +76,52 @@ def build_financial_overview_data(db: Session, company: Company, financial_year:
     }
 
 
-def render_pdf(data: dict) -> bytes:
+def render_pdf(data: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    """See vat_report.render_pdf's docstring for the general rule: only
+    report prose/labels change with `locale`, never amounts, enum
+    values, or identifiers."""
     company: Company = data["company"]
     fy: FinancialYear = data["financial_year"]
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ns = "financialOverview"
 
     pdf = PdfReportBuilder(
-        title="Financial Overview Report",
-        company_name=f"{company.name} ({company.vat_number or 'no VAT number on file'})",
-        subtitle=f"Financial year {fy.year} ({fy.start_date} to {fy.end_date})",
+        title=t(locale, ns, "title"),
+        company_name=f"{company.name} ({company.vat_number or t(locale, 'common', 'no_vat_number')})",
+        subtitle=t(locale, ns, "subtitle", year=fy.year, start=fy.start_date, end=fy.end_date),
         generated_at=generated,
+        locale=locale,
     )
 
-    pdf.heading("Income and expense overview, by period")
+    pdf.heading(t(locale, ns, "income_expense_heading"))
     pdf.table(
-        ["Period", "Sales (net)", "Purchases (net)", "Net", "Txns"],
+        [t(locale, ns, "col_period"), t(locale, ns, "col_sales_net"), t(locale, ns, "col_purchases_net"), t(locale, ns, "col_net"), t(locale, ns, "col_txns")],
         [
             [p["label"], str(p["sales_net"]), str(p["purchases_net"]), str(p["income_minus_expense"]), str(p["transaction_count"])]
             for p in data["periods_summary"]
         ],
         col_widths=[80, 110, 110, 110, 60],
     )
-    pdf.key_value_row("Total sales (net)", str(data["total_sales_net"]))
-    pdf.key_value_row("Total purchases (net)", str(data["total_purchases_net"]))
-    pdf.key_value_row("Net income", str(data["net_income"]), highlight=True)
+    pdf.key_value_row(t(locale, ns, "total_sales_net"), str(data["total_sales_net"]))
+    pdf.key_value_row(t(locale, ns, "total_purchases_net"), str(data["total_purchases_net"]))
+    pdf.key_value_row(t(locale, ns, "net_income"), str(data["net_income"]), highlight=True)
 
-    pdf.heading("Payment status")
+    pdf.heading(t(locale, ns, "payment_status_heading"))
     for status, count in data["payment_status_counts"].items():
         pdf.key_value_row(status, str(count))
 
-    pdf.heading("Outstanding invoices")
+    pdf.heading(t(locale, ns, "outstanding_invoices_heading"))
     if not data["outstanding_invoices"]:
-        pdf.text("No outstanding invoices.", color=(0.08, 0.5, 0.24))
+        pdf.text(t(locale, ns, "no_outstanding_invoices"), color=(0.08, 0.5, 0.24))
     else:
+        na = t(locale, "common", "na")
         pdf.table(
-            ["Counterparty", "Invoice #", "Due date", "Remaining", "Status"],
+            [t(locale, ns, "col_counterparty"), t(locale, ns, "col_invoice_number"), t(locale, ns, "col_due_date"), t(locale, ns, "col_remaining"), t(locale, ns, "col_status")],
             [
                 [
-                    o["counterparty_name"] or "n/a",
-                    o["invoice_number"] or "n/a",
-                    o["due_date"] or "n/a",
+                    o["counterparty_name"] or na,
+                    o["invoice_number"] or na,
+                    o["due_date"] or na,
                     str(o["remaining_balance"]),
                     o["payment_status"],
                 ]
@@ -126,26 +133,29 @@ def render_pdf(data: dict) -> bytes:
     return pdf.to_bytes()
 
 
-def render_xlsx(data: dict) -> bytes:
+def render_xlsx(data: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "financialOverview"
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Overview"
-    ws.append(["OnHolland Accounting — Financial Overview Report"])
-    ws.append([f"Company: {data['company'].name}"])
-    ws.append([f"Financial year: {data['financial_year'].year}"])
+    ws.title = t(locale, ns, "sheet_overview")
+    ws.append([f"OnHolland Accounting — {t(locale, ns, 'title')}"])
+    ws.append([f"{data['company'].name}"])
+    ws.append([t(locale, ns, "subtitle", year=data["financial_year"].year, start=data["financial_year"].start_date, end=data["financial_year"].end_date)])
     ws.append([])
-    ws.append(["Period", "Sales (net)", "Purchases (net)", "Net", "Transactions"])
+    ws.append([t(locale, ns, "col_period"), t(locale, ns, "col_sales_net"), t(locale, ns, "col_purchases_net"), t(locale, ns, "col_net"), t(locale, ns, "col_txns")])
     for p in data["periods_summary"]:
-        ws.append([p["label"], str(p["sales_net"]), str(p["purchases_net"]), str(p["income_minus_expense"]), p["transaction_count"]])
+        # Real numeric cell types (Decimal/int), not str() -- so Excel
+        # can sum/format these columns, not just display them as text.
+        ws.append([p["label"], p["sales_net"], p["purchases_net"], p["income_minus_expense"], p["transaction_count"]])
     ws.append([])
-    ws.append(["Total sales (net)", str(data["total_sales_net"])])
-    ws.append(["Total purchases (net)", str(data["total_purchases_net"])])
-    ws.append(["Net income", str(data["net_income"])])
+    ws.append([t(locale, ns, "total_sales_net"), data["total_sales_net"]])
+    ws.append([t(locale, ns, "total_purchases_net"), data["total_purchases_net"]])
+    ws.append([t(locale, ns, "net_income"), data["net_income"]])
 
-    ws2 = wb.create_sheet("Outstanding invoices")
-    ws2.append(["Counterparty", "Invoice #", "Due date", "Remaining balance", "Status"])
+    ws2 = wb.create_sheet(t(locale, ns, "sheet_outstanding"))
+    ws2.append([t(locale, ns, "col_counterparty"), t(locale, ns, "col_invoice_number"), t(locale, ns, "col_due_date"), t(locale, ns, "col_remaining"), t(locale, ns, "col_status")])
     for o in data["outstanding_invoices"]:
-        ws2.append([o["counterparty_name"], o["invoice_number"], o["due_date"], str(o["remaining_balance"]), o["payment_status"]])
+        ws2.append([o["counterparty_name"], o["invoice_number"], o["due_date"], o["remaining_balance"], o["payment_status"]])
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -153,7 +163,14 @@ def render_xlsx(data: dict) -> bytes:
 
 
 def render_csv(data: dict) -> bytes:
+    """Headers stay in their stable, canonical snake_case form (never
+    translated) -- this format is for machine import/export, not for
+    reading, see the Phase 16.2 report's CSV section. UTF-8 BOM prefix
+    so Excel (particularly on Windows, in any non-English locale)
+    correctly auto-detects UTF-8 instead of mis-decoding accented
+    counterparty names as Windows-1252."""
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["period", "sales_net", "purchases_net", "net", "transaction_count"])
     for p in data["periods_summary"]:

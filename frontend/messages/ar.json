@@ -158,11 +158,7 @@
   },
   "language": {
     "label": "اللغة",
-    "description": "اختر لغة الواجهة. هذا لا يغيّر أي بيانات خاصة بالشركة أو العميل أو المحاسبة.",
-    "nl-NL": "Nederlands",
-    "en-GB": "English",
-    "fa-IR": "فارسی",
-    "ar-SA": "العربية"
+    "description": "اختر لغة الواجهة. هذا لا يغيّر أي بيانات خاصة بالشركة أو العميل أو المحاسبة."
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -411,7 +407,16 @@
     "recentBatches": "الدفعات الأخيرة",
     "noBatchesYet": "لا توجد دفعات بعد لهذه الشركة.",
     "selectCompanyToSeeBatches": "اختر شركة لعرض الدفعات الأخيرة.",
-    "acceptHint": "PDF، JPG، PNG — إمكانية رفع عدة ملفات"
+    "acceptHint": "PDF، JPG، PNG — إمكانية رفع عدة ملفات",
+    "selectPlaceholder": "اختر…",
+    "financialYearLabel": "السنة المالية",
+    "filesSelected": "تم اختيار {count} ملف(ات)",
+    "remove": "إزالة",
+    "uploading": "جارٍ الرفع…",
+    "uploadButton": "رفع {count} ملف(ات)",
+    "selectRequired": "اختر شركة وسنة مالية وملفًا واحدًا على الأقل.",
+    "uploadFailed": "فشل الرفع",
+    "batchSummary": "{total} ملف · {extracted} مستخرج · {duplicates} مكرر · {failed} فاشل · {approved} معتمد"
   },
   "customers": {
     "title": "العملاء",
@@ -1532,5 +1537,13 @@
     "approve": "اعتماد",
     "reject": "رفض",
     "noEntriesYet": "لا توجد قيود بعد."
+  },
+  "charts": {
+    "noDataForPeriod": "لا توجد بيانات بعد لهذه الفترة.",
+    "chartAriaLabel": "مخطط {title} -- راجع جدول البيانات أدناه للحصول على القيم الدقيقة",
+    "tableCaption": "{title} -- القيم الدقيقة حسب الفترة",
+    "colPeriod": "الفترة",
+    "colValue": "القيمة",
+    "negativeSuffix": " (سالب)"
   }
 }

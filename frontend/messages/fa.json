@@ -158,11 +158,7 @@
   },
   "language": {
     "label": "زبان",
-    "description": "زبان رابط کاربری را انتخاب کنید. این تغییر هیچ‌یک از داده‌های شرکت، مشتری یا حسابداری را تغییر نمی‌دهد.",
-    "nl-NL": "Nederlands",
-    "en-GB": "English",
-    "fa-IR": "فارسی",
-    "ar-SA": "العربية"
+    "description": "زبان رابط کاربری را انتخاب کنید. این تغییر هیچ‌یک از داده‌های شرکت، مشتری یا حسابداری را تغییر نمی‌دهد."
   },
   "dashboard": {
     "title": "داشبورد",
@@ -411,7 +407,16 @@
     "recentBatches": "دسته‌های اخیر",
     "noBatchesYet": "هنوز هیچ دسته‌ای برای این شرکت وجود ندارد.",
     "selectCompanyToSeeBatches": "برای مشاهده دسته‌های اخیر، یک شرکت را انتخاب کنید.",
-    "acceptHint": "PDF، JPG، PNG — امکان آپلود چند فایل"
+    "acceptHint": "PDF، JPG، PNG — امکان آپلود چند فایل",
+    "selectPlaceholder": "انتخاب کنید…",
+    "financialYearLabel": "سال مالی",
+    "filesSelected": "{count} فایل انتخاب شد",
+    "remove": "حذف",
+    "uploading": "در حال بارگذاری…",
+    "uploadButton": "بارگذاری {count} فایل",
+    "selectRequired": "یک شرکت، سال مالی و حداقل یک فایل انتخاب کنید.",
+    "uploadFailed": "بارگذاری ناموفق بود",
+    "batchSummary": "{total} فایل · {extracted} استخراج‌شده · {duplicates} تکراری · {failed} ناموفق · {approved} تأییدشده"
   },
   "customers": {
     "title": "مشتریان",
@@ -1532,5 +1537,13 @@
     "approve": "تأیید",
     "reject": "رد",
     "noEntriesYet": "هنوز ردیفی ثبت نشده است."
+  },
+  "charts": {
+    "noDataForPeriod": "هنوز داده‌ای برای این دوره وجود ندارد.",
+    "chartAriaLabel": "نمودار {title} -- برای مقادیر دقیق به جدول زیر مراجعه کنید",
+    "tableCaption": "{title} -- مقادیر دقیق به تفکیک دوره",
+    "colPeriod": "دوره",
+    "colValue": "مقدار",
+    "negativeSuffix": " (منفی)"
   }
 }

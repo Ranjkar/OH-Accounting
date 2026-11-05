@@ -25,6 +25,12 @@ import arabic_reshaper
 import fitz
 from bidi.algorithm import get_display
 
+# The one string PdfReportBuilder itself generates (every other word on
+# every report comes from its caller, see app/reporting/report_i18n.py) --
+# kept here, not in report_i18n.py, since it's intrinsic to this class
+# rather than to any particular report.
+GENERATED_LABEL = {"nl": "Gegenereerd", "en": "Generated", "fa": "تاریخ تولید", "ar": "تاريخ الإنشاء"}
+
 NAVY = (0x0F / 255, 0x1B / 255, 0x3D / 255)
 SLATE = (0.35, 0.39, 0.46)
 BLACK = (0.1, 0.1, 0.1)
@@ -111,7 +117,8 @@ class PdfReportBuilder:
         self.y = 110
         self.text(company_name, size=13, bold=True)
         self.text(subtitle, size=10, color=SLATE)
-        self.text(f"Generated {generated_at}", size=8, color=SLATE)
+        generated_label = GENERATED_LABEL.get(self.locale, GENERATED_LABEL["nl"])
+        self.text(f"{generated_label} {generated_at}", size=8, color=SLATE)
         self.y += 8
         self._hr()
 
