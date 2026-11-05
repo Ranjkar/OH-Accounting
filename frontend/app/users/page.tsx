@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -26,6 +26,7 @@ const INVITATION_PILL: Record<string, string> = {
 
 function UsersContent() {
   const t = useTranslations("users");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const { token, user: currentUser } = useAuth();
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -256,7 +257,7 @@ function UsersContent() {
                     <td className="text-text-secondary text-xs">
                       {u.companies.length === 0 ? "—" : u.companies.map((c) => c.name).join(", ")}
                     </td>
-                    <td className="text-text-secondary text-xs">{formatDate(u.created_at)}</td>
+                    <td className="text-text-secondary text-xs">{formatDate(u.created_at, locale)}</td>
                     <td className="text-xs">
                       {u.id === currentUser?.id ? (
                         <span className="text-text-secondary">{t("you")}</span>
@@ -318,7 +319,7 @@ function UsersContent() {
                     <td>
                       <span className={`status-pill ${INVITATION_PILL[inv.status]}`}>{t(`invitationStatus.${inv.status.toLowerCase()}` as never)}</span>
                     </td>
-                    <td className="text-text-secondary text-xs">{formatDate(inv.expires_at)}</td>
+                    <td className="text-text-secondary text-xs">{formatDate(inv.expires_at, locale)}</td>
                     <td className="text-xs">
                       {inv.status === "PENDING" && (
                         <button onClick={() => handleRevokeInvitation(inv)} className="text-error hover:underline">

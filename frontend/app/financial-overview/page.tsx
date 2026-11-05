@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -24,6 +24,7 @@ function Tile({ label, value, href, suffix }: { label: string; value: string; hr
 function FinancialOverviewContent() {
   const t = useTranslations("financialOverview");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -70,9 +71,9 @@ function FinancialOverviewContent() {
                 {portfolio.portfolio.map((row: JsonReport) => (
                   <tr key={row.company_id}>
                     <td className="text-text-primary">{row.company_name}</td>
-                    <td className="col-amount">{formatEUR(row.current_month_revenue)}</td>
-                    <td className="col-amount">{formatEUR(row.current_month_net_profit)}</td>
-                    <td className="col-amount">{formatEUR(row.vat_payable)}</td>
+                    <td className="col-amount">{formatEUR(row.current_month_revenue, locale)}</td>
+                    <td className="col-amount">{formatEUR(row.current_month_net_profit, locale)}</td>
+                    <td className="col-amount">{formatEUR(row.vat_payable, locale)}</td>
                     <td className="text-right">{row.unreconciled_bank_transactions}</td>
                     <td>
                       <span className={`status-pill ${row.balance_sheet_balanced ? "status-pill-success" : "status-pill-warning"}`}>
@@ -106,13 +107,13 @@ function FinancialOverviewContent() {
 
         {owner && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            <Tile label={t("revenueThisMonth")} value={formatEUR(owner.revenue)} href="/profit-and-loss" />
-            <Tile label={t("netProfitThisMonth")} value={formatEUR(owner.net_profit)} href="/profit-and-loss" />
-            <Tile label={t("cashPosition")} value={formatEUR(owner.cash_position)} href="/balance-sheet" />
-            <Tile label={t("outstandingCustomerPayments")} value={formatEUR(owner.outstanding_customer_payments)} href="/working-capital" />
-            <Tile label={t("upcomingSupplierPayments")} value={formatEUR(owner.upcoming_supplier_payments)} href="/working-capital" />
-            <Tile label={t("estimatedVatPosition")} value={formatEUR(owner.estimated_vat_position)} href="/vat" />
-            <Tile label={t("budgetVariance")} value={owner.budget_performance ? formatEUR(owner.budget_performance.total_variance) : t("noApprovedBudget")} href="/budgets" />
+            <Tile label={t("revenueThisMonth")} value={formatEUR(owner.revenue, locale)} href="/profit-and-loss" />
+            <Tile label={t("netProfitThisMonth")} value={formatEUR(owner.net_profit, locale)} href="/profit-and-loss" />
+            <Tile label={t("cashPosition")} value={formatEUR(owner.cash_position, locale)} href="/balance-sheet" />
+            <Tile label={t("outstandingCustomerPayments")} value={formatEUR(owner.outstanding_customer_payments, locale)} href="/working-capital" />
+            <Tile label={t("upcomingSupplierPayments")} value={formatEUR(owner.upcoming_supplier_payments, locale)} href="/working-capital" />
+            <Tile label={t("estimatedVatPosition")} value={formatEUR(owner.estimated_vat_position, locale)} href="/vat" />
+            <Tile label={t("budgetVariance")} value={owner.budget_performance ? formatEUR(owner.budget_performance.total_variance, locale) : t("noApprovedBudget")} href="/budgets" />
             <Tile label={t("threeMonthForecast")} value={t("view")} href="/forecasts" />
           </div>
         )}

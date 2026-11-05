@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -30,6 +30,7 @@ const STATUS_FILTER_KEYS: { value: ReconciliationStatus | "all"; key: string }[]
 function BankTransactionsContent() {
   const t = useTranslations("banking");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -122,7 +123,7 @@ function BankTransactionsContent() {
               {transactions.map((tx) => (
                 <tr key={tx.id} className="cursor-pointer hover:bg-muted" onClick={() => openDetail(tx.id)}>
                   <td className="text-text-secondary">{tx.booking_date}</td>
-                  <td className={`col-amount font-medium ${Number(tx.amount) < 0 ? "value-negative" : "value-positive"}`}>{formatEUR(tx.amount)}</td>
+                  <td className={`col-amount font-medium ${Number(tx.amount) < 0 ? "value-negative" : "value-positive"}`}>{formatEUR(tx.amount, locale)}</td>
                   <td className="text-text-primary">{tx.counterparty_name ?? "—"}</td>
                   <td className="text-xs text-text-secondary">{tx.payment_reference ?? "—"}</td>
                   <td><span className={`status-pill ${STATUS_PILL_CLASS[tx.reconciliation_status]}`}>{tx.reconciliation_status.replace(/_/g, " ").toLowerCase()}</span></td>
@@ -144,7 +145,7 @@ function BankTransactionsContent() {
           {detail ? (
             <div className="space-y-3 text-sm">
               <h3 className="font-medium text-text-primary">{t("transactionNumber", { id: detail.id })}</h3>
-              <p>{tCommon("amount")}: <span className="font-mono">{formatEUR(detail.amount)}</span></p>
+              <p>{tCommon("amount")}: <span className="font-mono">{formatEUR(detail.amount, locale)}</span></p>
               <p>{tCommon("status")}: {detail.reconciliation_status}</p>
               <p>{t("counterparty")}: {detail.counterparty_name ?? "—"}</p>
               <p>{t("iban")}: <span dir="ltr">{detail.counterparty_iban ?? "—"}</span></p>
@@ -153,7 +154,7 @@ function BankTransactionsContent() {
               {detail.matches.map((m) => (
                 <div key={m.id} className="rounded-md border border-border-subtle p-2">
                   <p>{t("invoiceMatchLine", { id: m.accounting_transaction_id, level: m.confidence_level, score: m.confidence_score })}</p>
-                  <p className="text-xs text-text-secondary">{t("allocated")}: {formatEUR(m.allocated_amount)} · {tCommon("status")}: {m.status}</p>
+                  <p className="text-xs text-text-secondary">{t("allocated")}: {formatEUR(m.allocated_amount, locale)} · {tCommon("status")}: {m.status}</p>
                 </div>
               ))}
               {detail.reconciliation_status !== "EXCLUDED" && (

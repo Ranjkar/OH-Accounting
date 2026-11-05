@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -30,6 +30,7 @@ const PNL_LINES: { key: string; labelKey: string; highlight?: boolean }[] = [
 function PnlContent() {
   const t = useTranslations("profitAndLoss");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -113,9 +114,9 @@ function PnlContent() {
                 return (
                   <tr key={line.key} className={line.highlight ? "bg-muted font-medium" : ""}>
                     <td className="text-text-primary">{t(line.labelKey as never)}</td>
-                    <td className="col-amount">{formatEUR(report.current[line.key])}</td>
-                    {comparisonKey && <td className="col-amount text-text-secondary">{formatEUR(comparison?.previous ?? 0)}</td>}
-                    {comparisonKey && <td className="col-amount">{formatEUR(comparison?.change ?? 0)}</td>}
+                    <td className="col-amount">{formatEUR(report.current[line.key], locale)}</td>
+                    {comparisonKey && <td className="col-amount text-text-secondary">{formatEUR(comparison?.previous ?? 0, locale)}</td>}
+                    {comparisonKey && <td className="col-amount">{formatEUR(comparison?.change ?? 0, locale)}</td>}
                     {comparisonKey && (
                       <td className={`col-amount ${comparison?.change_pct && Number(comparison.change_pct) < 0 ? "value-negative" : "value-positive"}`}>
                         {comparison?.change_pct !== null && comparison?.change_pct !== undefined ? `${comparison.change_pct}%` : t("notApplicable")}

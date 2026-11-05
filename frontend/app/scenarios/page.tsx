@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -21,6 +21,7 @@ const ASSUMPTION_FIELDS: { key: string; labelKey: string; placeholderKey: string
 
 function ScenariosContent() {
   const t = useTranslations("scenarios");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -188,8 +189,8 @@ function ScenariosContent() {
               {comparison.comparison.map((row: JsonReport) => (
                 <tr key={row.name}>
                   <td className="text-text-primary">{row.name}</td>
-                  <td className="col-amount">{formatEUR(row.total_forecast_profit)}</td>
-                  <td className="col-amount">{formatEUR(row.scenario_net_cash_change)}</td>
+                  <td className="col-amount">{formatEUR(row.total_forecast_profit, locale)}</td>
+                  <td className="col-amount">{formatEUR(row.scenario_net_cash_change, locale)}</td>
                 </tr>
               ))}
             </tbody>

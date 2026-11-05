@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -31,6 +31,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
   const tStatus = useTranslations("vat.status");
   const { token, user } = useAuth();
   const router = useRouter();
+  const locale = useLocale();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
 
   const [vatReturn, setVatReturn] = useState<VatReturn | null>(null);
@@ -91,15 +92,15 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">{t("salesNet")}</p>
-          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(reconciliation.sales_total_net)}</p>
+          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(reconciliation.sales_total_net, locale)}</p>
         </div>
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">{t("purchasesNet")}</p>
-          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(reconciliation.purchases_total_net)}</p>
+          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(reconciliation.purchases_total_net, locale)}</p>
         </div>
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">{t("netPayable")} (5a − 5b)</p>
-          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(vatReturn.net_payable)}</p>
+          <p className="text-lg font-semibold text-navy mt-1">{formatEUR(vatReturn.net_payable, locale)}</p>
         </div>
       </div>
 
@@ -138,27 +139,27 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
               <tr key={row.code}>
                 <td className="font-medium text-navy">{row.code}</td>
                 <td className="text-text-primary">{tBoxes(row.labelKey as never)}</td>
-                <td className="col-amount">{row.net ? formatEUR(vatReturn[row.net] as string) : "—"}</td>
-                <td className="col-amount">{row.vat ? formatEUR(vatReturn[row.vat] as string) : "—"}</td>
+                <td className="col-amount">{row.net ? formatEUR(vatReturn[row.net] as string, locale) : "—"}</td>
+                <td className="col-amount">{row.vat ? formatEUR(vatReturn[row.vat] as string, locale) : "—"}</td>
               </tr>
             ))}
             <tr className="bg-muted font-medium">
               <td>5a</td>
               <td className="text-text-primary">{t("totalVatPayable")}</td>
               <td></td>
-              <td className="col-amount">{formatEUR(vatReturn.box_5a_vat)}</td>
+              <td className="col-amount">{formatEUR(vatReturn.box_5a_vat, locale)}</td>
             </tr>
             <tr className="bg-muted font-medium">
               <td>5b</td>
               <td className="text-text-primary">{t("deductibleInputVat")}</td>
               <td></td>
-              <td className="col-amount">{formatEUR(vatReturn.box_5b_vat)}</td>
+              <td className="col-amount">{formatEUR(vatReturn.box_5b_vat, locale)}</td>
             </tr>
             <tr className="bg-navy-solid text-white font-medium">
               <td>5g</td>
               <td>{t("finalTotal")} (5a − 5b)</td>
               <td></td>
-              <td className="col-amount">{formatEUR(vatReturn.net_payable)}</td>
+              <td className="col-amount">{formatEUR(vatReturn.net_payable, locale)}</td>
             </tr>
           </tbody>
         </table>

@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import StatusBadge from "@/components/StatusBadge";
@@ -12,6 +12,7 @@ import { api, ApiError, Company, CompanyAccess, CompanyInvitation, FinancialYear
 function TeamAccessSection({ companyId }: { companyId: number }) {
   const t = useTranslations("companies.teamAccess");
   const tRoles = useTranslations("users.roles");
+  const locale = useLocale();
   const { token } = useAuth();
   const [access, setAccess] = useState<CompanyAccess[]>([]);
   const [invitations, setInvitations] = useState<CompanyInvitation[]>([]);
@@ -111,7 +112,7 @@ function TeamAccessSection({ companyId }: { companyId: number }) {
           <ul className="divide-y divide-border text-sm">
             {pendingInvitations.map((i) => (
               <li key={i.id} className="flex items-center justify-between py-2">
-                <span><span dir="ltr">{i.invited_email}</span> <span className="text-text-secondary">({tRoles.has(i.intended_role as never) ? tRoles(i.intended_role as never) : i.intended_role}, {t("expiresOn", { date: new Date(i.expires_at).toLocaleDateString() })})</span></span>
+                <span><span dir="ltr">{i.invited_email}</span> <span className="text-text-secondary">({tRoles.has(i.intended_role as never) ? tRoles(i.intended_role as never) : i.intended_role}, {t("expiresOn", { date: new Date(i.expires_at).toLocaleDateString(locale) })})</span></span>
                 <button onClick={() => handleRevokeInvitation(i.id)} className="text-xs text-error hover:underline">{t("revoke")}</button>
               </li>
             ))}

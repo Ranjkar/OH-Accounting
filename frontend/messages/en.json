@@ -398,12 +398,9 @@
   "invoices": {
     "uploadSalesTitle": "Upload Sales Invoices",
     "uploadSalesDescription": "Upload multiple sales invoices (PDF, JPG, PNG) in one batch. Each invoice is extracted and classified independently, then sent to the sales ledger once approved.",
-    "uploadPurchaseTitle": "Upload Purchase Invoices",
-    "uploadPurchaseDescription": "Upload multiple supplier invoices and expense receipts (PDF, JPG, PNG, XLSX, CSV) in one batch. Input VAT eligibility is assessed per line and flagged for review when uncertain.",
     "dragDropFiles": "Drag and drop files here, or",
     "clickToSelect": "click to select",
     "financialYear": "Financial year",
-    "uploadFiles": "Upload files",
     "recentBatches": "Recent batches",
     "noBatchesYet": "No batches yet for this company.",
     "selectCompanyToSeeBatches": "Select a company to see recent batches.",

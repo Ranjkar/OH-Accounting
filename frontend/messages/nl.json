@@ -398,12 +398,9 @@
   "invoices": {
     "uploadSalesTitle": "Verkoopfacturen uploaden",
     "uploadSalesDescription": "Upload meerdere verkoopfacturen (PDF, JPG, PNG) in één batch. Elke factuur wordt onafhankelijk geëxtraheerd en geclassificeerd, en na goedkeuring naar het verkoopboek gestuurd.",
-    "uploadPurchaseTitle": "Inkoopfacturen uploaden",
-    "uploadPurchaseDescription": "Upload meerdere leveranciersfacturen en bonnen (PDF, JPG, PNG, XLSX, CSV) in één batch. BTW-aftrekbaarheid wordt per regel beoordeeld en gemarkeerd bij onzekerheid.",
     "dragDropFiles": "Sleep bestanden hierheen, of",
     "clickToSelect": "klik om te selecteren",
     "financialYear": "Boekjaar",
-    "uploadFiles": "Bestanden uploaden",
     "recentBatches": "Recente batches",
     "noBatchesYet": "Nog geen batches voor dit bedrijf.",
     "selectCompanyToSeeBatches": "Selecteer een bedrijf om recente batches te zien.",

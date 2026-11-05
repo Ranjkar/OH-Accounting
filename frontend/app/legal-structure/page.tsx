@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -10,15 +10,16 @@ import { formatEUR } from "@/lib/format";
 
 function OptionCard({ title, total_tax, net_result, highlight }: { title: string; total_tax: string; net_result: string; highlight: boolean }) {
   const t = useTranslations("legalStructure");
+  const locale = useLocale();
   return (
     <div className={`card-v2 p-4 ${highlight ? "border-2 border-brand-purple-500" : ""}`}>
       {/* Eenmanszaak/VOF/BV are official Dutch legal-entity-type names
           (like "Ltd" or "GmbH") -- kept untranslated, see the title prop
           at each call site below. */}
       <p className="text-xs text-text-secondary">{title}</p>
-      <p className="text-2xl font-semibold text-text-primary font-mono">{formatEUR(total_tax)}</p>
+      <p className="text-2xl font-semibold text-text-primary font-mono">{formatEUR(total_tax, locale)}</p>
       <p className="text-xs text-text-secondary">{t("estimatedTax")}</p>
-      <p className="text-sm font-mono mt-2">{formatEUR(net_result)}</p>
+      <p className="text-sm font-mono mt-2">{formatEUR(net_result, locale)}</p>
       <p className="text-xs text-text-secondary">{t("netResult")}</p>
       {highlight && <p className="text-xs text-brand-purple-600 mt-2 font-medium">{t("lowestEstimatedTax")}</p>}
     </div>
@@ -28,6 +29,7 @@ function OptionCard({ title, total_tax, net_result, highlight }: { title: string
 function LegalStructureContent() {
   const t = useTranslations("legalStructure");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -80,12 +82,12 @@ function LegalStructureContent() {
           </div>
           <div className="card-v2 p-4">
             <h2 className="font-medium text-text-primary mb-2">{t("bvDetail")}</h2>
-            <p className="text-sm">{t("dgaSalaryUsed")}: <span className="font-mono">{formatEUR(result.bv.dga_salary_used)}</span></p>
+            <p className="text-sm">{t("dgaSalaryUsed")}: <span className="font-mono">{formatEUR(result.bv.dga_salary_used, locale)}</span></p>
             <p className="text-sm">
-              {t("gebruikelijkLoonCompliant")}: {result.bv.dga_salary_check.compliant ? tCommon("yes") : t("gebruikelijkLoonNotCompliant", { minimum: formatEUR(result.bv.dga_salary_check.required_minimum) })}
+              {t("gebruikelijkLoonCompliant")}: {result.bv.dga_salary_check.compliant ? tCommon("yes") : t("gebruikelijkLoonNotCompliant", { minimum: formatEUR(result.bv.dga_salary_check.required_minimum, locale) })}
             </p>
-            <p className="text-sm">{t("corporateTax")}: <span className="font-mono">{formatEUR(result.bv.corporate_tax)}</span></p>
-            <p className="text-sm">{t("retainedProfitAfterTax")}: <span className="font-mono">{formatEUR(result.bv.retained_profit_after_corporate_tax)}</span></p>
+            <p className="text-sm">{t("corporateTax")}: <span className="font-mono">{formatEUR(result.bv.corporate_tax, locale)}</span></p>
+            <p className="text-sm">{t("retainedProfitAfterTax")}: <span className="font-mono">{formatEUR(result.bv.retained_profit_after_corporate_tax, locale)}</span></p>
           </div>
           <p className="text-xs text-pending">{result.disclaimer}</p>
         </>

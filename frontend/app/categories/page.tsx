@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -18,6 +18,7 @@ const EXPENSE_CATEGORIES = [
 
 function CategoriesContent() {
   const t = useTranslations("categories");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -170,7 +171,7 @@ function CategoriesContent() {
                   <tr key={t2.id}>
                     <td className="text-text-primary" dir="ltr">{t2.invoice_number ?? `#${t2.id}`}</td>
                     <td className="text-text-secondary">{t2.counterparty_name ?? "—"}</td>
-                    <td className="col-amount">{formatEUR(t2.net_amount)}</td>
+                    <td className="col-amount">{formatEUR(t2.net_amount, locale)}</td>
                     <td>
                       {suggestions[t2.id] ? (
                         <span className="text-xs text-text-secondary">

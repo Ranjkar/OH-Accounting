@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -10,6 +10,7 @@ import { formatEUR } from "@/lib/format";
 
 function CashFlowContent() {
   const t = useTranslations("cashFlow");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -90,31 +91,31 @@ function CashFlowContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">{t("operatingActivitiesNet")}</p>
-              <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.operating_activities.net)}</p>
-              <p className="text-xs text-text-secondary">{t("receiptsPayments", { receipts: formatEUR(statement.operating_activities.receipts), payments: formatEUR(statement.operating_activities.payments) })}</p>
+              <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.operating_activities.net, locale)}</p>
+              <p className="text-xs text-text-secondary">{t("receiptsPayments", { receipts: formatEUR(statement.operating_activities.receipts, locale), payments: formatEUR(statement.operating_activities.payments, locale) })}</p>
             </div>
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">{t("investingActivitiesNet")}</p>
-              <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.investing_activities.net)}</p>
+              <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.investing_activities.net, locale)}</p>
               <p className="text-xs text-text-secondary">{statement.investing_activities.note}</p>
             </div>
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">{t("financingActivitiesNet")}</p>
-              <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.financing_activities.net)}</p>
+              <p className="text-xl font-semibold text-navy font-mono">{formatEUR(statement.financing_activities.net, locale)}</p>
               <p className="text-xs text-text-secondary">{statement.financing_activities.note}</p>
             </div>
           </div>
           <div className="card-v2 p-4">
-            <p className="text-sm font-medium text-navy">{t("netChangeInCash")} <span className="font-mono">{formatEUR(statement.net_change_in_cash)}</span></p>
+            <p className="text-sm font-medium text-navy">{t("netChangeInCash")} <span className="font-mono">{formatEUR(statement.net_change_in_cash, locale)}</span></p>
           </div>
           <div className="card-v2 p-4">
             <h2 className="font-medium text-text-primary mb-2">{t("accrualVsCashHeading")}</h2>
-            <p className="text-sm">{t("netProfitAccrual")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.net_profit_accrual)}</span></p>
-            <p className="text-sm">{t("depreciationAddback")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.depreciation_addback)}</span></p>
-            <p className="text-sm">{t("increaseInAR")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_receivable)}</span></p>
-            <p className="text-sm">{t("increaseInAP")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_payable)}</span></p>
-            <p className="text-sm font-medium">{t("approxOperatingCash")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.approx_operating_cash_from_accrual)}</span></p>
-            <p className="text-sm font-medium">{t("actualOperatingCash")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.actual_operating_cash)}</span></p>
+            <p className="text-sm">{t("netProfitAccrual")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.net_profit_accrual, locale)}</span></p>
+            <p className="text-sm">{t("depreciationAddback")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.depreciation_addback, locale)}</span></p>
+            <p className="text-sm">{t("increaseInAR")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_receivable, locale)}</span></p>
+            <p className="text-sm">{t("increaseInAP")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.increase_in_accounts_payable, locale)}</span></p>
+            <p className="text-sm font-medium">{t("approxOperatingCash")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.approx_operating_cash_from_accrual, locale)}</span></p>
+            <p className="text-sm font-medium">{t("actualOperatingCash")} <span className="font-mono">{formatEUR(statement.accrual_vs_cash_reconciliation.actual_operating_cash, locale)}</span></p>
             <p className="text-xs text-pending mt-2">{statement.accrual_vs_cash_reconciliation.note}</p>
           </div>
         </div>
@@ -125,7 +126,7 @@ function CashFlowContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">{t("actualNetBankMovement")}</p>
-              <p className="text-2xl font-semibold text-navy font-mono">{formatEUR(forecast.net_bank_transaction_movement)}</p>
+              <p className="text-2xl font-semibold text-navy font-mono">{formatEUR(forecast.net_bank_transaction_movement, locale)}</p>
               <p className="text-xs text-pending mt-1">{forecast.net_bank_transaction_movement_disclaimer}</p>
             </div>
             <div className="card-v2 p-4">
@@ -134,12 +135,12 @@ function CashFlowContent() {
                 {t("salesPurchaseCount", { sales: forecast.outstanding_sales_invoice_count, purchases: forecast.outstanding_purchase_invoice_count })}
               </p>
               <p className="text-sm font-mono mt-1">
-                +{formatEUR(forecast.expected_incoming_total)} / -{formatEUR(forecast.expected_outgoing_total)}
+                +{formatEUR(forecast.expected_incoming_total, locale)} / -{formatEUR(forecast.expected_outgoing_total, locale)}
               </p>
             </div>
             <div className="card-v2 p-4">
               <p className="text-xs text-text-secondary">{t("aiEstimatedRecurringExpenses")}</p>
-              <p className="text-sm font-mono">{t("perMonth", { amount: formatEUR(forecast.recurring_expenses_monthly_equivalent) })}</p>
+              <p className="text-sm font-mono">{t("perMonth", { amount: formatEUR(forecast.recurring_expenses_monthly_equivalent, locale) })}</p>
               <p className="text-xs text-text-secondary">{t("patternsDetected", { count: forecast.recurring_pattern_count })}</p>
             </div>
           </div>
@@ -147,7 +148,7 @@ function CashFlowContent() {
           <div className="card-v2 p-4">
             <p className="text-sm font-medium text-navy">{t("forecastVatPosition")}</p>
             <p className="text-sm font-mono mt-1">
-              {t("payableRefundable", { payable: formatEUR(forecast.forecast_vat_payable), refundable: formatEUR(forecast.forecast_vat_refundable) })}
+              {t("payableRefundable", { payable: formatEUR(forecast.forecast_vat_payable, locale), refundable: formatEUR(forecast.forecast_vat_refundable, locale) })}
             </p>
             <p className="text-xs text-pending mt-1">{forecast.forecast_vat_disclaimer}</p>
           </div>
@@ -171,9 +172,9 @@ function CashFlowContent() {
                 {forecast.monthly_projection.map((m) => (
                   <tr key={m.month}>
                     <td className="text-text-secondary">{m.month}</td>
-                    <td className="col-amount value-positive">+{formatEUR(m.expected_incoming)}</td>
-                    <td className="col-amount value-negative">-{formatEUR(m.expected_outgoing)}</td>
-                    <td className="col-amount font-medium">{formatEUR(m.net)}</td>
+                    <td className="col-amount value-positive">+{formatEUR(m.expected_incoming, locale)}</td>
+                    <td className="col-amount value-negative">-{formatEUR(m.expected_outgoing, locale)}</td>
+                    <td className="col-amount font-medium">{formatEUR(m.net, locale)}</td>
                   </tr>
                 ))}
               </tbody>

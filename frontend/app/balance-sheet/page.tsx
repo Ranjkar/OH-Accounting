@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -18,10 +18,11 @@ const CATEGORY_KEYS: { value: BalanceSheetItemCategory; key: string }[] = [
 ];
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  const locale = useLocale();
   return (
     <div className={`flex items-center justify-between py-1.5 ${highlight ? "font-semibold border-t border-border mt-1 pt-2" : ""}`}>
       <span className="text-text-secondary">{label}</span>
-      <span className="font-mono tabular-nums">{formatEUR(value)}</span>
+      <span className="font-mono tabular-nums">{formatEUR(value, locale)}</span>
     </div>
   );
 }
@@ -29,6 +30,7 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 function BalanceSheetContent() {
   const t = useTranslations("balanceSheet");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -98,7 +100,7 @@ function BalanceSheetContent() {
         <>
           {!bs.is_balanced && (
             <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">
-              {t("doesNotBalance", { amount: formatEUR(bs.imbalance_amount) })} {bs.missing_opening_balance_warning}
+              {t("doesNotBalance", { amount: formatEUR(bs.imbalance_amount, locale) })} {bs.missing_opening_balance_warning}
             </div>
           )}
           {bs.is_balanced && bs.missing_opening_balance_warning && (
@@ -167,7 +169,7 @@ function BalanceSheetContent() {
                 <tr key={item.id}>
                   <td className="text-xs text-text-secondary">{item.category}</td>
                   <td className="text-text-primary">{item.label}</td>
-                  <td className="col-amount">{formatEUR(item.amount)}</td>
+                  <td className="col-amount">{formatEUR(item.amount, locale)}</td>
                   <td className="text-xs text-text-secondary">{item.as_of_date}</td>
                 </tr>
               ))}

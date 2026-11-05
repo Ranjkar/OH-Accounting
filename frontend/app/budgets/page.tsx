@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -19,6 +19,7 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 function BudgetsContent() {
   const t = useTranslations("budgets");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -142,7 +143,7 @@ function BudgetsContent() {
             <div className="bg-muted rounded-md p-3 text-xs space-y-1">
               {suggestion.ai_suggestion.suggestions.map((s: JsonReport) => (
                 <p key={s.category}>
-                  <span className="font-medium">{s.category}</span>: {formatEUR(s.suggested_monthly_amount)}{t("perMonthSuffix")} -- {s.reasoning}
+                  <span className="font-medium">{s.category}</span>: {formatEUR(s.suggested_monthly_amount, locale)}{t("perMonthSuffix")} -- {s.reasoning}
                 </p>
               ))}
               <p className="text-text-secondary">{t("aiSuggestionReviewNotice")}</p>
@@ -168,7 +169,7 @@ function BudgetsContent() {
               <ul className="text-xs text-text-secondary space-y-0.5">
                 {draftLines.map((l, i) => (
                   <li key={i}>
-                    {t("draftLineSummary", { category: l.category, month: l.month, amount: formatEUR(l.amount) })}
+                    {t("draftLineSummary", { category: l.category, month: l.month, amount: formatEUR(l.amount, locale) })}
                   </li>
                 ))}
               </ul>
@@ -235,7 +236,7 @@ function BudgetsContent() {
                     {t("categoryMonthLabel", { category: l.category, month: l.month })}
                   </span>
                   <span className="font-mono tabular-nums">
-                    {formatEUR(l.actual)} / {formatEUR(l.budgeted)}{" "}
+                    {formatEUR(l.actual, locale)} / {formatEUR(l.budgeted, locale)}{" "}
                     <span className={Number(l.variance) < 0 ? "value-negative" : "value-positive"}>
                       ({l.variance_pct !== null ? `${l.variance_pct}%` : t("notApplicable")})
                     </span>
@@ -244,7 +245,7 @@ function BudgetsContent() {
               ))}
               <div className="flex items-center justify-between font-medium pt-2">
                 <span>{t("totalVariance")}</span>
-                <span className="font-mono tabular-nums">{formatEUR(variance.total_variance)}</span>
+                <span className="font-mono tabular-nums">{formatEUR(variance.total_variance, locale)}</span>
               </div>
               <div className="flex items-center gap-2 pt-2 text-xs">
                 <a href={api.budgetVsActualReportUrl(selected.id, "pdf")} className="input-v2 px-2 py-1">

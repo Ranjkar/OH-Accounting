@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -19,6 +19,7 @@ const SOURCE_FORMATS: BankSourceFormat[] = ["CAMT053", "CAMT054", "MT940", "CSV"
 
 function BankingContent() {
   const t = useTranslations("banking");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -224,7 +225,7 @@ function BankingContent() {
             {selectedAccount.provider_name && <span className="text-text-secondary text-xs">{t("viaProvider", { provider: selectedAccount.provider_name })}</span>}
           </div>
           {selectedAccount.last_synced_at && (
-            <p className="text-xs text-text-secondary">{t("lastSynced", { date: new Date(selectedAccount.last_synced_at).toLocaleString() })}</p>
+            <p className="text-xs text-text-secondary">{t("lastSynced", { date: new Date(selectedAccount.last_synced_at).toLocaleString(locale) })}</p>
           )}
           {selectedAccount.last_sync_error && <p className="text-xs value-negative">{t("lastSyncError", { message: selectedAccount.last_sync_error })}</p>}
           {authorizationUrl && (
@@ -291,7 +292,7 @@ function BankingContent() {
               { key: "imported", header: t("imported"), render: (b) => b.transaction_count },
               { key: "dup", header: t("duplicates"), render: (b) => b.duplicate_count },
               { key: "errors", header: t("errors"), render: (b) => (b.error_count > 0 ? <span className="value-negative">{b.error_count}</span> : 0) },
-              { key: "when", header: t("when"), render: (b) => <span className="text-xs text-text-secondary">{new Date(b.imported_at).toLocaleString()}</span> },
+              { key: "when", header: t("when"), render: (b) => <span className="text-xs text-text-secondary">{new Date(b.imported_at).toLocaleString(locale)}</span> },
             ]}
             rows={batches}
             rowKey={(b) => b.id}

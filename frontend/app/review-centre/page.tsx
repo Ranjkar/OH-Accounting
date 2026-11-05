@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -47,6 +47,7 @@ function AcknowledgeDismiss({ anomaly, onChange }: { anomaly: AnomalyFlag; onCha
 function ReviewCentreContent() {
   const t = useTranslations("reviewCentre");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const companyId = selectedCompanyId ?? "";
@@ -142,7 +143,7 @@ function ReviewCentreContent() {
               emptyMessage={t("noSuggestedMatches")}
               columns={[
                 { key: "date", header: tCommon("date"), render: (tx) => tx.booking_date },
-                { key: "amount", header: tCommon("amount"), render: (tx) => <span className="font-mono text-xs">{formatEUR(tx.amount)} {tx.currency}</span> },
+                { key: "amount", header: tCommon("amount"), render: (tx) => <span className="font-mono text-xs">{formatEUR(tx.amount, locale)} {tx.currency}</span> },
                 { key: "counterparty", header: t("counterparty"), render: (tx) => tx.counterparty_name ?? "—" },
                 { key: "action", header: "", render: () => <Link href="/reconciliation" className="text-xs text-brand-purple-600 hover:underline">{t("reviewInReconciliationArrow")}</Link> },
               ]}

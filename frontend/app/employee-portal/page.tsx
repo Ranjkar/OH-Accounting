@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -65,6 +65,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function PayslipsTab() {
   const t = useTranslations("employeePortal");
+  const locale = useLocale();
   const { token } = useAuth();
   const [payslips, setPayslips] = useState<JsonReport[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +96,8 @@ function PayslipsTab() {
               <td className="text-text-primary">
                 #{String(p.id)} {p.voided ? <span className="value-negative">({t("voided")})</span> : null}
               </td>
-              <td className="col-amount">{formatEUR(String(p.gross_salary))}</td>
-              <td className="col-amount font-medium">{formatEUR(String(p.net_salary))}</td>
+              <td className="col-amount">{formatEUR(String(p.gross_salary), locale)}</td>
+              <td className="col-amount font-medium">{formatEUR(String(p.net_salary), locale)}</td>
               <td>
                 <a href={api.myPayslipPdfUrl(Number(p.id))} target="_blank" rel="noreferrer" className="text-navy hover:underline text-xs">
                   PDF
@@ -114,6 +115,7 @@ function PayslipsTab() {
 function StatementTab() {
   const t = useTranslations("employeePortal");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [taxYear, setTaxYear] = useState(new Date().getFullYear());
   const [statement, setStatement] = useState<JsonReport | null>(null);
@@ -150,9 +152,9 @@ function StatementTab() {
       {statement && (
         <div className="grid grid-cols-2 gap-3 text-sm">
           <Row label={t("payslipsIncluded")} value={String(statement.number_of_payslips)} />
-          <Row label={t("grossSalary")} value={formatEUR(statement.gross_salary)} />
-          <Row label={t("netSalaryPaid")} value={formatEUR(statement.net_salary)} />
-          <Row label={t("wageTaxWithheld")} value={formatEUR(statement.wage_tax_and_national_insurance)} />
+          <Row label={t("grossSalary")} value={formatEUR(statement.gross_salary, locale)} />
+          <Row label={t("netSalaryPaid")} value={formatEUR(statement.net_salary, locale)} />
+          <Row label={t("wageTaxWithheld")} value={formatEUR(statement.wage_tax_and_national_insurance, locale)} />
         </div>
       )}
     </GlassCard>

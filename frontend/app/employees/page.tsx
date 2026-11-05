@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,7 @@ import { formatEUR } from "@/lib/format";
 function EmployeesContent() {
   const t = useTranslations("payroll");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -118,7 +119,7 @@ function EmployeesContent() {
                 <td className="text-text-secondary">{emp.employee_number}</td>
                 <td className="text-text-primary">{emp.full_name}</td>
                 <td className="font-mono text-xs text-text-secondary">{emp.bsn_masked ?? "—"}</td>
-                <td className="col-amount">{emp.salary_basis === "MONTHLY" ? formatEUR(emp.monthly_salary) : t("perHour", { amount: formatEUR(emp.hourly_rate) })}</td>
+                <td className="col-amount">{emp.salary_basis === "MONTHLY" ? formatEUR(emp.monthly_salary, locale) : t("perHour", { amount: formatEUR(emp.hourly_rate, locale) })}</td>
                 <td>{emp.is_dga ? tCommon("yes") : ""}</td>
               </tr>
             ))}

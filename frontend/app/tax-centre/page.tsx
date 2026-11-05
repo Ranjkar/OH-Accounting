@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -13,6 +13,7 @@ const LEGAL_FORMS = ["EENMANSZAAK", "VOF", "MAATSCHAP", "CV", "BV", "NV", "COOPE
 function TaxCentreContent() {
   const t = useTranslations("taxCentre");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -109,7 +110,7 @@ function TaxCentreContent() {
                 <div key={row.period_label} className="flex items-center justify-between text-sm py-1 border-b border-border-subtle last:border-0">
                   <span>{row.period_label}</span>
                   <span className="pill-v2 bg-surface-page px-2 py-0.5 text-xs">{row.status}</span>
-                  <span className="font-mono">{formatEUR(row.net_payable)}</span>
+                  <span className="font-mono">{formatEUR(row.net_payable, locale)}</span>
                 </div>
               ))}
             </div>

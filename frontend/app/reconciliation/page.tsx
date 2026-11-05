@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,7 @@ import { formatEUR } from "@/lib/format";
 function ReconciliationContent() {
   const t = useTranslations("reconciliation");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -122,7 +123,7 @@ function ReconciliationContent() {
           <div key={tx.id} className="card-v2 p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span dir="ltr">
-                {t("bankTxLabel", { id: tx.id })} · {tx.booking_date} · <span className="font-mono">{formatEUR(tx.amount)}</span> · {tx.counterparty_name ?? "—"}
+                {t("bankTxLabel", { id: tx.id })} · {tx.booking_date} · <span className="font-mono">{formatEUR(tx.amount, locale)}</span> · {tx.counterparty_name ?? "—"}
               </span>
             </div>
             {tx.matches
@@ -133,7 +134,7 @@ function ReconciliationContent() {
                     <p dir="ltr">
                       {t("invoiceLabel", { id: m.accounting_transaction_id })} · <span className="font-semibold">{m.confidence_level}</span> ({m.confidence_score})
                     </p>
-                    <p className="text-xs text-text-secondary">{t("allocatedLabel", { amount: formatEUR(m.allocated_amount) })}</p>
+                    <p className="text-xs text-text-secondary">{t("allocatedLabel", { amount: formatEUR(m.allocated_amount, locale) })}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => approve(m.id)} className="btn-primary-v2 px-3 py-1.5 text-xs">
@@ -155,14 +156,14 @@ function ReconciliationContent() {
         {approvedQueue.map((tx) => (
           <div key={tx.id} className="card-v2 p-4 space-y-2">
             <div className="text-sm" dir="ltr">
-              {t("bankTxLabel", { id: tx.id })} · {tx.booking_date} · <span className="font-mono">{formatEUR(tx.amount)}</span> · {tx.counterparty_name ?? "—"}
+              {t("bankTxLabel", { id: tx.id })} · {tx.booking_date} · <span className="font-mono">{formatEUR(tx.amount, locale)}</span> · {tx.counterparty_name ?? "—"}
             </div>
             {tx.matches
               .filter((m) => m.status === "APPROVED")
               .map((m) => (
                 <div key={m.id} className="rounded-md border border-border-subtle p-3 flex items-center justify-between gap-3 text-sm">
                   <p dir="ltr">
-                    {t("invoiceLabel", { id: m.accounting_transaction_id })} · {t("allocatedShort", { amount: formatEUR(m.allocated_amount) })}
+                    {t("invoiceLabel", { id: m.accounting_transaction_id })} · {t("allocatedShort", { amount: formatEUR(m.allocated_amount, locale) })}
                   </p>
                   <div className="flex items-center gap-2">
                     <input

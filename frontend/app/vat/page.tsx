@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -51,6 +51,7 @@ function LockControl({ companyId, fy, onChange }: { companyId: number; fy: Finan
 function VatContent() {
   const t = useTranslations("vat");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -127,9 +128,9 @@ function VatContent() {
                       )}
                     </td>
                     <td className="text-text-secondary">{p.filing_deadline}</td>
-                    <td className="col-amount">{vr ? formatEUR(vr.box_5a_vat) : "—"}</td>
-                    <td className="col-amount">{vr ? formatEUR(vr.box_5b_vat) : "—"}</td>
-                    <td className="col-amount font-medium">{vr ? formatEUR(vr.net_payable) : "—"}</td>
+                    <td className="col-amount">{vr ? formatEUR(vr.box_5a_vat, locale) : "—"}</td>
+                    <td className="col-amount">{vr ? formatEUR(vr.box_5b_vat, locale) : "—"}</td>
+                    <td className="col-amount font-medium">{vr ? formatEUR(vr.net_payable, locale) : "—"}</td>
                     <td className="text-xs uppercase text-text-secondary">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
                   </tr>
                 );

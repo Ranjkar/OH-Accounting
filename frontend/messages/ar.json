@@ -398,12 +398,9 @@
   "invoices": {
     "uploadSalesTitle": "رفع فواتير المبيعات",
     "uploadSalesDescription": "ارفع عدة فواتير مبيعات (PDF، JPG، PNG) دفعة واحدة. يتم استخراج كل فاتورة وتصنيفها بشكل مستقل، ثم إرسالها إلى دفتر المبيعات بعد الموافقة عليها.",
-    "uploadPurchaseTitle": "رفع فواتير المشتريات",
-    "uploadPurchaseDescription": "ارفع عدة فواتير موردين وإيصالات مصروفات (PDF، JPG، PNG، XLSX، CSV) دفعة واحدة. يتم تقييم أهلية ضريبة المدخلات لكل بند ووضع علامة عليها للمراجعة عند عدم اليقين.",
     "dragDropFiles": "اسحب الملفات وأفلتها هنا، أو",
     "clickToSelect": "انقر للاختيار",
     "financialYear": "السنة المالية",
-    "uploadFiles": "رفع الملفات",
     "recentBatches": "الدفعات الأخيرة",
     "noBatchesYet": "لا توجد دفعات بعد لهذه الشركة.",
     "selectCompanyToSeeBatches": "اختر شركة لعرض الدفعات الأخيرة.",

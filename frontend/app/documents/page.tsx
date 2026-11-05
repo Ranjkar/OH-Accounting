@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
@@ -19,6 +19,7 @@ const STATUS_FILTERS: { value: DocumentStatus | "all"; key: string }[] = [
 
 function DocumentsContent() {
   const t = useTranslations("documents");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
@@ -129,7 +130,7 @@ function DocumentsContent() {
                 <p className="font-medium text-navy">{doc.original_filename}</p>
                 <p className="text-sm text-text-secondary">
                   {doc.document_type ?? t("unclassified")} ·{" "}
-                  {new Date(doc.created_at).toLocaleString()}
+                  {new Date(doc.created_at).toLocaleString(locale)}
                   {doc.is_duplicate && <span className="text-error"> · {t("duplicate")}</span>}
                 </p>
               </div>

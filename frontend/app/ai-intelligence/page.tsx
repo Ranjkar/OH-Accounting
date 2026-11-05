@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -28,6 +28,7 @@ import { formatEUR } from "@/lib/format";
 
 function AiIntelligenceContent() {
   const t = useTranslations("aiIntelligence");
+  const locale = useLocale();
   const { token } = useAuth();
   const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const companyId = selectedCompanyId ?? "";
@@ -150,7 +151,7 @@ function AiIntelligenceContent() {
                   render: (a) => <span className={a.severity === "critical" ? "value-negative" : a.severity === "warning" ? "value-warning" : "text-text-secondary"}>{a.severity}</span>,
                 },
                 { key: "message", header: t("colReason"), render: (a) => <span className="text-xs">{a.message}</span> },
-                { key: "when", header: t("colFlagged"), render: (a) => <span className="text-xs text-text-secondary">{new Date(a.created_at).toLocaleDateString()}</span> },
+                { key: "when", header: t("colFlagged"), render: (a) => <span className="text-xs text-text-secondary">{new Date(a.created_at).toLocaleDateString(locale)}</span> },
               ]}
               rows={anomalies.slice(0, 8)}
               rowKey={(a) => a.id}
@@ -170,9 +171,9 @@ function AiIntelligenceContent() {
               {cashFlow ? (
                 <>
                   <dl className="text-sm space-y-1.5">
-                    <div className="flex justify-between"><dt className="text-text-secondary">{t("expectedIncoming")}</dt><dd className="font-mono">{formatEUR(cashFlow.expected_incoming_total)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-text-secondary">{t("expectedOutgoing")}</dt><dd className="font-mono">{formatEUR(cashFlow.expected_outgoing_total)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-text-secondary">{t("forecastVatPayable")}</dt><dd className="font-mono">{formatEUR(cashFlow.forecast_vat_payable)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("expectedIncoming")}</dt><dd className="font-mono">{formatEUR(cashFlow.expected_incoming_total, locale)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("expectedOutgoing")}</dt><dd className="font-mono">{formatEUR(cashFlow.expected_outgoing_total, locale)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("forecastVatPayable")}</dt><dd className="font-mono">{formatEUR(cashFlow.forecast_vat_payable, locale)}</dd></div>
                   </dl>
                   <p className="text-xs text-text-secondary pt-1">{cashFlow.forecast_vat_disclaimer}</p>
                 </>
@@ -189,8 +190,8 @@ function AiIntelligenceContent() {
               {forecast?.outstanding_invoices ? (
                 <>
                   <dl className="text-sm space-y-1.5">
-                    <div className="flex justify-between"><dt className="text-text-secondary">{t("receivablesOutstanding")}</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-text-secondary">{t("payablesOutstanding")}</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("receivablesOutstanding")}</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding, locale)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-text-secondary">{t("payablesOutstanding")}</dt><dd className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_payables_outstanding, locale)}</dd></div>
                   </dl>
                   <p className="text-xs text-text-secondary pt-1">{forecast.outstanding_invoices.note}</p>
                 </>
@@ -211,7 +212,7 @@ function AiIntelligenceContent() {
                 {upcomingDeadlines.map((d) => (
                   <li key={d.vat_period_id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
                     <span>{d.period_label}</span>
-                    <span className="text-xs text-text-secondary">{t("filingDeadlineOn", { date: new Date(d.filing_deadline).toLocaleDateString() })}</span>
+                    <span className="text-xs text-text-secondary">{t("filingDeadlineOn", { date: new Date(d.filing_deadline).toLocaleDateString(locale) })}</span>
                   </li>
                 ))}
               </ul>

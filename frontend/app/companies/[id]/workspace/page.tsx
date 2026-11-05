@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -18,6 +18,7 @@ const NOTE_TYPE_KEY: Record<NoteType, string> = {
 function WorkspaceContent({ companyId }: { companyId: number }) {
   const t = useTranslations("companies.workspace");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token, user } = useAuth();
   const router = useRouter();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
@@ -136,7 +137,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
               <div key={note.id} className="px-5 py-3 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs text-text-secondary">
-                    {t(NOTE_TYPE_KEY[note.note_type] as never)} · {note.status === "RESOLVED" ? t("noteStatusResolved") : t("noteStatusOpen")} · {new Date(note.created_at).toLocaleDateString()}
+                    {t(NOTE_TYPE_KEY[note.note_type] as never)} · {note.status === "RESOLVED" ? t("noteStatusResolved") : t("noteStatusOpen")} · {new Date(note.created_at).toLocaleDateString(locale)}
                   </p>
                   <p className="text-sm text-text-primary mt-1">{note.body}</p>
                 </div>
@@ -202,7 +203,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                     </a>
                   </td>
                   <td className="text-text-secondary capitalize">{vr.status.replaceAll("_", " ")}</td>
-                  <td className="col-amount">{formatEUR(vr.net_payable)}</td>
+                  <td className="col-amount">{formatEUR(vr.net_payable, locale)}</td>
                 </tr>
               ))}
             </tbody>

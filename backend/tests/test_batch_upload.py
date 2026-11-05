@@ -353,6 +353,8 @@ def test_export_batch_csv(client, db_session, fake_ai_provider):
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/csv; charset=utf-8"
     assert b"a.pdf" in response.content
+    assert response.content.startswith("﻿".encode("utf-8")), "CSV should start with a UTF-8 BOM for Excel compatibility"
+    assert b"document_id,filename,category" in response.content  # stable, untranslated machine-readable header
 
 
 def test_batch_cross_tenant_access_blocked(client, db_session, fake_ai_provider):

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge";
@@ -22,6 +22,7 @@ function StatCard({ label, value, tone = "navy" }: { label: string; value: numbe
 function BatchDetailContent({ batchId }: { batchId: number }) {
   const t = useTranslations("batches");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token, user } = useAuth();
   const router = useRouter();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
@@ -117,7 +118,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
             ← {tCommon("back")}
           </button>
           <h1 className="text-xl font-semibold text-navy mt-1">
-            {t("batchHeading", { id: batch.id, category: batch.category, date: new Date(batch.created_at).toLocaleString() })}
+            {t("batchHeading", { id: batch.id, category: batch.category, date: new Date(batch.created_at).toLocaleString(locale) })}
           </h1>
         </div>
         <a href={api.batchExportUrl(batch.id)} target="_blank" rel="noreferrer" className="text-sm text-navy hover:underline">

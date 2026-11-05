@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,7 @@ import { api, Batch, Company, LedgerSide } from "@/lib/api";
 function BatchesContent() {
   const t = useTranslations("batches");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -91,7 +92,7 @@ function BatchesContent() {
                 <tr key={b.id} className="hover:bg-muted">
                   <td>
                     <Link href={`/batches/${b.id}`} className="text-navy hover:underline">
-                      {new Date(b.created_at).toLocaleString()}
+                      {new Date(b.created_at).toLocaleString(locale)}
                     </Link>
                   </td>
                   <td className="text-text-secondary">{b.category}</td>

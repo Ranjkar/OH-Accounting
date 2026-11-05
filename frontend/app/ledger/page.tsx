@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
@@ -44,6 +44,7 @@ function emptyLine(): LineForm {
 
 function LedgerContent() {
   const t = useTranslations("ledger");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -349,9 +350,9 @@ function LedgerContent() {
                   </td>
                   <td className="text-text-secondary">{tx.transaction_type.replaceAll("_", " ")}</td>
                   <td className="text-text-primary">{tx.counterparty_name ?? "—"}</td>
-                  <td className="col-amount">{formatEUR(tx.net_amount)}</td>
-                  <td className="col-amount text-text-secondary">{formatEUR(tx.vat_amount)}</td>
-                  <td className="col-amount font-medium">{formatEUR(tx.gross_amount)}</td>
+                  <td className="col-amount">{formatEUR(tx.net_amount, locale)}</td>
+                  <td className="col-amount text-text-secondary">{formatEUR(tx.vat_amount, locale)}</td>
+                  <td className="col-amount font-medium">{formatEUR(tx.gross_amount, locale)}</td>
                   <td>
                     <PaymentBadge status={tx.payment_status} />
                   </td>

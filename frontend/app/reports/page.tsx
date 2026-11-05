@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
@@ -29,6 +29,7 @@ function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void 
 function ReportsContent() {
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -136,9 +137,9 @@ function ReportsContent() {
                   {comparison.periods.map((p) => (
                     <tr key={p.label}>
                       <td className="text-text-primary">{p.label}</td>
-                      <td className="col-amount">{formatEUR(p.sales_net)}</td>
-                      <td className="col-amount">{formatEUR(p.purchases_net)}</td>
-                      <td className="col-amount font-medium">{formatEUR(p.income_minus_expense)}</td>
+                      <td className="col-amount">{formatEUR(p.sales_net, locale)}</td>
+                      <td className="col-amount">{formatEUR(p.purchases_net, locale)}</td>
+                      <td className="col-amount font-medium">{formatEUR(p.income_minus_expense, locale)}</td>
                       <td className="text-right text-text-secondary">{p.transaction_count}</td>
                     </tr>
                   ))}

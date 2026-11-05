@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import GlassPageHeader from "@/components/glass/GlassPageHeader";
@@ -18,6 +18,7 @@ import { formatEUR } from "@/lib/format";
 function AnnualStatementsContent() {
   const t = useTranslations("annualStatements");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -114,14 +115,14 @@ function AnnualStatementsContent() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <StatRow label={t("payslipsIncluded")} value={String(statement.number_of_payslips)} />
-              <StatRow label={t("grossSalary")} value={formatEUR(statement.gross_salary)} />
-              <StatRow label={t("taxableWage")} value={formatEUR(statement.taxable_wage)} />
-              <StatRow label={t("wageTaxAndNi")} value={formatEUR(statement.wage_tax_and_national_insurance)} />
-              <StatRow label={t("generalTaxCredit")} value={formatEUR(statement.general_tax_credit_applied)} />
-              <StatRow label={t("laborTaxCredit")} value={formatEUR(statement.labor_tax_credit_applied)} />
-              <StatRow label={t("pensionDeduction")} value={formatEUR(statement.pension_deduction)} />
-              <StatRow label={t("netSalaryPaid")} value={formatEUR(statement.net_salary)} strong />
-              <StatRow label={t("employerZvwLevy")} value={formatEUR(statement.employer_levy_zvw)} />
+              <StatRow label={t("grossSalary")} value={formatEUR(statement.gross_salary, locale)} />
+              <StatRow label={t("taxableWage")} value={formatEUR(statement.taxable_wage, locale)} />
+              <StatRow label={t("wageTaxAndNi")} value={formatEUR(statement.wage_tax_and_national_insurance, locale)} />
+              <StatRow label={t("generalTaxCredit")} value={formatEUR(statement.general_tax_credit_applied, locale)} />
+              <StatRow label={t("laborTaxCredit")} value={formatEUR(statement.labor_tax_credit_applied, locale)} />
+              <StatRow label={t("pensionDeduction")} value={formatEUR(statement.pension_deduction, locale)} />
+              <StatRow label={t("netSalaryPaid")} value={formatEUR(statement.net_salary, locale)} strong />
+              <StatRow label={t("employerZvwLevy")} value={formatEUR(statement.employer_levy_zvw, locale)} />
             </div>
           )}
           <p className="text-xs text-text-secondary mt-4">{String(statement.note)}</p>

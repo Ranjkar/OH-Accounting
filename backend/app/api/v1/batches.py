@@ -238,8 +238,14 @@ def bulk_reject(
 
 @router.get("/{batch_id}/export")
 def export_batch(batch_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Headers are stable, untranslated snake_case identifiers (this is
+    for re-import/scripting, not reading) -- same convention as every
+    other CSV exporter in app/reporting/, see financial_report.render_csv's
+    docstring. UTF-8 BOM so Excel correctly decodes non-ASCII content in
+    filenames/error messages regardless of the viewer's locale."""
     batch = _get_batch_or_404(db, user, batch_id)
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["document_id", "filename", "category", "document_type", "status", "is_duplicate", "error_message"])
     for d in batch.documents:
