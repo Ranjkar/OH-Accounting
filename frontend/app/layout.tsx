@@ -59,14 +59,14 @@ export const metadata: Metadata = {
 };
 
 // Phase 16: resolving the interface locale needs cookies()/headers() (see
-// i18n/request.ts), which this project's `cacheComponents` build mode
-// otherwise requires wrapping in Suspense to keep a route statically
-// prerenderable. There is no static/marketing surface in this app --
-// every route sits behind AuthGuard and fetches account-specific data
-// client-side -- so opting the whole tree out of prerendering here has no
-// real downside, and keeps <html lang/dir> synchronous instead of
-// deferring it behind a Suspense boundary (which would reintroduce
-// exactly the hydration flash server-resolved locale was meant to avoid).
+// i18n/request.ts). Under `cacheComponents` that makes every route fully
+// dynamic (no static shell) -- acceptable here, since every route sits
+// behind AuthGuard and fetches account-specific data client-side, and it
+// keeps <html lang/dir> synchronous instead of behind a Suspense boundary.
+// NOTE: this only holds while next start sees next.config.ts at runtime
+// (see frontend/Dockerfile); without it Next falls back to legacy static
+// generation and cookies() throws DYNAMIC_SERVER_USAGE.
+// `instant` only disables instant-navigation validation for this tree.
 export const instant = false;
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
