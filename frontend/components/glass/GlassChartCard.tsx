@@ -83,8 +83,8 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
 
   return (
     <div className="glass-panel p-5">
-      <div className="flex items-start justify-between mb-2">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+        <div className="min-w-0">
           <h3 className="text-card-heading">{title}</h3>
           {subtitle && <p className="text-helper-v2 mt-0.5">{subtitle}</p>}
         </div>
@@ -177,9 +177,9 @@ export default function GlassChartCard({ title, subtitle, points, formatValue, a
         )}
       </svg>
 
-      <div className="flex justify-between text-helper-v2 mt-1 px-1" aria-hidden="true">
+      <div className="flex justify-between gap-1 text-helper-v2 mt-1 px-1 overflow-hidden" aria-hidden="true">
         {points.map((p, i) => (
-          <span key={i} className={i === hover ? "text-brand-purple-600 font-medium" : ""}>
+          <span key={i} className={`min-w-0 truncate ${i === hover ? "text-brand-purple-600 font-medium" : ""}`}>
             {p.label}
           </span>
         ))}

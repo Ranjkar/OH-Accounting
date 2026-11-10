@@ -21,15 +21,17 @@ import { defineConfig, devices } from "@playwright/test";
  * layout/overflow/touch-target assertions in responsive.spec.ts depend on
  * CSS viewport width and touch emulation, not on the rendering engine.
  *
- * `workers: 2` is deliberate: the backend login endpoint is rate-limited
- * (10/minute, see backend/app/core/config.py) and each project logs in. */
+ * `workers: 1` is deliberate: every spec shares one test account whose
+ * saved locale preference is server-side, so two specs running at once
+ * would switch each other's language mid-test; and the backend login
+ * endpoint is rate-limited (10/minute, see backend/app/core/config.py). */
 const RESPONSIVE = /responsive\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   retries: 0,
-  workers: 2,
+  workers: 1,
   reporter: [["list"]],
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
