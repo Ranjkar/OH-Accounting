@@ -1,30 +1,36 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, BalanceSheetItemCategory, Company, JsonReport, ManualBalanceSheetItem } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
-const CATEGORIES: { value: BalanceSheetItemCategory; label: string }[] = [
-  { value: "FIXED_ASSETS", label: "Fixed assets" },
-  { value: "INVENTORY", label: "Inventory" },
-  { value: "OTHER_ASSET", label: "Other asset" },
-  { value: "EQUITY", label: "Equity / contributed capital" },
-  { value: "LOANS", label: "Loans" },
-  { value: "OTHER_LIABILITY", label: "Other liability" },
+const CATEGORY_KEYS: { value: BalanceSheetItemCategory; key: string }[] = [
+  { value: "FIXED_ASSETS", key: "fixedAssets" },
+  { value: "INVENTORY", key: "inventory" },
+  { value: "OTHER_ASSET", key: "otherAsset" },
+  { value: "EQUITY", key: "equity" },
+  { value: "LOANS", key: "loans" },
+  { value: "OTHER_LIABILITY", key: "otherLiability" },
 ];
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  const locale = useLocale();
   return (
-    <div className={`flex items-center justify-between py-1.5 ${highlight ? "font-semibold border-t border-slate-200 mt-1 pt-2" : ""}`}>
-      <span className="text-slate-600">{label}</span>
-      <span className="font-mono">{value}</span>
+    <div className={`flex items-center justify-between py-1.5 ${highlight ? "font-semibold border-t border-border mt-1 pt-2" : ""}`}>
+      <span className="text-text-secondary">{label}</span>
+      <span className="font-mono tabular-nums">{formatEUR(value, locale)}</span>
     </div>
   );
 }
 
 function BalanceSheetContent() {
+  const t = useTranslations("balanceSheet");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -65,29 +71,25 @@ function BalanceSheetContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Balance Sheet</h1>
-      <p className="text-sm text-slate-500">
-        Fixed assets, inventory, equity, and loans are never derived automatically -- this ledger has no chart of
-        accounts. Enter them manually below; until you do, the balance sheet only reflects cash, receivables,
-        payables, and VAT position.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("manualItemsNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <input type="date" value={asOfDate} aria-label={t("asOfDate")} onChange={(e) => setAsOfDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
         {companyId && (
-          <div className="flex items-center gap-2 ml-auto text-xs">
+          <div className="flex items-center gap-2 ms-auto text-xs">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
-              <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), asOfDate, fmt)} className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50">
-                Export {fmt.toUpperCase()}
+              <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), asOfDate, fmt)} className="input-v2 px-2 py-1 hover:bg-muted">
+                {tCommon("export")} {fmt.toUpperCase()}
               </a>
             ))}
           </div>
@@ -98,77 +100,87 @@ function BalanceSheetContent() {
         <>
           {!bs.is_balanced && (
             <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">
-              Balance sheet does not balance -- off by {bs.imbalance_amount}. {bs.missing_opening_balance_warning}
+              {t("doesNotBalance", { amount: formatEUR(bs.imbalance_amount, locale) })} {bs.missing_opening_balance_warning}
             </div>
           )}
           {bs.is_balanced && bs.missing_opening_balance_warning && (
             <div className="rounded-md bg-amber-50 text-amber-700 text-sm px-3 py-2">{bs.missing_opening_balance_warning}</div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h2 className="font-medium text-navy mb-2">Assets</h2>
-              <Row label="Cash and bank" value={bs.assets.cash_and_bank} />
-              <Row label="Accounts receivable" value={bs.assets.accounts_receivable} />
-              <Row label="Inventory" value={bs.assets.inventory} />
-              <Row label="Fixed assets" value={bs.assets.fixed_assets} />
-              <Row label="Other assets" value={bs.assets.other_assets} />
-              <Row label="VAT receivable" value={bs.assets.vat_receivable} />
-              <Row label="Total assets" value={bs.assets.total} highlight />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="card-v2 p-4">
+              <h2 className="font-medium text-text-primary mb-2">{t("assets")}</h2>
+              <Row label={t("cashAndBank")} value={bs.assets.cash_and_bank} />
+              <Row label={t("accountsReceivable")} value={bs.assets.accounts_receivable} />
+              <Row label={t("inventory")} value={bs.assets.inventory} />
+              <Row label={t("fixedAssets")} value={bs.assets.fixed_assets} />
+              <Row label={t("otherAssets")} value={bs.assets.other_assets} />
+              <Row label={t("vatReceivable")} value={bs.assets.vat_receivable} />
+              <Row label={t("totalAssets")} value={bs.assets.total} highlight />
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h2 className="font-medium text-navy mb-2">Liabilities</h2>
-              <Row label="Accounts payable" value={bs.liabilities.accounts_payable} />
-              <Row label="Loans" value={bs.liabilities.loans} />
-              <Row label="Other liabilities" value={bs.liabilities.other_liabilities} />
-              <Row label="VAT payable" value={bs.liabilities.vat_payable} />
-              <Row label="Total liabilities" value={bs.liabilities.total} highlight />
+            <div className="card-v2 p-4">
+              <h2 className="font-medium text-text-primary mb-2">{t("liabilities")}</h2>
+              <Row label={t("accountsPayable")} value={bs.liabilities.accounts_payable} />
+              <Row label={t("loans")} value={bs.liabilities.loans} />
+              <Row label={t("otherLiabilities")} value={bs.liabilities.other_liabilities} />
+              <Row label={t("vatPayable")} value={bs.liabilities.vat_payable} />
+              <Row label={t("totalLiabilities")} value={bs.liabilities.total} highlight />
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h2 className="font-medium text-navy mb-2">Equity</h2>
-              <Row label="Contributed / other equity" value={bs.equity.contributed_and_other_equity} />
-              <Row label="Retained earnings" value={bs.equity.retained_earnings} />
-              <Row label="Total equity" value={bs.equity.total} highlight />
+            <div className="card-v2 p-4">
+              <h2 className="font-medium text-text-primary mb-2">{t("equity")}</h2>
+              <Row label={t("contributedEquity")} value={bs.equity.contributed_and_other_equity} />
+              <Row label={t("retainedEarnings")} value={bs.equity.retained_earnings} />
+              <Row label={t("totalEquity")} value={bs.equity.total} highlight />
             </div>
           </div>
         </>
       )}
 
       {companyId && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
-          <h2 className="font-medium text-navy">Manual balance-sheet items</h2>
+        <div className="card-v2 p-4 space-y-3">
+          <h2 className="font-medium text-text-primary">{t("manualItemsHeading")}</h2>
           <form onSubmit={addItem} className="flex items-end gap-3 flex-wrap">
-            <select value={category} onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
-              {CATEGORIES.map((c) => (
+            <select value={category} aria-label={tCommon("category")} onChange={(e) => setCategory(e.target.value as BalanceSheetItemCategory)} className="input-v2 px-2 py-2 text-sm">
+              {CATEGORY_KEYS.map((c) => (
                 <option key={c.value} value={c.value}>
-                  {c.label}
+                  {t(`category.${c.key}` as never)}
                 </option>
               ))}
             </select>
-            <input required value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Delivery van)" className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="rounded-md border border-slate-300 px-3 py-2 text-sm w-32" />
-            <input type="date" value={itemDate} onChange={(e) => setItemDate(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
-              Add
+            <input required value={label} aria-label={tCommon("name")} onChange={(e) => setLabel(e.target.value)} placeholder={t("labelPlaceholder")} className="input-v2 px-3 py-2 text-sm" />
+            <input required value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
+            <input type="date" value={itemDate} aria-label={t("itemDate")} onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
+            <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
+              {tCommon("create")}
             </button>
           </form>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
+            <thead>
+              <tr>
+                <th>{tCommon("category")}</th>
+                <th>{tCommon("name")}</th>
+                <th className="text-right">{tCommon("amount")}</th>
+                <th>{tCommon("date")}</th>
+              </tr>
+            </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="py-1.5 text-xs text-slate-500">{item.category}</td>
-                  <td className="py-1.5">{item.label}</td>
-                  <td className="py-1.5 font-mono">{item.amount}</td>
-                  <td className="py-1.5 text-xs text-slate-400">{item.as_of_date}</td>
+                <tr key={item.id}>
+                  <td className="text-xs text-text-secondary">{item.category}</td>
+                  <td className="text-text-primary">{item.label}</td>
+                  <td className="col-amount">{formatEUR(item.amount, locale)}</td>
+                  <td className="text-xs text-text-secondary">{item.as_of_date}</td>
                 </tr>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td className="py-2 text-slate-500">No manual items recorded yet.</td>
+                  <td colSpan={4} className="text-text-secondary">{t("noManualItems")}</td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

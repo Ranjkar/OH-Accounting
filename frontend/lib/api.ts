@@ -1,4 +1,28 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+/**
+ * Base URL for every API call.
+ *
+ * Phase 21 (audit finding 6.10). This used to default to the ABSOLUTE string
+ * "http://localhost:8000/api/v1". Next.js statically inlines `NEXT_PUBLIC_*`
+ * into the client bundle at BUILD time, and neither frontend/Dockerfile nor
+ * docker-compose.prod.yml supplied it as a build argument -- compose set it
+ * under `environment:`, which is RUNTIME and therefore never reaches an
+ * already-compiled bundle. Every production build therefore shipped the
+ * localhost fallback, so each visitor's browser called their own machine.
+ *
+ * The default is now the SAME-ORIGIN relative path "/api/v1": the browser
+ * resolves it against whatever origin served the page, and next.config.ts
+ * proxies it to the backend. No URL is compiled into the bundle, so there is
+ * nothing to get wrong per environment, and requests are same-origin -- CORS
+ * is not involved in a normal deployment at all.
+ *
+ * `NEXT_PUBLIC_API_URL` is still honoured, for deployments that want the
+ * browser to call the API directly (cross-origin, so the backend's
+ * CORS_ALLOWED_ORIGINS must then allow the frontend origin). If you set it in
+ * Docker you MUST pass it as a build argument:
+ *   docker build --build-arg NEXT_PUBLIC_API_URL=https://api.example/api/v1 .
+ * A runtime environment variable cannot reach the compiled bundle.
+ */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 export class ApiError extends Error {
   status: number;
@@ -29,7 +53,11 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
-export type UserRole = "admin" | "accountant" | "viewer";
+export type UserRole = "owner" | "admin" | "accountant" | "viewer" | "customer" | "employee";
+/** Roles assignable through the Phase 15 user-management API --
+ * `customer`/`employee` are legacy/specialised and have their own flows
+ * (see backend app/schemas/user.py's ASSIGNABLE_ROLES). */
+export const ASSIGNABLE_ROLES: UserRole[] = ["owner", "admin", "accountant", "viewer"];
 export type VatFrequency = "monthly" | "quarterly" | "annual";
 export type VatPeriodStatus = "open" | "filed" | "paid";
 export type VatAccountingBasis = "invoice_based" | "cash_based";
@@ -185,6 +213,13 @@ export interface User {
   email: string;
   full_name: string;
   role: UserRole;
+  mfa_enabled: boolean;
+  is_platform_admin: boolean;
+  /** Phase 16: raw personal override (null = none set, follows the
+   * tenant's default). Use lib/locale-context's effective locale rather
+   * than reading this directly in UI code. */
+  locale: string | null;
+  tenant_default_locale: string;
 }
 
 export interface Company {
@@ -196,6 +231,88 @@ export interface Company {
   vat_frequency: VatFrequency;
   vat_accounting_basis: VatAccountingBasis;
   input_vat_pro_rata_percentage: string | null;
+}
+
+export type CompanyInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+
+export interface CompanyAccess {
+  user_id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+}
+
+export interface CompanyInvitation {
+  id: number;
+  company_id: number;
+  invited_email: string;
+  intended_role: UserRole;
+  status: CompanyInvitationStatus;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+}
+
+// ---- Phase 15: tenant user management & audit log ----
+
+export interface TenantUser {
+  id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  is_active: boolean;
+  mfa_enabled: boolean;
+  created_at: string;
+  companies: { id: number; name: string }[];
+}
+
+export interface UserInvitation {
+  id: number;
+  invited_email: string;
+  intended_role: UserRole;
+  status: CompanyInvitationStatus;
+  invited_by_user_id: number;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+}
+
+export interface AuditLogActor {
+  id: number;
+  email: string;
+  full_name: string;
+}
+
+export interface AuditLogEntry {
+  id: number;
+  user_id: number | null;
+  actor: AuditLogActor | null;
+  action: string;
+  entity_type: string;
+  entity_id: number;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  request_id: string | null;
+  event_metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AuditLogPage {
+  items: AuditLogEntry[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface AuditLogFilters {
+  skip?: number;
+  limit?: number;
+  user_id?: number;
+  action?: string;
+  entity_type?: string;
+  q?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
 export interface VatPeriod {
@@ -213,6 +330,8 @@ export interface FinancialYear {
   year: number;
   start_date: string;
   end_date: string;
+  is_locked: boolean;
+  locked_at: string | null;
   vat_periods: VatPeriod[];
 }
 
@@ -447,8 +566,8 @@ export interface AssistantResponse {
 
 // ---- Phase 6: banking, reconciliation, automation ----
 
-export type BankSourceFormat = "CAMT053" | "CAMT054" | "MT940" | "CSV";
-export type BankConsentStatus = "NOT_CONNECTED" | "FILE_IMPORT_ONLY" | "CONNECTED";
+export type BankSourceFormat = "CAMT053" | "CAMT054" | "MT940" | "CSV" | "OPEN_BANKING";
+export type BankConsentStatus = "NOT_CONNECTED" | "PENDING" | "CONNECTED" | "EXPIRED" | "ERROR" | "REVOKED";
 export type ReconciliationStatus =
   | "IMPORTED"
   | "UNMATCHED"
@@ -471,7 +590,51 @@ export interface BankAccount {
   account_name: string;
   currency: string;
   consent_status: BankConsentStatus;
+  provider_name: string | null;
+  consent_granted_at: string | null;
+  consent_expires_at: string | null;
+  last_synced_at: string | null;
+  last_sync_error: string | null;
   created_at: string;
+}
+
+export interface KvkLookupResult {
+  kvk_number: string;
+  name: string;
+  legal_form: string | null;
+  trade_names: string[];
+  address: string | null;
+  sbi_activity: string | null;
+  is_test_data: boolean;
+}
+
+export type SubscriptionStatus = "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED";
+
+export interface Plan {
+  code: string;
+  name: string;
+  monthly_price_eur: string | null;
+  company_limit: number;
+  user_limit: number;
+}
+
+export interface Subscription {
+  plan: Plan;
+  status: SubscriptionStatus;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  canceled_at: string | null;
+  companies_used: number;
+  users_used: number;
+}
+
+export interface PlatformOverviewRow {
+  tenant_id: number;
+  tenant_name: string;
+  plan_code: string | null;
+  subscription_status: SubscriptionStatus | null;
+  companies_used: number;
+  users_used: number;
 }
 
 export interface BankImportBatch {
@@ -670,12 +833,25 @@ export interface Scenario {
 }
 
 export const api = {
-  login: (email: string, password: string) =>
-    request<{ access_token: string }>("/auth/login", {
+  login: (email: string, password: string, mfaCode?: string) =>
+    request<{ access_token: string | null; mfa_required: boolean }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, mfa_code: mfaCode }),
     }),
   me: (token: string) => request<User>("/auth/me", { token }),
+  /** Phase 17.3 (audit 6.13): this method did not exist, so the sidebar's
+   * "Log out" button only cleared localStorage -- the JWT stayed valid for
+   * its full 24h lifetime and kept passing the backend's token_version
+   * check. Calling this bumps token_version server-side, which revokes
+   * every token ever issued for the account. */
+  logout: (token: string) => request<void>("/auth/logout", { method: "POST", token }),
+  mfaSetup: (token: string) => request<{ secret: string; provisioning_uri: string }>("/auth/mfa/setup", { method: "POST", token }),
+  mfaEnable: (token: string, secret: string, code: string) =>
+    request<void>("/auth/mfa/enable", { method: "POST", token, body: JSON.stringify({ secret, code }) }),
+  mfaDisable: (token: string, code: string) =>
+    request<void>("/auth/mfa/disable", { method: "POST", token, body: JSON.stringify({ code }) }),
+  updateMyLocale: (token: string, locale: string | null) =>
+    request<User>("/auth/me/locale", { method: "PATCH", token, body: JSON.stringify({ locale }) }),
   listCompanies: (token: string) => request<Company[]>("/companies", { token }),
   createCompany: (
     token: string,
@@ -687,6 +863,56 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getCompany: (token: string, id: number) => request<Company>(`/companies/${id}`, { token }),
+  listCompanyAccess: (token: string, companyId: number) => request<CompanyAccess[]>(`/companies/${companyId}/access`, { token }),
+  revokeCompanyAccess: (token: string, companyId: number, userId: number) =>
+    request<void>(`/companies/${companyId}/access/${userId}/revoke`, { method: "POST", token }),
+  listCompanyInvitations: (token: string, companyId: number) =>
+    request<CompanyInvitation[]>(`/companies/${companyId}/invitations`, { token }),
+  createCompanyInvitation: (token: string, companyId: number, invitedEmail: string, intendedRole: UserRole = "accountant") =>
+    request<{ invitation: CompanyInvitation; raw_token: string }>(`/companies/${companyId}/invitations`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ invited_email: invitedEmail, intended_role: intendedRole }),
+    }),
+  revokeCompanyInvitation: (token: string, companyId: number, invitationId: number) =>
+    request<CompanyInvitation>(`/companies/${companyId}/invitations/${invitationId}/revoke`, { method: "POST", token }),
+  acceptCompanyInvitation: (token: string, invitationToken: string) =>
+    request<CompanyAccess>("/companies/invitations/accept", { method: "POST", token, body: JSON.stringify({ token: invitationToken }) }),
+
+  // ---- Phase 15: tenant user management ----
+  listUsers: (token: string) => request<TenantUser[]>("/users", { token }),
+  getUser: (token: string, userId: number) => request<TenantUser>(`/users/${userId}`, { token }),
+  updateUserRole: (token: string, userId: number, role: UserRole) =>
+    request<TenantUser>(`/users/${userId}/role`, { method: "PATCH", token, body: JSON.stringify({ role }) }),
+  activateUser: (token: string, userId: number) => request<TenantUser>(`/users/${userId}/activate`, { method: "POST", token }),
+  deactivateUser: (token: string, userId: number) => request<TenantUser>(`/users/${userId}/deactivate`, { method: "POST", token }),
+  revokeUserSessions: (token: string, userId: number) => request<void>(`/users/${userId}/revoke-sessions`, { method: "POST", token }),
+  listUserInvitations: (token: string) => request<UserInvitation[]>("/users/invitations", { token }),
+  createUserInvitation: (token: string, invitedEmail: string, intendedRole: UserRole, initialCompanyIds?: number[]) =>
+    request<{ invitation: UserInvitation; raw_token: string }>("/users/invitations", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ invited_email: invitedEmail, intended_role: intendedRole, initial_company_ids: initialCompanyIds ?? null }),
+    }),
+  revokeUserInvitation: (token: string, invitationId: number) =>
+    request<UserInvitation>(`/users/invitations/${invitationId}/revoke`, { method: "POST", token }),
+  acceptUserInvitation: (invitationToken: string, fullName: string, password: string) =>
+    request<TenantUser>("/users/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify({ token: invitationToken, full_name: fullName, password }),
+    }),
+
+  // ---- Phase 15: audit log ----
+  listAuditLog: (token: string, filters: AuditLogFilters = {}) => {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
+    }
+    const qs = search.toString();
+    return request<AuditLogPage>(`/audit-log${qs ? `?${qs}` : ""}`, { token });
+  },
+  listAuditActions: (token: string) => request<string[]>("/audit-log/actions", { token }),
+  listAuditEntityTypes: (token: string) => request<string[]>("/audit-log/entity-types", { token }),
   listFinancialYears: (token: string, companyId: number) =>
     request<FinancialYear[]>(`/companies/${companyId}/financial-years`, { token }),
   createFinancialYear: (token: string, companyId: number, year: number) =>
@@ -992,6 +1218,45 @@ export const api = {
   },
   listImportBatches: (token: string, bankAccountId: number) =>
     request<BankImportBatch[]>(`/bank-accounts/${bankAccountId}/import-batches`, { token }),
+
+  // ---- Phase 12: Open Banking (sandbox stub provider only, see docs/open-banking.md) ----
+  connectOpenBanking: (token: string, bankAccountId: number, redirectUri: string) =>
+    request<{ authorization_url: string; provider: string }>(`/bank-accounts/${bankAccountId}/open-banking/connect`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ redirect_uri: redirectUri }),
+    }),
+  completeOpenBanking: (token: string, bankAccountId: number, callbackParams: Record<string, unknown> = {}) =>
+    request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/callback`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ callback_params: callbackParams }),
+    }),
+  syncOpenBanking: (token: string, bankAccountId: number) =>
+    request<BankImportBatch>(`/bank-accounts/${bankAccountId}/open-banking/sync`, { method: "POST", token }),
+  disconnectOpenBanking: (token: string, bankAccountId: number) =>
+    request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/disconnect`, { method: "POST", token }),
+
+  // ---- Phase 12/13: KVK lookup + verification (real sandbox, see docs/government-integrations.md) ----
+  lookupKvk: (token: string, kvkNumber: string) =>
+    request<KvkLookupResult>(`/kvk/lookup/${encodeURIComponent(kvkNumber)}`, { token }),
+  verifyCompanyKvk: (token: string, companyId: number) =>
+    request<{ company_id: number; stored_name: string; kvk_name: string; kvk_number: string; name_matches: boolean; is_test_data: boolean; legal_form: string | null; address: string | null }>(
+      `/kvk/verify/${companyId}`,
+      { token }
+    ),
+
+  // ---- Phase 14: subscription & billing (sandbox stub provider, see docs/subscription-billing.md) ----
+  listPlans: (token: string) => request<Plan[]>("/billing/plans", { token }),
+  getSubscription: (token: string) => request<Subscription>("/billing/subscription", { token }),
+  createCheckout: (token: string, planCode: string) =>
+    request<{ checkout_url: string; provider_session_id: string }>("/billing/checkout", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ plan_code: planCode }),
+    }),
+  cancelSubscription: (token: string) => request<Subscription>("/billing/cancel", { method: "POST", token }),
+  getPlatformOverview: (token: string) => request<{ tenants: PlatformOverviewRow[] }>("/billing/admin/overview", { token }),
   listBankTransactions: (
     token: string,
     filters: { company_id?: number; bank_account_id?: number; reconciliation_status?: ReconciliationStatus } = {}
@@ -1155,6 +1420,115 @@ export const api = {
     `${API_BASE}/reports/budget-vs-actual/${budgetId}?format=${format}`,
   scenarioComparisonReportUrl: (companyId: number, scenarioIds: number[]): string =>
     `${API_BASE}/reports/scenario-comparison?company_id=${companyId}&scenario_ids=${scenarioIds.join(",")}&format=csv`,
+
+  // ---- Phase 9: legal forms ----
+  listLegalFormDefinitions: (token: string) => request<JsonReport[]>("/legal-form-definitions", { token }),
+  setCompanyLegalForm: (token: string, payload: { company_id: number; legal_form_code: string; effective_from: string }) =>
+    request<JsonReport>("/company-legal-forms", { method: "POST", token, body: JSON.stringify(payload) }),
+  listCompanyLegalForms: (token: string, companyId: number) =>
+    request<JsonReport[]>(`/company-legal-forms?company_id=${companyId}`, { token }),
+  getCurrentLegalForm: (token: string, companyId: number) =>
+    request<JsonReport>(`/company-legal-forms/current?company_id=${companyId}`, { token }),
+  createPartner: (token: string, payload: { company_id: number; name: string; partner_type?: string; profit_share_percentage: string; entrepreneur_hours_eligible?: boolean; effective_from: string }) =>
+    request<JsonReport>("/partners", { method: "POST", token, body: JSON.stringify(payload) }),
+  listPartners: (token: string, companyId: number) => request<JsonReport[]>(`/partners?company_id=${companyId}`, { token }),
+  setPartnerHoursEligibility: (token: string, partnerId: number, eligible: boolean) =>
+    request<JsonReport>(`/partners/${partnerId}/entrepreneur-hours-eligibility?eligible=${eligible}`, { method: "PATCH", token }),
+  createShareholder: (token: string, payload: { company_id: number; name: string; ownership_percentage: string; is_director?: boolean; is_dga?: boolean; effective_from: string }) =>
+    request<JsonReport>("/shareholders", { method: "POST", token, body: JSON.stringify(payload) }),
+  listShareholders: (token: string, companyId: number) => request<JsonReport[]>(`/shareholders?company_id=${companyId}`, { token }),
+
+  // ---- Phase 9: employees ----
+  createEmployee: (token: string, payload: Record<string, unknown>) =>
+    request<JsonReport>("/employees", { method: "POST", token, body: JSON.stringify(payload) }),
+  listEmployees: (token: string, companyId: number) => request<JsonReport[]>(`/employees?company_id=${companyId}`, { token }),
+  getEmployee: (token: string, id: number) => request<JsonReport>(`/employees/${id}`, { token }),
+  employeeHoursSummary: (token: string, employeeId: number, year: number) =>
+    request<JsonReport>(`/employees/${employeeId}/hours-summary?year=${year}`, { token }),
+
+  // ---- Phase 9: timesheets & entrepreneur hours ----
+  createTimesheetEntry: (token: string, payload: { employee_id: number; entry_date: string; entry_type: string; hours: string; description?: string }) =>
+    request<JsonReport>("/timesheet-entries", { method: "POST", token, body: JSON.stringify(payload) }),
+  listTimesheetEntries: (token: string, employeeId: number) => request<JsonReport[]>(`/timesheet-entries?employee_id=${employeeId}`, { token }),
+  submitTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/timesheet-entries/${id}/submit`, { method: "POST", token }),
+  approveTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/timesheet-entries/${id}/approve`, { method: "POST", token }),
+  rejectTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/timesheet-entries/${id}/reject`, { method: "POST", token }),
+
+  createEntrepreneurHoursEntry: (token: string, payload: { company_id: number; partner_id?: number | null; entry_date: string; activity_category: string; duration_hours: string; description?: string; customer_name?: string; project?: string }) =>
+    request<JsonReport>("/entrepreneur-hours-entries", { method: "POST", token, body: JSON.stringify(payload) }),
+  listEntrepreneurHoursEntries: (token: string, companyId: number, partnerId?: number) =>
+    request<JsonReport[]>(`/entrepreneur-hours-entries?company_id=${companyId}${partnerId ? `&partner_id=${partnerId}` : ""}`, { token }),
+  urencriteriumDashboard: (token: string, companyId: number, year: number, partnerId?: number) =>
+    request<JsonReport>(`/companies/${companyId}/urencriterium-dashboard?year=${year}${partnerId ? `&partner_id=${partnerId}` : ""}`, { token }),
+
+  // ---- Phase 9: payroll ----
+  createPayrollRun: (token: string, payload: { company_id: number; period_type: string; period_year: number; period_number: number; tax_year?: number }) =>
+    request<JsonReport>("/payroll-runs", { method: "POST", token, body: JSON.stringify(payload) }),
+  listPayrollRuns: (token: string, companyId: number) => request<JsonReport[]>(`/payroll-runs?company_id=${companyId}`, { token }),
+  getPayrollRun: (token: string, id: number) => request<JsonReport>(`/payroll-runs/${id}`, { token }),
+  listPayslips: (token: string, runId: number) => request<JsonReport[]>(`/payroll-runs/${runId}/payslips`, { token }),
+  addPayslip: (token: string, runId: number, payload: Record<string, unknown>) =>
+    request<JsonReport>(`/payroll-runs/${runId}/payslips`, { method: "POST", token, body: JSON.stringify(payload) }),
+  approvePayrollRun: (token: string, runId: number) => request<JsonReport>(`/payroll-runs/${runId}/approve`, { method: "POST", token }),
+  markPayrollRunPaid: (token: string, runId: number) => request<JsonReport>(`/payroll-runs/${runId}/mark-paid`, { method: "POST", token }),
+  correctPayslip: (token: string, payslipId: number, payload: { reason: string } & Record<string, unknown>) =>
+    request<JsonReport>(`/payslips/${payslipId}/correct`, { method: "POST", token, body: JSON.stringify(payload) }),
+  payslipPdfUrl: (payslipId: number): string => `${API_BASE}/payslips/${payslipId}/pdf`,
+
+  // ---- Phase 9: tax centre ----
+  taxCentreOverview: (token: string, companyId: number) => request<JsonReport>(`/tax-centre/overview?company_id=${companyId}`, { token }),
+  incomeTaxEstimate: (token: string, companyId: number, annualProfit: string, hoursCriterionMet: boolean, isStarter: boolean) =>
+    request<JsonReport>(`/tax-centre/income-tax-estimate?company_id=${companyId}&annual_profit=${annualProfit}&hours_criterion_met=${hoursCriterionMet}&is_starter=${isStarter}`, { token }),
+  corporateTaxEstimate: (token: string, companyId: number, annualTaxableProfit: string) =>
+    request<JsonReport>(`/tax-centre/corporate-tax-estimate?company_id=${companyId}&annual_taxable_profit=${annualTaxableProfit}`, { token }),
+  dgaPosition: (token: string, companyId: number, proposedSalary: string, dividendDeclared: string) =>
+    request<JsonReport>(`/tax-centre/dga-position?company_id=${companyId}&proposed_dga_salary=${proposedSalary}&dividend_declared=${dividendDeclared}`, { token }),
+  taxOptimizationOpportunities: (token: string, companyId: number, annualProfit?: string, annualRevenue?: string) =>
+    request<JsonReport[]>(`/tax-centre/tax-optimization?company_id=${companyId}${annualProfit ? `&annual_profit=${annualProfit}` : ""}${annualRevenue ? `&annual_revenue=${annualRevenue}` : ""}&hours_criterion_met=true`, { token }),
+  structureComparison: (token: string, companyId: number, annualRevenue: string, annualOperatingExpenses: string) =>
+    request<JsonReport>(`/tax-centre/structure-comparison?company_id=${companyId}&annual_revenue=${annualRevenue}&annual_operating_expenses=${annualOperatingExpenses}`, { token }),
+
+  // ---- Phase 10: loonheffingen declarations ----
+  createLoonheffingenDeclaration: (token: string, runId: number) =>
+    request<JsonReport>(`/payroll-runs/${runId}/loonheffingen-declaration`, { method: "POST", token }),
+  getLoonheffingenDeclaration: (token: string, id: number) => request<JsonReport>(`/loonheffingen-declarations/${id}`, { token }),
+  validateLoonheffingenDeclaration: (token: string, id: number) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/validate`, { method: "POST", token }),
+  approveLoonheffingenDeclaration: (token: string, id: number) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/approve`, { method: "POST", token }),
+  markLoonheffingenReadyForSubmission: (token: string, id: number) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/mark-ready-for-submission`, { method: "POST", token }),
+  recordLoonheffingenSubmission: (token: string, id: number, submissionReference: string) =>
+    request<JsonReport>(`/loonheffingen-declarations/${id}/record-submission`, {
+      method: "POST", token, body: JSON.stringify({ submission_reference: submissionReference }),
+    }),
+  recordLoonheffingenGovernmentResponse: (
+    token: string, id: number, payload: { accepted: boolean; response_reference: string; rejection_reason?: string }
+  ) => request<JsonReport>(`/loonheffingen-declarations/${id}/record-government-response`, { method: "POST", token, body: JSON.stringify(payload) }),
+
+  // ---- Phase 10: annual statements (jaaropgaaf) ----
+  getAnnualStatement: (token: string, employeeId: number, taxYear: number) =>
+    request<JsonReport>(`/employees/${employeeId}/annual-statement?tax_year=${taxYear}`, { token }),
+  annualStatementPdfUrl: (employeeId: number, taxYear: number): string =>
+    `${API_BASE}/employees/${employeeId}/annual-statement/pdf?tax_year=${taxYear}`,
+
+  // ---- Phase 10: employee self-service portal ----
+  myProfile: (token: string) => request<JsonReport>("/me/profile", { token }),
+  myPayslips: (token: string) => request<JsonReport[]>("/me/payslips", { token }),
+  myPayslipPdfUrl: (payslipId: number): string => `${API_BASE}/me/payslips/${payslipId}/pdf`,
+  myAnnualStatement: (token: string, taxYear: number) => request<JsonReport>(`/me/annual-statement?tax_year=${taxYear}`, { token }),
+  myAnnualStatementPdfUrl: (taxYear: number): string => `${API_BASE}/me/annual-statement/pdf?tax_year=${taxYear}`,
+  myTimesheetEntries: (token: string) => request<JsonReport[]>("/me/timesheet-entries", { token }),
+  createMyTimesheetEntry: (token: string, payload: { employee_id: number; entry_date: string; entry_type: string; hours: string; description?: string }) =>
+    request<JsonReport>("/me/timesheet-entries", { method: "POST", token, body: JSON.stringify(payload) }),
+  submitMyTimesheetEntry: (token: string, id: number) => request<JsonReport>(`/me/timesheet-entries/${id}/submit`, { method: "POST", token }),
+  myHoursSummary: (token: string, year: number) => request<JsonReport>(`/me/hours-summary?year=${year}`, { token }),
+
+  // ---- Phase 10: financial year locking ----
+  lockFinancialYear: (token: string, companyId: number, financialYearId: number) =>
+    request<FinancialYear>(`/companies/${companyId}/financial-years/${financialYearId}/lock`, { method: "POST", token }),
+  unlockFinancialYear: (token: string, companyId: number, financialYearId: number) =>
+    request<FinancialYear>(`/companies/${companyId}/financial-years/${financialYearId}/unlock`, { method: "POST", token }),
 };
 
 function periodQuery(params: PeriodParams, skipCompanyId = false): string {

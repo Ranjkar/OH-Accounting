@@ -30,35 +30,14 @@ class BankImportError(Exception):
     pass
 
 
-def import_bank_file(
-    db: Session,
-    bank_account: BankAccount,
-    content: bytes,
-    filename: str,
-    source_format: BankSourceFormat,
-    imported_by_user_id: int,
-) -> BankImportBatch:
-    parser = _PARSERS[source_format]
-    try:
-        parsed_rows: list[ParsedBankTransaction] = parser(content)
-    except BankFileParseError as exc:
-        raise BankImportError(str(exc)) from exc
-
-    batch = BankImportBatch(
-        tenant_id=bank_account.tenant_id,
-        company_id=bank_account.company_id,
-        bank_account_id=bank_account.id,
-        source_format=source_format,
-        original_filename=filename,
-        storage_path="",
-        imported_by_user_id=imported_by_user_id,
-    )
-    db.add(batch)
-    db.flush()
-
-    clean_name = secure_filename(filename)
-    batch.storage_path = storage.save(bank_account.tenant_id, bank_account.company_id, batch.id, clean_name, content)
-
+def insert_rows_with_dedup(
+    db: Session, bank_account: BankAccount, batch: BankImportBatch, parsed_rows: list[ParsedBankTransaction], source_format: BankSourceFormat,
+) -> tuple[int, int]:
+    """Shared by file import and Open Banking sync (app.services.
+    open_banking_service) -- the actual duplicate-prevention logic (a
+    dedupe_hash lookup, backed by the DB's own uq_bank_transaction_dedupe
+    unique constraint) must not be duplicated across two call sites.
+    Returns (created_count, duplicate_count)."""
     duplicate_count = 0
     created_count = 0
     for row in parsed_rows:
@@ -98,4 +77,37 @@ def import_bank_file(
     batch.transaction_count = created_count
     batch.duplicate_count = duplicate_count
     db.flush()
+    return created_count, duplicate_count
+
+
+def import_bank_file(
+    db: Session,
+    bank_account: BankAccount,
+    content: bytes,
+    filename: str,
+    source_format: BankSourceFormat,
+    imported_by_user_id: int,
+) -> BankImportBatch:
+    parser = _PARSERS[source_format]
+    try:
+        parsed_rows: list[ParsedBankTransaction] = parser(content)
+    except BankFileParseError as exc:
+        raise BankImportError(str(exc)) from exc
+
+    batch = BankImportBatch(
+        tenant_id=bank_account.tenant_id,
+        company_id=bank_account.company_id,
+        bank_account_id=bank_account.id,
+        source_format=source_format,
+        original_filename=filename,
+        storage_path="",
+        imported_by_user_id=imported_by_user_id,
+    )
+    db.add(batch)
+    db.flush()
+
+    clean_name = secure_filename(filename)
+    batch.storage_path = storage.save(bank_account.tenant_id, bank_account.company_id, batch.id, clean_name, content)
+
+    insert_rows_with_dedup(db, bank_account, batch, parsed_rows, source_format)
     return batch

@@ -1,21 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
+import { formatEUR } from "@/lib/format";
 import { api, BankTransaction, BankTransactionDetail, Company, ReconciliationStatus } from "@/lib/api";
 
-const STATUS_FILTERS: { value: ReconciliationStatus | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "UNMATCHED", label: "Unmatched" },
-  { value: "SUGGESTED_MATCH", label: "Suggested match" },
-  { value: "MATCHED", label: "Matched" },
-  { value: "PARTIALLY_MATCHED", label: "Partially matched" },
-  { value: "EXCLUDED", label: "Excluded" },
+const STATUS_PILL_CLASS: Record<ReconciliationStatus, string> = {
+  IMPORTED: "status-pill-neutral",
+  UNMATCHED: "status-pill-warning",
+  SUGGESTED_MATCH: "status-pill-info",
+  MATCHED: "status-pill-success",
+  PARTIALLY_MATCHED: "status-pill-warning",
+  MANUALLY_RECONCILED: "status-pill-success",
+  EXCLUDED: "status-pill-neutral",
+};
+
+const STATUS_FILTER_KEYS: { value: ReconciliationStatus | "all"; key: string }[] = [
+  { value: "all", key: "all" },
+  { value: "UNMATCHED", key: "unmatched" },
+  { value: "SUGGESTED_MATCH", key: "suggestedMatch" },
+  { value: "MATCHED", key: "matched" },
+  { value: "PARTIALLY_MATCHED", key: "partiallyMatched" },
+  { value: "EXCLUDED", key: "excluded" },
 ];
 
 function BankTransactionsContent() {
+  const t = useTranslations("banking");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -59,16 +74,17 @@ function BankTransactionsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Bank Transactions</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
         <select
           value={companyId}
+          aria-label={tCommon("company")}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">All companies</option>
+          <option value="">{tCommon("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -76,78 +92,80 @@ function BankTransactionsContent() {
           ))}
         </select>
         <div className="flex items-center gap-2 text-sm flex-wrap">
-          {STATUS_FILTERS.map((f) => (
+          {STATUS_FILTER_KEYS.map((f) => (
             <button
               key={f.value}
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                statusFilter === f.value ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
-              {f.label}
+              {t(f.key as never)}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="col-span-2 card-v2 overflow-hidden">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-4 py-2 font-medium">Date</th>
-                <th className="px-4 py-2 font-medium">Amount</th>
-                <th className="px-4 py-2 font-medium">Counterparty</th>
-                <th className="px-4 py-2 font-medium">Reference</th>
-                <th className="px-4 py-2 font-medium">Status</th>
+              <tr>
+                <th>{tCommon("date")}</th>
+                <th className="text-right">{tCommon("amount")}</th>
+                <th>{t("counterparty")}</th>
+                <th>{t("reference")}</th>
+                <th>{tCommon("status")}</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t) => (
-                <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => openDetail(t.id)}>
-                  <td className="px-4 py-2.5">{t.booking_date}</td>
-                  <td className={`px-4 py-2.5 font-mono ${Number(t.amount) < 0 ? "text-error" : "text-green-700"}`}>{t.amount}</td>
-                  <td className="px-4 py-2.5">{t.counterparty_name ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{t.payment_reference ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-xs">{t.reconciliation_status}</td>
+              {transactions.map((tx) => (
+                <tr key={tx.id} className="cursor-pointer hover:bg-muted" onClick={() => openDetail(tx.id)}>
+                  <td className="text-text-secondary">{tx.booking_date}</td>
+                  <td className={`col-amount font-medium ${Number(tx.amount) < 0 ? "value-negative" : "value-positive"}`}>{formatEUR(tx.amount, locale)}</td>
+                  <td className="text-text-primary">{tx.counterparty_name ?? "—"}</td>
+                  <td className="text-xs text-text-secondary">{tx.payment_reference ?? "—"}</td>
+                  <td><span className={`status-pill ${STATUS_PILL_CLASS[tx.reconciliation_status]}`}>{tx.reconciliation_status.replace(/_/g, " ").toLowerCase()}</span></td>
                 </tr>
               ))}
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-4 text-slate-500">
-                    No bank transactions match these filters.
+                  <td colSpan={5} className="px-4 py-4 text-text-secondary">
+                    {t("noTransactionsMatchFilters")}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="card-v2 p-4">
           {detail ? (
             <div className="space-y-3 text-sm">
-              <h3 className="font-medium text-navy">Transaction #{detail.id}</h3>
-              <p>Amount: <span className="font-mono">{detail.amount}</span></p>
-              <p>Status: {detail.reconciliation_status}</p>
-              <p>Counterparty: {detail.counterparty_name ?? "—"}</p>
-              <p>IBAN: {detail.counterparty_iban ?? "—"}</p>
-              <h4 className="font-medium text-navy mt-3">Candidate matches</h4>
-              {detail.matches.length === 0 && <p className="text-slate-500">No matches found.</p>}
+              <h3 className="font-medium text-text-primary">{t("transactionNumber", { id: detail.id })}</h3>
+              <p>{tCommon("amount")}: <span className="font-mono">{formatEUR(detail.amount, locale)}</span></p>
+              <p>{tCommon("status")}: {detail.reconciliation_status}</p>
+              <p>{t("counterparty")}: {detail.counterparty_name ?? "—"}</p>
+              <p>{t("iban")}: <span dir="ltr">{detail.counterparty_iban ?? "—"}</span></p>
+              <h4 className="font-medium text-navy mt-3">{t("candidateMatches")}</h4>
+              {detail.matches.length === 0 && <p className="text-text-secondary">{t("noMatchesFound")}</p>}
               {detail.matches.map((m) => (
-                <div key={m.id} className="rounded-md border border-slate-200 p-2">
-                  <p>Invoice #{m.accounting_transaction_id} · {m.confidence_level} ({m.confidence_score})</p>
-                  <p className="text-xs text-slate-500">Allocated: {m.allocated_amount} · Status: {m.status}</p>
+                <div key={m.id} className="rounded-md border border-border-subtle p-2">
+                  <p>{t("invoiceMatchLine", { id: m.accounting_transaction_id, level: m.confidence_level, score: m.confidence_score })}</p>
+                  <p className="text-xs text-text-secondary">{t("allocated")}: {formatEUR(m.allocated_amount, locale)} · {tCommon("status")}: {m.status}</p>
                 </div>
               ))}
               {detail.reconciliation_status !== "EXCLUDED" && (
-                <button onClick={() => exclude(detail.id)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs">
-                  Exclude from reconciliation
+                <button onClick={() => exclude(detail.id)} className="input-v2 px-3 py-1.5 text-xs">
+                  {t("excludeFromReconciliation")}
                 </button>
               )}
-              <p className="text-xs text-slate-400">Go to Reconciliation to approve/reject/reverse matches.</p>
+              <p className="text-xs text-text-secondary">{t("goToReconciliationHint")}</p>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Select a transaction to see details.</p>
+            <p className="text-sm text-text-secondary">{t("selectTransactionToSeeDetails")}</p>
           )}
         </div>
       </div>

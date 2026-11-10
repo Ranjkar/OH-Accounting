@@ -2,21 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import CalendarStatusBadge from "@/components/CalendarStatusBadge";
 import { useAuth } from "@/lib/auth-context";
 import { api, CalendarStatus, Company, TaxCalendarEntry } from "@/lib/api";
 
-const STATUS_FILTERS: { value: CalendarStatus | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "overdue", label: "Overdue" },
-  { value: "pending", label: "Pending" },
-  { value: "upcoming", label: "Upcoming" },
-  { value: "completed", label: "Completed" },
+const STATUS_FILTERS: { value: CalendarStatus | "all" }[] = [
+  { value: "all" },
+  { value: "overdue" },
+  { value: "pending" },
+  { value: "upcoming" },
+  { value: "completed" },
 ];
 
 function TaxCalendarContent() {
+  const t = useTranslations("calendar");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -48,19 +50,19 @@ function TaxCalendarContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Tax Calendar</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => setView("list")}
-            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}
+            className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}
           >
-            List
+            {t("listView")}
           </button>
           <button
             onClick={() => setView("calendar")}
-            className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-navy text-white" : "bg-white border border-slate-200"}`}
+            className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}
           >
-            Calendar
+            {t("calendarView")}
           </button>
         </div>
       </div>
@@ -70,10 +72,11 @@ function TaxCalendarContent() {
       <div className="flex items-center gap-4">
         <select
           value={companyId}
+          aria-label={t("companyLabel")}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">All companies</option>
+          <option value="">{t("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -86,45 +89,46 @@ function TaxCalendarContent() {
               key={f.value}
               onClick={() => setStatusFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                statusFilter === f.value ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                statusFilter === f.value ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
-              {f.label}
+              {t(`statusFilters.${f.value}`)}
             </button>
           ))}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-slate-500">No VAT periods match these filters.</p>
+        <p className="text-sm text-text-secondary">{t("noMatches")}</p>
       ) : view === "list" ? (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="card-v2 overflow-hidden">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-5 py-2 font-medium">Company</th>
-                <th className="px-5 py-2 font-medium">Period</th>
-                <th className="px-5 py-2 font-medium">Frequency</th>
-                <th className="px-5 py-2 font-medium">Filing deadline</th>
-                <th className="px-5 py-2 font-medium">Payment deadline</th>
-                <th className="px-5 py-2 font-medium">Status</th>
+              <tr>
+                <th>{t("colCompany")}</th>
+                <th>{t("colPeriod")}</th>
+                <th>{t("colFrequency")}</th>
+                <th>{t("colFilingDeadline")}</th>
+                <th>{t("colPaymentDeadline")}</th>
+                <th>{t("colStatus")}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((e) => (
-                <tr key={e.vat_period_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="px-5 py-2.5">
+                <tr key={e.vat_period_id} className="hover:bg-muted">
+                  <td>
                     <Link href={`/companies/${e.company_id}/workspace`} className="text-navy hover:underline">
                       {e.company_name}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">
+                  <td className="text-text-secondary">
                     {e.financial_year} {e.period_label}
                   </td>
-                  <td className="px-5 py-2.5 capitalize">{e.vat_frequency}</td>
-                  <td className="px-5 py-2.5">{e.filing_deadline}</td>
-                  <td className="px-5 py-2.5">{e.payment_deadline}</td>
-                  <td className="px-5 py-2.5">
+                  <td className="text-text-secondary capitalize">{e.vat_frequency}</td>
+                  <td className="text-text-secondary">{e.filing_deadline}</td>
+                  <td className="text-text-secondary">{e.payment_deadline}</td>
+                  <td>
                     {e.vat_return_id ? (
                       <Link href={`/vat/${e.vat_return_id}`}>
                         <CalendarStatusBadge status={e.calendar_status} />
@@ -137,19 +141,20 @@ function TaxCalendarContent() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
           {[...byMonth.entries()].sort().map(([month, monthEntries]) => (
-            <div key={month} className="bg-white rounded-lg border border-slate-200">
-              <div className="px-5 py-3 border-b border-slate-200 font-medium text-navy">{month}</div>
-              <div className="divide-y divide-slate-100">
+            <div key={month} className="card-v2">
+              <div className="px-5 py-3 border-b border-border-subtle font-medium text-text-primary">{month}</div>
+              <div className="divide-y divide-border">
                 {monthEntries.map((e) => (
                   <div key={e.vat_period_id} className="px-5 py-3 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-navy">{e.company_name}</p>
-                      <p className="text-xs text-slate-500">
-                        {e.financial_year} {e.period_label} · due {e.filing_deadline}
+                      <p className="text-sm font-medium text-text-primary">{e.company_name}</p>
+                      <p className="text-xs text-text-secondary">
+                        {e.financial_year} {e.period_label} · {t("dueOn", { date: e.filing_deadline })}
                       </p>
                     </div>
                     <CalendarStatusBadge status={e.calendar_status} />

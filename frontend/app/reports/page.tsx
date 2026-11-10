@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, FinancialYear } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 type Format = "pdf" | "xlsx" | "csv";
 
@@ -15,7 +17,7 @@ function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void 
         <button
           key={fmt}
           onClick={() => onDownload(fmt)}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium uppercase hover:bg-slate-50 transition-colors"
+          className="input-v2 px-3 py-1.5 text-xs font-medium uppercase hover:bg-muted transition-colors"
         >
           {fmt}
         </button>
@@ -25,6 +27,9 @@ function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void 
 }
 
 function ReportsContent() {
+  const t = useTranslations("reports");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -59,26 +64,27 @@ function ReportsContent() {
         `financial-overview.${format}`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to download report");
+      setError(err instanceof Error ? err.message : t("downloadFailed"));
     }
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Reports</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
         <select
           value={companyId}
+          aria-label={tCommon("company")}
           onChange={(e) => {
             setCompanyId(e.target.value ? Number(e.target.value) : "");
             setFinancialYearId("");
           }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">Select a company…</option>
+          <option value="">{t("selectCompanyEllipsis")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -87,11 +93,12 @@ function ReportsContent() {
         </select>
         <select
           value={financialYearId}
+          aria-label={t("financialYear")}
           onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
           disabled={!companyId}
         >
-          <option value="">Select a financial year…</option>
+          <option value="">{t("selectFinancialYearEllipsis")}</option>
           {financialYears.map((fy) => (
             <option key={fy.id} value={fy.id}>
               {fy.year}
@@ -102,49 +109,49 @@ function ReportsContent() {
 
       {companyId && financialYearId && (
         <>
-          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3">
+          <div className="card-v2 p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-navy">Financial Overview Report</h2>
+              <h2 className="text-sm font-medium text-text-primary">{t("financialOverviewReport")}</h2>
               <DownloadButtons onDownload={downloadFinancialOverview} />
             </div>
-            <p className="text-xs text-slate-500">
-              Income/expense overview, period-by-period comparison, payment status, and outstanding invoices.
-            </p>
+            <p className="text-xs text-text-secondary">{t("financialOverviewReportDescription")}</p>
           </div>
 
           {comparison && (
-            <div className="bg-white rounded-lg border border-slate-200">
-              <div className="px-5 py-3 border-b border-slate-200">
-                <h2 className="text-sm font-medium text-navy">Period comparison — financial year {comparison.financial_year}</h2>
+            <div className="card-v2">
+              <div className="px-5 py-3 border-b border-border-subtle">
+                <h2 className="text-sm font-medium text-text-primary">{t("periodComparisonHeading", { year: comparison.financial_year })}</h2>
               </div>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="table-v3">
                 <thead>
-                  <tr className="text-left text-slate-500 border-b border-slate-200">
-                    <th className="px-5 py-2 font-medium">Period</th>
-                    <th className="px-5 py-2 font-medium">Sales (net)</th>
-                    <th className="px-5 py-2 font-medium">Purchases (net)</th>
-                    <th className="px-5 py-2 font-medium">Net</th>
-                    <th className="px-5 py-2 font-medium">Txns</th>
+                  <tr>
+                    <th>{t("period")}</th>
+                    <th className="text-right">{t("salesNet")}</th>
+                    <th className="text-right">{t("purchasesNet")}</th>
+                    <th className="text-right">{t("net")}</th>
+                    <th className="text-right">{t("transactionsAbbr")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.periods.map((p) => (
-                    <tr key={p.label} className="border-b border-slate-100 last:border-0">
-                      <td className="px-5 py-2.5">{p.label}</td>
-                      <td className="px-5 py-2.5">{p.sales_net}</td>
-                      <td className="px-5 py-2.5">{p.purchases_net}</td>
-                      <td className="px-5 py-2.5">{p.income_minus_expense}</td>
-                      <td className="px-5 py-2.5">{p.transaction_count}</td>
+                    <tr key={p.label}>
+                      <td className="text-text-primary">{p.label}</td>
+                      <td className="col-amount">{formatEUR(p.sales_net, locale)}</td>
+                      <td className="col-amount">{formatEUR(p.purchases_net, locale)}</td>
+                      <td className="col-amount font-medium">{formatEUR(p.income_minus_expense, locale)}</td>
+                      <td className="text-right text-text-secondary">{p.transaction_count}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3">
-            <h2 className="text-sm font-medium text-navy">VAT Return Reports</h2>
-            <p className="text-xs text-slate-500">Open a period&apos;s VAT return from the VAT Returns or Tax Calendar page to download its report.</p>
+          <div className="card-v2 p-5 space-y-3">
+            <h2 className="text-sm font-medium text-text-primary">{t("vatReturnReports")}</h2>
+            <p className="text-xs text-text-secondary">{t("vatReturnReportsDescription")}</p>
           </div>
         </>
       )}

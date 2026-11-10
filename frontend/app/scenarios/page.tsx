@@ -1,21 +1,28 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, JsonReport, Scenario, ScenarioType } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
-const ASSUMPTION_FIELDS: { key: string; label: string; placeholder: string }[] = [
-  { key: "revenue_change_pct", label: "Revenue change %", placeholder: "e.g. 10 or -15" },
-  { key: "expense_change_pct", label: "Expense change %", placeholder: "e.g. 5" },
-  { key: "new_hire_monthly_cost", label: "New hire monthly cost", placeholder: "e.g. 3500" },
-  { key: "payment_delay_days", label: "Payment delay (days)", placeholder: "e.g. 30" },
-  { key: "new_equipment_investment", label: "New equipment investment", placeholder: "one-off, e.g. 8000" },
-  { key: "additional_financing", label: "Additional financing", placeholder: "one-off, e.g. 20000" },
+/** labelKey/placeholderKey resolved against the "scenarios" namespace at
+ * render time -- plain module-level array, not a component. */
+const ASSUMPTION_FIELDS: { key: string; labelKey: string; placeholderKey: string }[] = [
+  { key: "revenue_change_pct", labelKey: "revenueChangePct", placeholderKey: "revenueChangePctPlaceholder" },
+  { key: "expense_change_pct", labelKey: "expenseChangePct", placeholderKey: "expenseChangePctPlaceholder" },
+  { key: "new_hire_monthly_cost", labelKey: "newHireMonthlyCost", placeholderKey: "newHireMonthlyCostPlaceholder" },
+  { key: "payment_delay_days", labelKey: "paymentDelayDays", placeholderKey: "paymentDelayDaysPlaceholder" },
+  { key: "new_equipment_investment", labelKey: "newEquipmentInvestment", placeholderKey: "newEquipmentInvestmentPlaceholder" },
+  { key: "additional_financing", labelKey: "additionalFinancing", placeholderKey: "additionalFinancingPlaceholder" },
 ];
 
 function ScenariosContent() {
+  const t = useTranslations("scenarios");
+  const locale = useLocale();
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -73,15 +80,12 @@ function ScenariosContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Scenario Planning</h1>
-      <p className="text-sm text-slate-500">
-        Scenarios never touch the ledger -- every result here is recomputed on the fly from your current forecast
-        plus the assumptions below.
-      </p>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">{t("subtitle")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-        <option value="">Select a company</option>
+      <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -90,104 +94,108 @@ function ScenariosContent() {
       </select>
 
       {companyId && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
-          <h2 className="font-medium text-navy">New scenario</h2>
+        <div className="card-v2 p-4 space-y-3">
+          <h2 className="font-medium text-text-primary">{t("newScenario")}</h2>
           <form onSubmit={createScenario} className="space-y-3">
             <div className="flex items-center gap-3">
-              <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Scenario name" className="rounded-md border border-slate-300 px-3 py-2 text-sm w-56" />
-              <select value={scenarioType} onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
-                <option value="BASE">Base case</option>
-                <option value="OPTIMISTIC">Optimistic</option>
-                <option value="CONSERVATIVE">Conservative</option>
-                <option value="CUSTOM">Custom</option>
+              <input required value={name} aria-label={tCommon("name")} onChange={(e) => setName(e.target.value)} placeholder={t("scenarioNamePlaceholder")} className="input-v2 px-3 py-2 text-sm w-56" />
+              <select value={scenarioType} aria-label={t("scenarioType")} onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="input-v2 px-2 py-2 text-sm">
+                <option value="BASE">{t("baseCase")}</option>
+                <option value="OPTIMISTIC">{t("optimistic")}</option>
+                <option value="CONSERVATIVE">{t("conservative")}</option>
+                <option value="CUSTOM">{t("custom")}</option>
               </select>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {ASSUMPTION_FIELDS.map((f) => (
                 <input
                   key={f.key}
                   value={assumptions[f.key] ?? ""}
                   onChange={(e) => setAssumptions((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                  placeholder={`${f.label} (${f.placeholder})`}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-xs"
+                  placeholder={`${t(f.labelKey as never)} (${t(f.placeholderKey as never)})`}
+                  className="input-v2 px-3 py-2 text-xs"
                 />
               ))}
             </div>
-            <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
-              Create scenario
+            <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
+              {t("createScenario")}
             </button>
           </form>
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card-v2 overflow-hidden">
+        <div className="overflow-x-auto">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
-              <th className="px-4 py-2 font-medium" />
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">Type</th>
-              <th className="px-4 py-2 font-medium" />
+            <tr>
+              <th />
+              <th>{tCommon("name")}</th>
+              <th>{t("type")}</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {scenarios.map((s) => (
-              <tr key={s.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-2.5">
-                  <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
+              <tr key={s.id}>
+                <td>
+                  <input type="checkbox" aria-label={t("selectScenario", { name: s.name })} checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} />
                 </td>
-                <td className="px-4 py-2.5">{s.name}</td>
-                <td className="px-4 py-2.5 text-xs">{s.scenario_type}</td>
-                <td className="px-4 py-2.5 text-xs">
-                  <button onClick={() => duplicate(s)} className="text-navy underline">
-                    Duplicate
+                <td className="text-text-primary">{s.name}</td>
+                <td className="text-xs text-text-secondary">{s.scenario_type}</td>
+                <td className="text-xs">
+                  <button onClick={() => duplicate(s)} className="text-navy hover:underline">
+                    {t("duplicate")}
                   </button>
                 </td>
               </tr>
             ))}
             {scenarios.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-slate-500">
-                  No scenarios yet.
+                <td colSpan={4} className="text-text-secondary">
+                  {t("noScenariosYet")}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={compare} disabled={selectedIds.length < 2} className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
-          Compare selected
+        <button onClick={compare} disabled={selectedIds.length < 2} className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+          {t("compareSelected")}
         </button>
         {companyId && selectedIds.length >= 2 && (
           <a href={api.scenarioComparisonReportUrl(Number(companyId), selectedIds)} className="text-xs text-navy underline">
-            Export comparison CSV
+            {t("exportComparisonCsv")}
           </a>
         )}
       </div>
 
       {comparison && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h2 className="font-medium text-navy mb-2">Comparison</h2>
-          <table className="w-full text-sm">
+        <div className="card-v2 p-4">
+          <h2 className="font-medium text-text-primary mb-2">{t("comparison")}</h2>
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="py-1">Scenario</th>
-                <th className="py-1">Forecast profit</th>
-                <th className="py-1">Net cash change</th>
+              <tr>
+                <th>{t("scenario")}</th>
+                <th className="text-right">{t("forecastProfit")}</th>
+                <th className="text-right">{t("netCashChange")}</th>
               </tr>
             </thead>
             <tbody>
               {comparison.comparison.map((row: JsonReport) => (
-                <tr key={row.name} className="border-b border-slate-100 last:border-0">
-                  <td className="py-1.5">{row.name}</td>
-                  <td className="py-1.5 font-mono">{row.total_forecast_profit}</td>
-                  <td className="py-1.5 font-mono">{row.scenario_net_cash_change}</td>
+                <tr key={row.name}>
+                  <td className="text-text-primary">{row.name}</td>
+                  <td className="col-amount">{formatEUR(row.total_forecast_profit, locale)}</td>
+                  <td className="col-amount">{formatEUR(row.scenario_net_cash_change, locale)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

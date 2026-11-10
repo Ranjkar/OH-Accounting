@@ -3,7 +3,7 @@ import { TransactionApprovalStatus, TransactionPaymentStatus } from "@/lib/api";
 const APPROVAL_STYLES: Record<TransactionApprovalStatus, string> = {
   DRAFT: "bg-slate-100 text-slate-600",
   APPROVED: "bg-green-100 text-green-800",
-  LOCKED: "bg-navy text-white",
+  LOCKED: "bg-navy-solid text-white",
 };
 
 const PAYMENT_STYLES: Record<TransactionPaymentStatus, string> = {

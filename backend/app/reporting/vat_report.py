@@ -16,6 +16,7 @@ from app.models.accounting import AccountingTransaction, VatReturn
 from app.models.company import Company
 from app.models.enums import InputVatEligibility, LedgerSide
 from app.reporting.pdf_builder import PdfReportBuilder
+from app.reporting.report_i18n import DEFAULT_LOCALE, box_description, t
 
 BOX_ROWS = [
     ("1a", "Domestic sales, high rate (21%)", "box_1a_net", "box_1a_vat"),
@@ -90,88 +91,94 @@ def build_vat_report_data(db: Session, vat_return: VatReturn, company: Company) 
     }
 
 
-def render_pdf(data: dict) -> bytes:
+def render_pdf(data: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    """`locale` only changes the surrounding report prose/labels (see
+    report_i18n.VAT_REPORT) -- box codes, VAT percentages, enum values,
+    company/customer names and all amounts are never translated, and the
+    Dutch-language version remains the canonical one actually filed with
+    the Belastingdienst."""
     company: Company = data["company"]
     vat_return: VatReturn = data["vat_return"]
     period = data["period"]
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     pdf = PdfReportBuilder(
-        title="VAT Return Report",
-        company_name=f"{company.name} ({company.vat_number or 'no VAT number on file'})",
-        subtitle=f"Period: {period.label} ({period.start_date} to {period.end_date}) - Status: {vat_return.status.value}",
+        title=t(locale, "vat", "title"),
+        company_name=f"{company.name} ({company.vat_number or t(locale, 'common', 'no_vat_number')})",
+        subtitle=t(locale, "vat", "period_label", label=period.label, start=period.start_date, end=period.end_date, status=vat_return.status.value),
         generated_at=generated,
+        locale=locale,
     )
 
-    pdf.heading("Declaration box breakdown")
+    pdf.heading(t(locale, "vat", "box_breakdown_heading"))
     pdf.table(
-        ["Box", "Description", "Net", "VAT"],
+        [t(locale, "vat", "col_box"), t(locale, "vat", "col_description"), t(locale, "vat", "col_net"), t(locale, "vat", "col_vat")],
         [
             [
                 code,
-                label,
-                str(data["box_totals"][code][0]) if data["box_totals"][code][0] is not None else "n/a",
-                str(data["box_totals"][code][1]) if data["box_totals"][code][1] is not None else "n/a",
+                box_description(locale, code),
+                str(data["box_totals"][code][0]) if data["box_totals"][code][0] is not None else t(locale, "common", "na"),
+                str(data["box_totals"][code][1]) if data["box_totals"][code][1] is not None else t(locale, "common", "na"),
             ]
-            for code, label, _, _ in BOX_ROWS
+            for code, _, _, _ in BOX_ROWS
         ],
         col_widths=[40, 280, 90, 90],
     )
-    pdf.key_value_row("5a - Total VAT payable", str(data["box_5a_vat"]))
-    pdf.key_value_row("5b - Deductible input VAT", str(data["box_5b_vat"]))
-    pdf.key_value_row("5g - Net VAT payable / refundable", str(data["net_payable"]), highlight=True)
+    pdf.key_value_row(t(locale, "vat", "box_5a"), str(data["box_5a_vat"]))
+    pdf.key_value_row(t(locale, "vat", "box_5b"), str(data["box_5b_vat"]))
+    pdf.key_value_row(t(locale, "vat", "box_5g"), str(data["net_payable"]), highlight=True)
 
-    pdf.heading("Sales and purchase overview")
-    pdf.key_value_row("Total sales (net)", str(data["sales_total_net"]))
-    pdf.key_value_row("Total purchases (net)", str(data["purchases_total_net"]))
+    pdf.heading(t(locale, "vat", "sales_purchase_heading"))
+    pdf.key_value_row(t(locale, "vat", "total_sales_net"), str(data["sales_total_net"]))
+    pdf.key_value_row(t(locale, "vat", "total_purchases_net"), str(data["purchases_total_net"]))
 
-    pdf.heading("VAT by rate")
+    pdf.heading(t(locale, "vat", "vat_by_rate_heading"))
     for rate, amount in data["sales_vat_by_rate"].items():
-        pdf.key_value_row(f"Sales VAT at {rate}%", str(amount))
+        pdf.key_value_row(t(locale, "vat", "sales_vat_at", rate=rate), str(amount))
     for rate, amount in data["purchase_vat_by_rate"].items():
-        pdf.key_value_row(f"Purchase VAT at {rate}%", str(amount))
+        pdf.key_value_row(t(locale, "vat", "purchase_vat_at", rate=rate), str(amount))
 
-    pdf.heading("Reverse-charge overview")
-    pdf.key_value_row("Reverse-charge / import / EU-acquisition lines", str(data["reverse_charge_line_count"]))
-    pdf.key_value_row("Net amount", str(data["reverse_charge_net_total"]))
+    pdf.heading(t(locale, "vat", "reverse_charge_heading"))
+    pdf.key_value_row(t(locale, "vat", "reverse_charge_lines"), str(data["reverse_charge_line_count"]))
+    pdf.key_value_row(t(locale, "vat", "net_amount"), str(data["reverse_charge_net_total"]))
 
-    pdf.heading("Input VAT summary (deductible, by eligibility)")
+    pdf.heading(t(locale, "vat", "input_vat_heading"))
     for eligibility, amount in data["deductible_by_eligibility"].items():
         pdf.key_value_row(eligibility, str(amount))
 
-    pdf.heading("Reconciliation findings")
+    pdf.heading(t(locale, "vat", "reconciliation_heading"))
     if not (data["pending_documents"] or data["duplicate_documents"] or data["validation_errors"] or data["unresolved_fx_transaction_ids"]):
-        pdf.text("No outstanding issues.", color=(0.08, 0.5, 0.24))
+        pdf.text(t(locale, "vat", "no_outstanding_issues"), color=(0.08, 0.5, 0.24))
     else:
         for d in data["pending_documents"]:
-            pdf.text(f"Pending document: {d['original_filename']} ({d['status']})")
+            pdf.text(t(locale, "vat", "pending_document", name=d["original_filename"], status=d["status"]))
         for d in data["duplicate_documents"]:
-            pdf.text(f"Duplicate document: {d['original_filename']}")
+            pdf.text(t(locale, "vat", "duplicate_document", name=d["original_filename"]))
         for v in data["validation_errors"]:
-            pdf.text(f"Validation error on document #{v['document_id']}: {v['message']}")
+            pdf.text(t(locale, "vat", "validation_error", id=v["document_id"], message=v["message"]))
         for tid in data["unresolved_fx_transaction_ids"]:
-            pdf.text(f"Transaction #{tid} needs an FX rate before inclusion")
+            pdf.text(t(locale, "vat", "fx_needed", id=tid))
 
     return pdf.to_bytes()
 
 
-def render_xlsx(data: dict) -> bytes:
+def render_xlsx(data: dict, locale: str = DEFAULT_LOCALE) -> bytes:
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "VAT Return"
-    ws.append(["OnHolland Accounting — VAT Return Report"])
-    ws.append([f"Company: {data['company'].name} ({data['company'].vat_number or ''})"])
-    ws.append([f"Period: {data['period'].label} ({data['period'].start_date} to {data['period'].end_date})"])
-    ws.append([f"Status: {data['vat_return'].status.value}"])
+    ws.title = t(locale, "vat", "title")[:31]  # Excel sheet-name length limit
+    ws.append([f"OnHolland Accounting — {t(locale, 'vat', 'title')}"])
+    ws.append([f"{data['company'].name} ({data['company'].vat_number or t(locale, 'common', 'no_vat_number')})"])
+    ws.append([t(locale, "vat", "period_label", label=data["period"].label, start=data["period"].start_date, end=data["period"].end_date, status=data["vat_return"].status.value)])
     ws.append([])
-    ws.append(["Box", "Description", "Net", "VAT"])
+    ws.append([t(locale, "vat", "col_box"), t(locale, "vat", "col_description"), t(locale, "vat", "col_net"), t(locale, "vat", "col_vat")])
     for code, label, _, _ in BOX_ROWS:
         net, vat = data["box_totals"][code]
-        ws.append([code, label, str(net) if net is not None else "", str(vat) if vat is not None else ""])
+        # Real numeric cells (Decimal), not str(), where a value exists.
+        ws.append([code, box_description(locale, code), net if net is not None else "", vat if vat is not None else ""])
     ws.append([])
-    ws.append(["5a", "Total VAT payable", "", str(data["box_5a_vat"])])
-    ws.append(["5b", "Deductible input VAT", "", str(data["box_5b_vat"])])
-    ws.append(["5g", "Net VAT payable / refundable", "", str(data["net_payable"])])
+    ws.append([t(locale, "vat", "box_5a"), "", "", data["box_5a_vat"]])
+    ws.append([t(locale, "vat", "box_5b"), "", "", data["box_5b_vat"]])
+    ws.append([t(locale, "vat", "box_5g"), "", "", data["net_payable"]])
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -179,7 +186,13 @@ def render_xlsx(data: dict) -> bytes:
 
 
 def render_csv(data: dict) -> bytes:
+    """Headers and box descriptions stay in their stable, canonical
+    English form -- never translated, see financial_report.render_csv's
+    docstring. UTF-8 BOM so Excel (any non-English locale, especially on
+    Windows) correctly auto-detects UTF-8 instead of mis-decoding
+    non-ASCII content as Windows-1252."""
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["box", "description", "net", "vat"])
     for code, label, _, _ in BOX_ROWS:

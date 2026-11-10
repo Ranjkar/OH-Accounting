@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.deps import get_current_user, require_company_access, require_editor, require_uploader
+from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access, require_editor, require_uploader
 from app.core.rate_limit import enforce as enforce_rate_limit
 from app.db.session import SessionLocal, get_db
 from app.models.audit_log import AuditLog
@@ -102,7 +102,7 @@ def list_documents(
     user: User = Depends(get_current_user),
 ):
     query = db.query(Document).filter(Document.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         query = query.filter(Document.company_id.in_(accessible_ids))
     if company_id is not None:
@@ -215,6 +215,20 @@ def approve_document(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except ledger_service.LedgerPostingError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        # Phase 19 (audit 6.6): uq_accounting_transaction_source_document means
+        # a concurrent approval of this same document won the race and already
+        # posted it. Report a conflict rather than a 500, and roll back so the
+        # session is usable again -- an IntegrityError leaves it in a failed
+        # state that would otherwise break every subsequent query on it.
+        db.rollback()
+        logger.warning(
+            "concurrent_approval_blocked document_id=%s user_id=%s", document_id, user.id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This document has already been posted to the ledger by a concurrent request",
+        ) from exc
     db.commit()
     db.refresh(document)
     return document

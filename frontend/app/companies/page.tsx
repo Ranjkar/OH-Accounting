@@ -2,12 +2,17 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, VatFrequency } from "@/lib/api";
 
+const FREQUENCY_KEY: Record<VatFrequency, string> = { monthly: "frequencyMonthly", quarterly: "frequencyQuarterly", annual: "frequencyAnnual" };
+
 function CompaniesContent() {
+  const t = useTranslations("companies");
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -41,89 +46,91 @@ function CompaniesContent() {
       setShowForm(false);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create company");
+      setError(err instanceof Error ? err.message : t("createFailed"));
     }
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Companies</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+          className="btn-primary-v2 px-4 py-2 text-sm"
         >
-          {showForm ? "Cancel" : "New company"}
+          {showForm ? tCommon("cancel") : t("newCompany")}
         </button>
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 max-w-lg">
+        <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4 max-w-lg">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Company name</label>
+            <label className="text-sm font-medium text-text-primary">{t("companyNameLabel")}</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="w-full input-v2 px-3 py-2 text-sm"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">KVK number</label>
+              <label className="text-sm font-medium text-text-primary">{t("kvkNumberLabel")}</label>
               <input
                 value={kvk}
                 onChange={(e) => setKvk(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full input-v2 px-3 py-2 text-sm"
+                dir="ltr"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">VAT number</label>
+              <label className="text-sm font-medium text-text-primary">{t("vatNumberLabel")}</label>
               <input
                 value={vat}
                 onChange={(e) => setVat(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full input-v2 px-3 py-2 text-sm"
+                dir="ltr"
               />
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">VAT filing frequency</label>
+            <label className="text-sm font-medium text-text-primary">{t("vatFrequencyLabel")}</label>
             <select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as VatFrequency)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="w-full input-v2 px-3 py-2 text-sm"
             >
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="annual">Annual</option>
+              <option value="monthly">{t("frequencyMonthly")}</option>
+              <option value="quarterly">{t("frequencyQuarterly")}</option>
+              <option value="annual">{t("frequencyAnnual")}</option>
             </select>
           </div>
           <button
             type="submit"
-            className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+            className="btn-primary-v2 px-4 py-2 text-sm"
           >
-            Create company
+            {t("createCompany")}
           </button>
         </form>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
+      <div className="card-v2 divide-y divide-border">
         {companies.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No companies yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">{t("noCompaniesYet")}</p>
         ) : (
           companies.map((c) => (
             <Link
               key={c.id}
               href={`/companies/${c.id}`}
-              className="flex items-center justify-between px-5 py-3 hover:bg-slate-50"
+              className="flex items-center justify-between px-5 py-3 hover:bg-muted"
             >
               <div>
                 <p className="font-medium text-navy">{c.name}</p>
-                <p className="text-sm text-slate-500">
-                  {c.kvk_number ? `KVK ${c.kvk_number}` : "No KVK number"} ·{" "}
-                  {c.vat_frequency}
+                <p className="text-sm text-text-secondary">
+                  {c.kvk_number ? <span dir="ltr">{t("kvkWithNumber", { number: c.kvk_number })}</span> : t("noKvkNumber")} ·{" "}
+                  {t(FREQUENCY_KEY[c.vat_frequency] as never)}
                 </p>
               </div>
             </Link>

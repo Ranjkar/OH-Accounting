@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import (
     InputVatEligibility,
@@ -39,7 +39,16 @@ class PaymentOut(BaseModel):
 
 
 class PaymentCreate(BaseModel):
-    amount: Decimal
+    # Phase 19 (audit finding 8.8): `amount` had no bound at all, so a zero or
+    # negative payment was accepted, committed, and fed into
+    # payment_engine.compute_payment_status. A negative payment inflates
+    # remaining_balance, can flip a settled invoice back to UNPAID, and
+    # corrupts debtors/creditors aging, the cash-flow statement and DSO.
+    # Correcting a wrongly-recorded payment is what the void path exists for
+    # (reconciliation_service voids, never deletes) -- not a negative row.
+    # Precision is left to the MONEY column (Numeric(14,2)) rather than being
+    # re-specified here, so this constrains only what the finding requires.
+    amount: Decimal = Field(gt=0)
     payment_date: date
     reference: str | None = None
 

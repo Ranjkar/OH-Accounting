@@ -1,14 +1,25 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
-import { api, Budget, Company, FinancialYear, JsonReport } from "@/lib/api";
+import { api, Budget, BudgetStatus, Company, FinancialYear, JsonReport } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
+
+const BUDGET_STATUS_PILL: Record<BudgetStatus, string> = {
+  DRAFT: "status-pill-neutral",
+  SUBMITTED: "status-pill-info",
+  APPROVED: "status-pill-success",
+};
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 function BudgetsContent() {
+  const t = useTranslations("budgets");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -99,21 +110,21 @@ function BudgetsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Budgets</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
       <div className="flex items-center gap-3">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">Select a company</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
           ))}
         </select>
-        <select value={financialYearId} onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">All financial years</option>
+        <select value={financialYearId} aria-label={t("financialYear")} onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{t("allFinancialYears")}</option>
           {financialYears.map((fy) => (
             <option key={fy.id} value={fy.id}>
               {fy.year}
@@ -123,79 +134,80 @@ function BudgetsContent() {
       </div>
 
       {companyId && financialYearId && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
-          <h2 className="font-medium text-navy">Create a budget</h2>
+        <div className="card-v2 p-4 space-y-3">
+          <h2 className="font-medium text-text-primary">{t("createBudget")}</h2>
           <button onClick={getSuggestion} className="text-xs text-navy underline">
-            Get AI suggestion from last year&apos;s actuals
+            {t("getAiSuggestion")}
           </button>
           {suggestion && (
-            <div className="bg-slate-50 rounded-md p-3 text-xs space-y-1">
+            <div className="bg-muted rounded-md p-3 text-xs space-y-1">
               {suggestion.ai_suggestion.suggestions.map((s: JsonReport) => (
                 <p key={s.category}>
-                  <span className="font-medium">{s.category}</span>: {s.suggested_monthly_amount}/mo -- {s.reasoning}
+                  <span className="font-medium">{s.category}</span>: {formatEUR(s.suggested_monthly_amount, locale)}{t("perMonthSuffix")} -- {s.reasoning}
                 </p>
               ))}
-              <p className="text-slate-400">AI suggestions always require review before use -- never auto-applied.</p>
+              <p className="text-text-secondary">{t("aiSuggestionReviewNotice")}</p>
             </div>
           )}
           <form onSubmit={createBudget} className="space-y-3">
-            <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Budget name" className="rounded-md border border-slate-300 px-3 py-2 text-sm w-64" />
+            <input required value={name} aria-label={tCommon("name")} onChange={(e) => setName(e.target.value)} placeholder={t("budgetName")} className="input-v2 px-3 py-2 text-sm w-64" />
             <div className="flex items-end gap-2">
-              <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category (e.g. Revenue, Rent)" className="rounded-md border border-slate-300 px-3 py-2 text-sm w-48" />
-              <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+              <input value={category} aria-label={t("category")} onChange={(e) => setCategory(e.target.value)} placeholder={t("categoryPlaceholder")} className="input-v2 px-3 py-2 text-sm w-48" />
+              <select value={month} aria-label={t("month")} onChange={(e) => setMonth(Number(e.target.value))} className="input-v2 px-2 py-2 text-sm">
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
-                    Month {m}
+                    {t("monthNumber", { month: m })}
                   </option>
                 ))}
               </select>
-              <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="rounded-md border border-slate-300 px-3 py-2 text-sm w-32" />
-              <button type="button" onClick={addDraftLine} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                Add line
+              <input value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
+              <button type="button" onClick={addDraftLine} className="input-v2 px-3 py-2 text-sm">
+                {t("addLine")}
               </button>
             </div>
             {draftLines.length > 0 && (
-              <ul className="text-xs text-slate-600 space-y-0.5">
+              <ul className="text-xs text-text-secondary space-y-0.5">
                 {draftLines.map((l, i) => (
                   <li key={i}>
-                    {l.category} / month {l.month}: {l.amount}
+                    {t("draftLineSummary", { category: l.category, month: l.month, amount: formatEUR(l.amount, locale) })}
                   </li>
                 ))}
               </ul>
             )}
-            <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
-              Create budget
+            <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
+              {t("createBudget")}
             </button>
           </form>
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="card-v2 overflow-hidden">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-4 py-2 font-medium">Name</th>
-                <th className="px-4 py-2 font-medium">Version</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium" />
+              <tr>
+                <th>{tCommon("name")}</th>
+                <th>{t("version")}</th>
+                <th>{tCommon("status")}</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {budgets.map((b) => (
-                <tr key={b.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => viewBudget(b)}>
-                  <td className="px-4 py-2.5">{b.name}</td>
-                  <td className="px-4 py-2.5">v{b.version}</td>
-                  <td className="px-4 py-2.5">{b.status}</td>
-                  <td className="px-4 py-2.5 text-xs">
+                <tr key={b.id} className="cursor-pointer hover:bg-muted" onClick={() => viewBudget(b)}>
+                  <td className="text-text-primary">{b.name}</td>
+                  <td className="text-text-secondary">v{b.version}</td>
+                  <td><span className={`status-pill ${BUDGET_STATUS_PILL[b.status]}`}>{t(`status.${b.status.toLowerCase()}` as never)}</span></td>
+                  <td className="text-xs">
                     {b.status === "DRAFT" && (
-                      <button onClick={(e) => { e.stopPropagation(); submit(b); }} className="text-navy underline">
-                        Submit
+                      <button onClick={(e) => { e.stopPropagation(); submit(b); }} className="text-navy hover:underline">
+                        {t("submit")}
                       </button>
                     )}
                     {b.status === "SUBMITTED" && (
-                      <button onClick={(e) => { e.stopPropagation(); approve(b); }} className="text-navy underline">
-                        Approve
+                      <button onClick={(e) => { e.stopPropagation(); approve(b); }} className="text-navy hover:underline">
+                        {t("approve")}
                       </button>
                     )}
                   </td>
@@ -203,48 +215,49 @@ function BudgetsContent() {
               ))}
               {budgets.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-4 text-slate-500">
-                    No budgets yet.
+                  <td colSpan={4} className="text-text-secondary">
+                    {t("noBudgetsYet")}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="card-v2 p-4">
           {variance && selected ? (
             <div className="space-y-2 text-sm">
-              <h3 className="font-medium text-navy">{variance.budget_name} -- actual vs budget</h3>
-              {variance.lines.length === 0 && <p className="text-slate-500">No lines in this budget.</p>}
+              <h3 className="font-medium text-text-primary">{t("actualVsBudget", { name: variance.budget_name })}</h3>
+              {variance.lines.length === 0 && <p className="text-text-secondary">{t("noLinesInBudget")}</p>}
               {variance.lines.map((l: JsonReport, i: number) => (
-                <div key={i} className="flex items-center justify-between border-b border-slate-100 py-1">
+                <div key={i} className="flex items-center justify-between border-b border-border py-1">
                   <span>
-                    {l.category} (month {l.month})
+                    {t("categoryMonthLabel", { category: l.category, month: l.month })}
                   </span>
-                  <span className="font-mono">
-                    {l.actual} / {l.budgeted}{" "}
-                    <span className={Number(l.variance) < 0 ? "text-error" : "text-green-700"}>
-                      ({l.variance_pct !== null ? `${l.variance_pct}%` : "n/a"})
+                  <span className="font-mono tabular-nums">
+                    {formatEUR(l.actual, locale)} / {formatEUR(l.budgeted, locale)}{" "}
+                    <span className={Number(l.variance) < 0 ? "value-negative" : "value-positive"}>
+                      ({l.variance_pct !== null ? `${l.variance_pct}%` : t("notApplicable")})
                     </span>
                   </span>
                 </div>
               ))}
               <div className="flex items-center justify-between font-medium pt-2">
-                <span>Total variance</span>
-                <span className="font-mono">{variance.total_variance}</span>
+                <span>{t("totalVariance")}</span>
+                <span className="font-mono tabular-nums">{formatEUR(variance.total_variance, locale)}</span>
               </div>
               <div className="flex items-center gap-2 pt-2 text-xs">
-                <a href={api.budgetVsActualReportUrl(selected.id, "pdf")} className="rounded-md border border-slate-300 px-2 py-1">
-                  Export PDF
+                <a href={api.budgetVsActualReportUrl(selected.id, "pdf")} className="input-v2 px-2 py-1">
+                  {tCommon("export")} PDF
                 </a>
-                <a href={api.budgetVsActualReportUrl(selected.id, "csv")} className="rounded-md border border-slate-300 px-2 py-1">
-                  Export CSV
+                <a href={api.budgetVsActualReportUrl(selected.id, "csv")} className="input-v2 px-2 py-1">
+                  {tCommon("export")} CSV
                 </a>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Select a budget to see actual vs budget.</p>
+            <p className="text-sm text-text-secondary">{t("selectBudgetToSeeVariance")}</p>
           )}
         </div>
       </div>

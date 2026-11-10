@@ -2,10 +2,38 @@ import enum
 
 
 class UserRole(str, enum.Enum):
+    # Phase 15: tenant-wide super-role, strictly additive -- every check that
+    # previously treated `admin` as "full access" now treats `owner` the same
+    # (see app.core.deps.ADMIN_ROLES), so no existing admin loses anything.
+    # Owner exists above admin specifically for user-management authority
+    # (granting/revoking owner or admin itself, last-owner protection) --
+    # see app.api.v1.users for the exact rules.
+    owner = "owner"
     admin = "admin"
     accountant = "accountant"
     viewer = "viewer"
+    # Legacy/specialised roles, unchanged by Phase 15: `customer` is the
+    # existing "business owner of one company" persona (see
+    # app.api.v1.companies._require_company_owner); `employee` is the
+    # self-service-portal-only role (app.core.deps.get_current_employee).
+    # Neither is assignable through the new Phase 15 role-management
+    # endpoints -- they have their own dedicated flows.
     customer = "customer"
+    employee = "employee"
+
+
+class CompanyInvitationStatus(str, enum.Enum):
+    pending = "PENDING"
+    accepted = "ACCEPTED"
+    revoked = "REVOKED"
+    expired = "EXPIRED"
+
+
+class SubscriptionStatus(str, enum.Enum):
+    trialing = "TRIALING"
+    active = "ACTIVE"
+    past_due = "PAST_DUE"
+    canceled = "CANCELED"
 
 
 class VatFrequency(str, enum.Enum):
@@ -135,15 +163,20 @@ class BankSourceFormat(str, enum.Enum):
     camt054 = "CAMT054"
     mt940 = "MT940"
     csv = "CSV"
+    open_banking = "OPEN_BANKING"  # Phase 12: synced via a provider, not a file
 
 
 class BankConsentStatus(str, enum.Enum):
-    """Open Banking connection status. Always not_connected in this build --
-    there is no live provider integration, only file import. See
-    docs/bank-integration.md."""
+    """Open Banking connection status. Phase 12 adds a real provider
+    abstraction (app/services/open_banking_provider.py) and a stub
+    provider for development -- no authorised AISP agreement/credentials
+    exist for this project, so `connected` only ever reflects the stub in
+    this build. See docs/open-banking.md."""
 
     not_connected = "NOT_CONNECTED"
+    pending = "PENDING"  # consent flow started, not yet completed
     connected = "CONNECTED"
+    expired = "EXPIRED"  # consent lapsed (PSD2 RTS: max 90 days), needs renewal
     error = "ERROR"
     revoked = "REVOKED"
 
@@ -245,3 +278,95 @@ class ScenarioType(str, enum.Enum):
     optimistic = "OPTIMISTIC"
     conservative = "CONSERVATIVE"
     custom = "CUSTOM"
+
+
+class LegalFormCode(str, enum.Enum):
+    eenmanszaak = "EENMANSZAAK"
+    vof = "VOF"
+    maatschap = "MAATSCHAP"
+    cv = "CV"
+    bv = "BV"
+    nv = "NV"
+    cooperatie = "COOPERATIE"
+    owm = "OWM"
+    stichting = "STICHTING"
+    vereniging = "VERENIGING"
+    vve = "VVE"
+    rederij = "REDERIJ"
+    other = "OTHER"
+
+
+class LiabilityType(str, enum.Enum):
+    unlimited_personal = "UNLIMITED_PERSONAL"
+    limited = "LIMITED"
+    shared_unlimited = "SHARED_UNLIMITED"
+    mixed = "MIXED"
+
+
+class PartnerType(str, enum.Enum):
+    general = "GENERAL"
+    limited = "LIMITED"
+
+
+class EmploymentType(str, enum.Enum):
+    permanent = "PERMANENT"
+    fixed_term = "FIXED_TERM"
+    zero_hours = "ZERO_HOURS"
+    on_call = "ON_CALL"
+
+
+class SalaryBasis(str, enum.Enum):
+    monthly = "MONTHLY"
+    hourly = "HOURLY"
+
+
+class PayrollPeriodType(str, enum.Enum):
+    monthly = "MONTHLY"
+    four_weekly = "FOUR_WEEKLY"
+
+
+class PayrollRunStatus(str, enum.Enum):
+    draft = "DRAFT"
+    approved = "APPROVED"
+    paid = "PAID"
+    corrected = "CORRECTED"
+
+
+class TimesheetEntryType(str, enum.Enum):
+    worked = "WORKED"
+    holiday = "HOLIDAY"
+    sick = "SICK"
+    absence = "ABSENCE"
+
+
+class TimesheetStatus(str, enum.Enum):
+    draft = "DRAFT"
+    submitted = "SUBMITTED"
+    approved = "APPROVED"
+    rejected = "REJECTED"
+
+
+class TaxOpportunityRisk(str, enum.Enum):
+    low = "LOW"
+    medium = "MEDIUM"
+    high = "HIGH"
+
+
+class TaxCentreItemStatus(str, enum.Enum):
+    prepared = "PREPARED"
+    under_review = "UNDER_REVIEW"
+    approved = "APPROVED"
+    filed = "FILED"
+    paid = "PAID"
+    overdue = "OVERDUE"
+
+
+class LoonheffingenDeclarationStatus(str, enum.Enum):
+    draft = "DRAFT"
+    validation = "VALIDATION"
+    accountant_review = "ACCOUNTANT_REVIEW"
+    approved = "APPROVED"
+    ready_for_submission = "READY_FOR_SUBMISSION"
+    submitted = "SUBMITTED"
+    accepted = "ACCEPTED"
+    rejected = "REJECTED"

@@ -12,70 +12,61 @@ import openpyxl
 
 from app.models.company import Company
 from app.reporting.pdf_builder import PdfReportBuilder
+from app.reporting.report_i18n import DEFAULT_LOCALE, t
+
+PNL_ROW_KEYS = [
+    "revenue", "cost_of_sales", "gross_profit", "operating_expenses", "uncategorized_expenses",
+    "personnel_expenses", "ebitda", "depreciation", "ebit", "interest_expense", "profit_before_tax",
+    "tax_expense", "net_profit",
+]
+PNL_HIGHLIGHT_KEYS = {"gross_profit", "ebitda", "ebit", "net_profit"}
 
 
 def _generated_at() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
 
-def _header_lines(company: Company, period_label: str) -> list[str]:
-    return [
-        f"Company: {company.name} ({company.vat_number or 'no VAT number on file'})",
-        f"Period: {period_label}",
-        f"Accounting basis: {company.vat_accounting_basis.value}",
-    ]
-
-
 # ---- Profit and Loss ----
 
 
-def render_pnl_pdf(company: Company, period_label: str, pnl: dict) -> bytes:
+def render_pnl_pdf(company: Company, period_label: str, pnl: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "pnl"
     pdf = PdfReportBuilder(
-        title="Profit & Loss Statement", company_name=company.name, subtitle=period_label, generated_at=_generated_at()
+        title=t(locale, ns, "title"), company_name=company.name, subtitle=period_label, generated_at=_generated_at(), locale=locale
     )
-    pdf.heading("Summary (all figures actual, accrual basis)")
-    rows = [
-        ("Revenue", pnl["revenue"]), ("Cost of sales", pnl["cost_of_sales"]), ("Gross profit", pnl["gross_profit"]),
-        ("Operating expenses", pnl["operating_expenses"]), ("Uncategorized expenses", pnl["uncategorized_expenses"]),
-        ("Personnel expenses", pnl["personnel_expenses"]), ("EBITDA", pnl["ebitda"]), ("Depreciation", pnl["depreciation"]),
-        ("EBIT", pnl["ebit"]), ("Interest expense", pnl["interest_expense"]), ("Profit before tax", pnl["profit_before_tax"]),
-        ("Tax expense", pnl["tax_expense"]), ("Net profit", pnl["net_profit"]),
-    ]
-    for label, value in rows:
-        pdf.key_value_row(label, str(value), highlight=label in ("Gross profit", "EBITDA", "EBIT", "Net profit"))
+    pdf.heading(t(locale, ns, "summary_heading"))
+    for key in PNL_ROW_KEYS:
+        pdf.key_value_row(t(locale, ns, key), str(pnl[key]), highlight=key in PNL_HIGHLIGHT_KEYS)
     pdf.text(pnl.get("tax_expense_note", ""), size=8)
     return pdf.to_bytes()
 
 
-def render_pnl_xlsx(company: Company, period_label: str, pnl: dict) -> bytes:
+def render_pnl_xlsx(company: Company, period_label: str, pnl: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "pnl"
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Profit and Loss"
-    ws.append(["OnHolland Accounting -- Profit & Loss Statement"])
-    for line in _header_lines(company, period_label):
-        ws.append([line])
-    ws.append([f"Generated {_generated_at()}"])
+    ws.title = t(locale, ns, "sheet_title")
+    ws.append([f"OnHolland Accounting -- {t(locale, ns, 'title')}"])
+    ws.append([f"{company.name} ({company.vat_number or t(locale, 'common', 'no_vat_number')})"])
+    ws.append([period_label])
+    ws.append([company.vat_accounting_basis.value])
     ws.append([])
-    for label, key in [
-        ("Revenue", "revenue"), ("Cost of sales", "cost_of_sales"), ("Gross profit", "gross_profit"),
-        ("Operating expenses", "operating_expenses"), ("Uncategorized expenses", "uncategorized_expenses"),
-        ("Personnel expenses", "personnel_expenses"), ("EBITDA", "ebitda"), ("Depreciation", "depreciation"),
-        ("EBIT", "ebit"), ("Interest expense", "interest_expense"), ("Profit before tax", "profit_before_tax"),
-        ("Tax expense", "tax_expense"), ("Net profit", "net_profit"),
-    ]:
-        ws.append([label, str(pnl[key])])
+    for key in PNL_ROW_KEYS:
+        # Real numeric cell (Decimal), not str(), so Excel can sum/format it.
+        ws.append([t(locale, ns, key), pnl[key]])
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
 
 
 def render_pnl_csv(pnl: dict) -> bytes:
+    """Line-item keys stay their stable, canonical snake_case form --
+    never translated, see financial_report.render_csv's docstring."""
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["line", "amount"])
-    for key in ("revenue", "cost_of_sales", "gross_profit", "operating_expenses", "uncategorized_expenses",
-                "personnel_expenses", "ebitda", "depreciation", "ebit", "interest_expense", "profit_before_tax",
-                "tax_expense", "net_profit"):
+    for key in PNL_ROW_KEYS:
         writer.writerow([key, pnl[key]])
     return buf.getvalue().encode("utf-8")
 
@@ -83,41 +74,43 @@ def render_pnl_csv(pnl: dict) -> bytes:
 # ---- Balance sheet ----
 
 
-def render_balance_sheet_pdf(company: Company, as_of_label: str, bs: dict) -> bytes:
-    pdf = PdfReportBuilder(title="Balance Sheet", company_name=company.name, subtitle=as_of_label, generated_at=_generated_at())
-    pdf.heading("Assets")
+def render_balance_sheet_pdf(company: Company, as_of_label: str, bs: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "balanceSheet"
+    pdf = PdfReportBuilder(title=t(locale, ns, "title"), company_name=company.name, subtitle=as_of_label, generated_at=_generated_at(), locale=locale)
+    pdf.heading(t(locale, ns, "assets_heading"))
     for label, value in bs["assets"].items():
-        pdf.key_value_row(label.replace("_", " ").title(), str(value), highlight=label == "total")
-    pdf.heading("Liabilities")
+        pdf.key_value_row(t(locale, ns, label), str(value), highlight=label == "total")
+    pdf.heading(t(locale, ns, "liabilities_heading"))
     for label, value in bs["liabilities"].items():
-        pdf.key_value_row(label.replace("_", " ").title(), str(value), highlight=label == "total")
-    pdf.heading("Equity")
+        pdf.key_value_row(t(locale, ns, label), str(value), highlight=label == "total")
+    pdf.heading(t(locale, ns, "equity_heading"))
     for label, value in bs["equity"].items():
-        pdf.key_value_row(label.replace("_", " ").title(), str(value), highlight=label == "total")
-    pdf.heading("Balance check")
-    pdf.key_value_row("Balanced", "Yes" if bs["is_balanced"] else "NO -- see imbalance below", highlight=not bs["is_balanced"])
-    pdf.key_value_row("Imbalance amount", str(bs["imbalance_amount"]))
+        pdf.key_value_row(t(locale, ns, label), str(value), highlight=label == "total")
+    pdf.heading(t(locale, ns, "balance_check_heading"))
+    pdf.key_value_row(t(locale, ns, "balanced_label"), t(locale, "common", "yes") if bs["is_balanced"] else t(locale, ns, "imbalance_label"), highlight=not bs["is_balanced"])
+    pdf.key_value_row(t(locale, ns, "imbalance_amount_label"), str(bs["imbalance_amount"]))
     if bs.get("missing_opening_balance_warning"):
         pdf.text(bs["missing_opening_balance_warning"], size=8, color=(0.73, 0.11, 0.11))
     return pdf.to_bytes()
 
 
-def render_balance_sheet_xlsx(company: Company, as_of_label: str, bs: dict) -> bytes:
+def render_balance_sheet_xlsx(company: Company, as_of_label: str, bs: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "balanceSheet"
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Balance Sheet"
-    ws.append(["OnHolland Accounting -- Balance Sheet"])
-    ws.append([f"Company: {company.name}"])
+    ws.title = t(locale, ns, "sheet_title")
+    ws.append([f"OnHolland Accounting -- {t(locale, ns, 'title')}"])
+    ws.append([company.name])
     ws.append([as_of_label])
-    ws.append([f"Generated {_generated_at()}"])
-    for section in ("assets", "liabilities", "equity"):
+    for section, heading_key in (("assets", "assets_heading"), ("liabilities", "liabilities_heading"), ("equity", "equity_heading")):
         ws.append([])
-        ws.append([section.title()])
+        ws.append([t(locale, ns, heading_key)])
         for label, value in bs[section].items():
-            ws.append([label.replace("_", " ").title(), str(value)])
+            # Real numeric cell (Decimal), not str().
+            ws.append([t(locale, ns, label), value])
     ws.append([])
-    ws.append(["Balanced", "Yes" if bs["is_balanced"] else "No"])
-    ws.append(["Imbalance amount", str(bs["imbalance_amount"])])
+    ws.append([t(locale, ns, "balanced_label"), t(locale, "common", "yes") if bs["is_balanced"] else t(locale, "common", "no")])
+    ws.append([t(locale, ns, "imbalance_amount_label"), bs["imbalance_amount"]])
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
@@ -125,6 +118,7 @@ def render_balance_sheet_xlsx(company: Company, as_of_label: str, bs: dict) -> b
 
 def render_balance_sheet_csv(bs: dict) -> bytes:
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["section", "line", "amount"])
     for section in ("assets", "liabilities", "equity"):
@@ -138,25 +132,27 @@ def render_balance_sheet_csv(bs: dict) -> bytes:
 # ---- Budget vs actual ----
 
 
-def render_budget_vs_actual_pdf(company: Company, variance: dict) -> bytes:
+def render_budget_vs_actual_pdf(company: Company, variance: dict, locale: str = DEFAULT_LOCALE) -> bytes:
+    ns = "budgetVsActual"
     pdf = PdfReportBuilder(
-        title="Budget vs Actual", company_name=company.name, subtitle=f"{variance['budget_name']} (v{variance['version']}, {variance['status']})",
-        generated_at=_generated_at(),
+        title=t(locale, ns, "title"), company_name=company.name, subtitle=f"{variance['budget_name']} (v{variance['version']}, {variance['status']})",
+        generated_at=_generated_at(), locale=locale,
     )
-    pdf.heading("Lines (actual vs budgeted)")
+    pdf.heading(t(locale, ns, "lines_heading"))
     pdf.table(
-        ["Category", "Month", "Budgeted", "Actual", "Variance"],
+        [t(locale, ns, "col_category"), t(locale, ns, "col_month"), t(locale, ns, "col_budgeted"), t(locale, ns, "col_actual"), t(locale, ns, "col_variance")],
         [[row["category"], str(row["month"]), str(row["budgeted"]), str(row["actual"]), str(row["variance"])] for row in variance["lines"]],
         col_widths=[140, 50, 90, 90, 90],
     )
-    pdf.key_value_row("Total budgeted", str(variance["total_budgeted"]))
-    pdf.key_value_row("Total actual", str(variance["total_actual"]))
-    pdf.key_value_row("Total variance", str(variance["total_variance"]), highlight=True)
+    pdf.key_value_row(t(locale, ns, "total_budgeted_label"), str(variance["total_budgeted"]))
+    pdf.key_value_row(t(locale, ns, "total_actual_label"), str(variance["total_actual"]))
+    pdf.key_value_row(t(locale, ns, "total_variance_label"), str(variance["total_variance"]), highlight=True)
     return pdf.to_bytes()
 
 
 def render_budget_vs_actual_csv(variance: dict) -> bytes:
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["category", "month", "budgeted", "actual", "variance", "variance_pct"])
     for row in variance["lines"]:
@@ -173,6 +169,7 @@ def render_budget_vs_actual_csv(variance: dict) -> bytes:
 
 def render_scenario_comparison_csv(comparison: dict) -> bytes:
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["scenario", "total_forecast_profit", "scenario_net_cash_change"])
     for row in comparison["comparison"]:

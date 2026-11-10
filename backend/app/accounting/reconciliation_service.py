@@ -10,6 +10,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.accounting import matching_engine, payment_engine
+from app.accounting.period_assignment import assign_vat_period_on_payment
 from app.models.accounting import AccountingTransaction, Payment
 from app.models.banking import BankTransaction, PaymentMatch
 from app.models.enums import ReconciliationStatus
@@ -76,6 +77,13 @@ def approve_match(db: Session, match: PaymentMatch, user_id: int, payment_date=N
     )
     db.add(payment)
     db.flush()
+
+    # Phase 19 (audit 6.2): a bank-matched payment is just as much a payment as
+    # one recorded through POST /transactions/{id}/payments, so a cash-based
+    # company's VAT period must be assigned here too. The effective date is the
+    # same one the Payment row was created with (explicit payment_date, else
+    # the bank transaction's booking date).
+    assign_vat_period_on_payment(db, acc_tx, payment.payment_date)
 
     match.status = "APPROVED"
     match.approved_by_user_id = user_id

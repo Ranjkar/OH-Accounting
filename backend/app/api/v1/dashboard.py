@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.accounting import financial_forecast, financial_reports as fr
 from app.api.v1._json_safe import to_json_safe
-from app.core.deps import get_current_user, require_company_access
+from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access
+from app.core.locale import resolve_locale_for_user
+from app.core.messages_i18n import t
 from app.db.session import get_db
 from app.models.accounting import AccountingTransaction, VatReturn
 from app.models.banking import BankTransaction
@@ -47,7 +49,7 @@ def dashboard_summary(
     user: User = Depends(get_current_user),
 ):
     companies_query = db.query(Company).filter(Company.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         companies_query = companies_query.filter(Company.id.in_(accessible_ids))
     if company_id is not None:
@@ -133,6 +135,7 @@ def dashboard_summary(
         else 0
     )
 
+    locale = resolve_locale_for_user(user)
     attention: list[CompanyAttentionFlag] = []
     for company in companies:
         reasons = []
@@ -142,21 +145,21 @@ def dashboard_summary(
             if p.financial_year.company_id == company.id and _is_overdue_unresolved(p, vat_return_by_period, today)
         ]
         if company_overdue:
-            reasons.append(f"{len(company_overdue)} overdue VAT return(s)")
+            reasons.append(t(locale, "dashboard.overdueVatReturns", count=len(company_overdue)))
         pending_docs = (
             db.query(Document)
             .filter(Document.company_id == company.id, Document.status.in_([DocumentStatus.needs_review, DocumentStatus.failed]))
             .count()
         )
         if pending_docs:
-            reasons.append(f"{pending_docs} document(s) need review")
+            reasons.append(t(locale, "dashboard.documentsNeedReview", count=pending_docs))
         overdue_tx = (
             db.query(AccountingTransaction)
             .filter(AccountingTransaction.company_id == company.id, AccountingTransaction.payment_status == PaymentStatus.overdue)
             .count()
         )
         if overdue_tx:
-            reasons.append(f"{overdue_tx} overdue payment(s)")
+            reasons.append(t(locale, "dashboard.overduePayments", count=overdue_tx))
         if reasons:
             attention.append(CompanyAttentionFlag(company_id=company.id, company_name=company.name, reasons=reasons))
 
@@ -185,7 +188,7 @@ def accountant_dashboard(reference_date: date | None = None, db: Session = Depen
     and the Phase 6 reconciliation status rather than a second summary
     engine."""
     companies_query = db.query(Company).filter(Company.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         companies_query = companies_query.filter(Company.id.in_(accessible_ids))
     companies = companies_query.all()

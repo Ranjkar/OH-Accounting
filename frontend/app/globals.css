@@ -1,29 +1,653 @@
 @import "tailwindcss";
 
 :root {
+  /* ---- Mollie-inspired design system (light mode, default) ----
+     Replaces the Phase 11 glassmorphism palette. Kept under the SAME
+     class/variable names used across 52 pages deliberately: every page
+     already using card-v2/btn-primary-v2/input-v2/nav-item-v2/etc is
+     re-skinned by changing these values alone, with no page-level edits
+     required -- the same high-leverage mechanism Phase 11 used, reused
+     here for the opposite visual direction. */
   --background: #ffffff;
-  --foreground: #0f172a;
-  --navy: #0f1b3d;
-  --navy-light: #1e2a4f;
+  --foreground: #171717;
+
+  /* Restrained OnHolland brand accent (kept from Phase 11 -- an
+     established brand identity across 4 phases, not re-hued -- but used
+     sparingly now: small buttons, active pills, focus rings, never
+     backgrounds/gradients/hero sections). */
+  --navy: #7c3aed;
+  --navy-light: #8b5cf6;
+  /* A separate, theme-INVARIANT token for solid fills with white text
+     (buttons, active pills, avatars) -- --navy itself must get lighter
+     in dark mode so it stays legible as plain text/icons/links against
+     a dark page background, but that same lighter value fails WCAG AA
+     for white text on top of it (measured 2.72:1, needs 4.5:1). Button
+     fills don't have that constraint -- a vivid purple reads fine
+     against a dark page in either theme -- so they keep the original
+     saturated value always. */
+  --navy-solid: #7c3aed;
+  --navy-solid-hover: #6d28d9;
   --status-approved: #15803d;
   --status-pending: #b45309;
   --status-error: #b91c1c;
+
+  --surface-page: #ffffff;
+  --surface-card: #ffffff;
+  --surface-elevated: #ffffff;
+  /* Sidebar: warm off-white, not a dark rail -- a genuine departure from
+     Phase 11's nav-rail-v2, not a relabeling of the same thing. */
+  --sidebar-bg: #faf8f7;
+  --sidebar-active-bg: #eceae9;
+  --sidebar-border: #eae7e5;
+  --sidebar-text: #171717;
+  --sidebar-text-secondary: #666666;
+
+  --brand-purple-50: #f5f3ff;
+  --brand-purple-100: #ede9fe;
+  --brand-purple-400: #a78bfa;
+  --brand-purple-500: #8b5cf6;
+  --brand-purple-600: #7c3aed;
+  --brand-purple-700: #6d28d9;
+  --brand-violet-600: #6d28d9;
+
+  --accent-cyan-400: #22d3ee;
+  --accent-cyan-500: #0891b2;
+  --accent-cyan-50: #ecfeff;
+  --accent-teal-400: #2dd4bf;
+  --accent-indigo-500: #6366f1;
+  --accent-indigo-600: #4f46e5;
+
+  --semantic-warning: #b45309;
+  --semantic-error: #b91c1c;
+  --semantic-success: #15803d;
+  --semantic-info: #1d4ed8;
+
+  --text-primary: #171717;
+  --text-secondary: #666666;
+  --text-muted: #929292;
+  /* Kept for the handful of components still placing text directly on a
+     literal dark surface (e.g. a status pill's own coloured fill) --
+     no longer "the sidebar's text colour" now that the sidebar is light
+     by default; see --sidebar-text for that. */
+  --text-on-dark: #f5f5f5;
+  --text-on-dark-secondary: #d4d4d4;
+
+  --radius-card: 0.75rem;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(23, 23, 23, 0.04);
+  --shadow-card-hover: 0 2px 6px rgba(23, 23, 23, 0.08);
+  --border-subtle: #eae7e5;
+  --border-strong: #d4d0cd;
+
+  /* Flat page background -- no gradient. Kept as a variable (rather than
+     deleted) so .app-shell-v2 has one thing to point at. */
+  --app-gradient: var(--surface-page);
+
+  /* Glass variables kept defined (zero orphaned var() references in
+     components that still read them) but neutralised to flat,
+     non-transparent equivalents -- no blur, no see-through surfaces. */
+  --glass-surface: var(--surface-card);
+  --glass-surface-strong: var(--surface-card);
+  --glass-border: var(--border-subtle);
+  --glass-shadow: var(--shadow-card);
+  --glass-blur: 0px;
+  --glass-dark-surface: var(--sidebar-bg);
+  --glass-dark-surface-strong: var(--sidebar-bg);
+  --glass-dark-border: var(--sidebar-border);
+
+  /* ---- Semantic design tokens (Phase 11.1, repointed) ---- */
+  --color-token-background: var(--background);
+  --color-token-foreground: var(--foreground);
+  --color-token-surface: var(--surface-page);
+  --color-token-surface-elevated: var(--surface-elevated);
+  --color-token-surface-glass: var(--surface-card);
+  --color-token-surface-glass-hover: #fafafa;
+  --color-token-border: var(--border-subtle);
+  --color-token-border-strong: var(--border-strong);
+  --color-token-primary: var(--navy);
+  --color-token-primary-hover: var(--brand-purple-700);
+  --color-token-secondary: var(--accent-indigo-600);
+  --color-token-accent: var(--accent-cyan-500);
+  --color-token-muted: #f5f5f4;
+  --color-token-muted-foreground: var(--text-secondary);
+  --color-token-success: var(--semantic-success);
+  --color-token-warning: var(--semantic-warning);
+  --color-token-danger: var(--semantic-error);
+  --color-token-info: var(--semantic-info);
+  --color-token-focus-ring: var(--navy);
+  --color-token-disabled: #c7c7c7;
+
+  /* Typography scale -- unchanged roles, same as Phase 11.1. */
+  --font-size-page-title: 1.5rem;
+  --font-size-section-heading: 1.125rem;
+  --font-size-card-heading: 1rem;
+  --font-size-body: 0.875rem;
+  --font-size-secondary: 0.8125rem;
+  --font-size-label: 0.75rem;
+  --font-size-helper: 0.75rem;
+  --font-size-financial: 0.9375rem;
+}
+
+/* ---- Dark mode ----
+   A deliberate, independently-designed palette (per the brief: "do not
+   simply invert the light theme") -- set via data-theme="dark" on
+   <html>, written synchronously before paint by the inline script in
+   app/layout.tsx (no flash of the wrong theme) and kept in sync by
+   lib/theme-context.tsx for the Light/Dark/System toggle. */
+:root[data-theme="dark"] {
+  --background: #171717;
+  --foreground: #f5f5f5;
+
+  --navy: #a78bfa;
+  --navy-light: #c4b5fd;
+  --status-approved: #4ade80;
+  --status-pending: #fbbf24;
+  --status-error: #f87171;
+
+  --surface-page: #171717;
+  --surface-card: #242424;
+  --surface-elevated: #2a2a2a;
+  --sidebar-bg: #1d1d1d;
+  --sidebar-active-bg: #303030;
+  --sidebar-border: #383838;
+  --sidebar-text: #f5f5f5;
+  --sidebar-text-secondary: #a3a3a3;
+
+  --brand-purple-50: #2a2140;
+  --brand-purple-100: #3a2d5c;
+  --brand-purple-400: #c4b5fd;
+  --brand-purple-500: #a78bfa;
+  --brand-purple-600: #a78bfa;
+  --brand-purple-700: #c4b5fd;
+
+  --accent-cyan-400: #22d3ee;
+  --accent-cyan-500: #38bdf8;
+  --accent-indigo-500: #818cf8;
+  --accent-indigo-600: #a5b4fc;
+
+  --semantic-warning: #fbbf24;
+  --semantic-error: #f87171;
+  --semantic-success: #4ade80;
+  --semantic-info: #60a5fa;
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --text-on-dark: #f5f5f5;
+  --text-on-dark-secondary: #d4d4d4;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --border-subtle: #383838;
+  --border-strong: #484848;
+
+  --glass-surface: var(--surface-card);
+  --glass-surface-strong: var(--surface-elevated);
+  --glass-border: var(--border-subtle);
+  --glass-dark-surface: var(--sidebar-bg);
+  --glass-dark-surface-strong: var(--sidebar-bg);
+  --glass-dark-border: var(--sidebar-border);
+
+  --color-token-surface-glass-hover: var(--surface-elevated);
+  --color-token-muted: #2a2a2a;
+  --color-token-disabled: #4a4a4a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-navy: var(--navy);
+  --color-navy-solid: var(--navy-solid);
+  --color-navy-solid-hover: var(--navy-solid-hover);
   --color-navy-light: var(--navy-light);
   --color-approved: var(--status-approved);
   --color-pending: var(--status-pending);
   --color-error: var(--status-error);
+
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-text-secondary: var(--sidebar-text-secondary);
+  --color-brand-purple-50: var(--brand-purple-50);
+  --color-brand-purple-100: var(--brand-purple-100);
+  --color-brand-purple-400: var(--brand-purple-400);
+  --color-brand-purple-500: var(--brand-purple-500);
+  --color-brand-purple-600: var(--brand-purple-600);
+  --color-brand-purple-700: var(--brand-purple-700);
+  --color-accent-cyan-400: var(--accent-cyan-400);
+  --color-accent-cyan-500: var(--accent-cyan-500);
+  --color-accent-cyan-50: var(--accent-cyan-50);
+  --color-accent-teal-400: var(--accent-teal-400);
+  --color-accent-indigo-500: var(--accent-indigo-500);
+  --color-accent-indigo-600: var(--accent-indigo-600);
+  --color-semantic-warning: var(--semantic-warning);
+  --color-semantic-error: var(--semantic-error);
+  --color-semantic-success: var(--semantic-success);
+  --color-semantic-info: var(--semantic-info);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-dark: var(--text-on-dark);
+  --color-text-on-dark-secondary: var(--text-on-dark-secondary);
+  --color-border-subtle: var(--border-subtle);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-surface: var(--color-token-surface);
+  --color-surface-elevated: var(--color-token-surface-elevated);
+  --color-surface-glass: var(--color-token-surface-glass);
+  --color-surface-glass-hover: var(--color-token-surface-glass-hover);
+  --color-border: var(--color-token-border);
+  --color-border-strong: var(--color-token-border-strong);
+  --color-primary: var(--color-token-primary);
+  --color-primary-hover: var(--color-token-primary-hover);
+  --color-secondary: var(--color-token-secondary);
+  --color-accent: var(--color-token-accent);
+  --color-muted: var(--color-token-muted);
+  --color-muted-foreground: var(--color-token-muted-foreground);
+  --color-success: var(--color-token-success);
+  --color-warning: var(--color-token-warning);
+  --color-danger: var(--color-token-danger);
+  --color-info: var(--color-token-info);
+  --color-focus-ring: var(--color-token-focus-ring);
+  --color-disabled: var(--color-token-disabled);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Locale-aware application font.
+   Dutch/English retain Geist. Persian leads with Vazirmatn, which is designed
+   for Persian and carries the glyph shapes and metrics that language needs;
+   Arabic leads with Noto Sans Arabic. Each stack keeps the other as a
+   fallback so a string mixing both scripts still renders, and both end in a
+   generic sans-serif.
+
+   Phase 17.5 (audit 6.12): these MUST use the `:lang()` pseudo-class and NOT
+   a `[lang="fa"]` attribute selector. app/layout.tsx emits the full BCP-47
+   tag ("fa-IR", "ar-SA"), and an attribute selector demands an exact match --
+   so an earlier `:root[lang="fa"]` never matched anything and Persian and
+   Arabic silently fell back to Geist while both webfonts were downloaded and
+   never used. `:lang(fa)` matches "fa-IR" correctly.
+   test/locale-fonts.test.ts pins this, including a jsdom assertion that
+   `:lang(fa)` matches lang="fa-IR" while `[lang="fa"]` does not. */
+:root {
+  --font-app-sans: var(--font-geist-sans);
+}
+
+:root:lang(fa) {
+  --font-app-sans: var(--font-vazirmatn), var(--font-noto-sans-arabic), sans-serif;
+  --font-sans: var(--font-vazirmatn), var(--font-noto-sans-arabic), sans-serif;
+}
+
+:root:lang(ar) {
+  --font-app-sans: var(--font-noto-sans-arabic), var(--font-vazirmatn), sans-serif;
+  --font-sans: var(--font-noto-sans-arabic), var(--font-vazirmatn), sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-app-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Keep native form controls consistent with the active locale font. */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--brand-purple-100);
+}
+
+:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- App background shell: flat, no gradient ---- */
+.app-shell-v2 {
+  background: var(--app-gradient);
+}
+
+/* ---- Surfaces (Phase 14: flat Mollie cards, not glass panels) ---- */
+.glass-panel {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.glass-panel-elevated {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.glass-panel-dark {
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: var(--radius-card);
+  color: var(--sidebar-text);
+}
+
+/* Formerly a vivid purple/cyan gradient hero -- flattened to a subtle
+   tinted surface, consistent with "no large gradients, no decorative
+   backgrounds." Text stays dark-on-light (not white-on-tint) since the
+   tint is now far too light for white text to pass contrast. */
+.glass-hero {
+  background: var(--brand-purple-50);
+  border: 1px solid var(--brand-purple-100);
+  border-radius: var(--radius-card);
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Phase 9 shared component classes, re-themed for Phase 14 ----
+   Kept under the SAME class names deliberately -- see file header. */
+
+.card-v2 {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  color: var(--text-primary);
+}
+
+.card-v2-hover {
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+.card-v2-hover:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-strong);
+}
+
+.hero-gradient-v2 {
+  background: var(--navy-solid);
+  border-radius: var(--radius-card);
+  color: #ffffff;
+}
+
+.pill-v2 {
+  border-radius: var(--radius-pill);
+}
+
+.btn-primary-v2 {
+  background: var(--navy-solid);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 150ms ease, transform 100ms ease;
+}
+.btn-primary-v2:hover {
+  background: var(--navy-solid-hover);
+}
+.btn-primary-v2:active {
+  transform: translateY(1px);
+}
+.btn-primary-v2:disabled {
+  opacity: 0.5;
+}
+
+.btn-primary-v2:focus-visible,
+.btn-danger-v2:focus-visible,
+.btn-success-v2:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.35);
+}
+
+.btn-secondary-v2 {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.btn-secondary-v2:hover {
+  background: var(--color-token-muted);
+  border-color: var(--border-strong);
+}
+
+.btn-outline-v2 {
+  background: transparent;
+  color: var(--navy);
+  border: 1.5px solid var(--brand-purple-400);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.btn-outline-v2:hover {
+  background: var(--brand-purple-50);
+  border-color: var(--navy);
+}
+
+.btn-danger-v2 {
+  background: var(--semantic-error);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 150ms ease, transform 100ms ease;
+}
+.btn-danger-v2:hover { background: #991b1b; }
+.btn-danger-v2:active { transform: translateY(1px); }
+.btn-danger-v2:disabled { opacity: 0.5; }
+
+.btn-success-v2 {
+  background: var(--semantic-success);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 150ms ease, transform 100ms ease;
+}
+.btn-success-v2:hover { background: #166534; }
+.btn-success-v2:active { transform: translateY(1px); }
+.btn-success-v2:disabled { opacity: 0.5; }
+
+.btn-ghost-v2 {
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background 150ms ease, color 150ms ease;
+}
+.btn-ghost-v2:hover {
+  background: var(--color-token-muted);
+  color: var(--text-primary);
+}
+
+/* ---- Sidebar: warm off-white rail (light), charcoal rail (dark) ----
+   Replaces Phase 11's dark-purple nav-rail-v2 entirely -- not a
+   relabeling, a different visual identity matching the brief's sidebar
+   description (approx. #FAF8F7 light / #1D1D1D dark). */
+.nav-rail-v2 {
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  /* Logical property (Phase 16): the sidebar sits on the reading-start
+     side in both directions (left in LTR, right in RTL -- GlassSidebar's
+     own layout, not this border, is what actually moves it; this just
+     keeps the divider on the side that's visually "inward" either way). */
+  border-inline-end: 1px solid var(--sidebar-border);
+}
+
+.nav-item-v2 {
+  border-radius: 0.5rem;
+  color: var(--sidebar-text-secondary);
+  transition: background 120ms ease, color 120ms ease;
+}
+.nav-item-v2:hover {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text);
+}
+.nav-item-v2.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text);
+  font-weight: 500;
+}
+
+.input-v2 {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.input-v2::placeholder {
+  color: var(--text-muted);
+}
+.input-v2:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px var(--brand-purple-100);
+}
+
+/* Native <select> elements otherwise keep the OS's own chrome (different
+   font/height/arrow) even with the background/border/colour above
+   applied -- normalise it to a custom, theme-aware chevron so a select
+   looks like part of this design system, not a browser default. */
+select.input-v2 {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-inline-end: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  /* background-position has no logical-keyword form in CSS yet --
+     mirrored explicitly for RTL below. The chevron glyph itself ('v') is
+     direction-agnostic, so it needs no separate flip. */
+  background-position: right 0.65rem center;
+}
+:root[dir="rtl"] select.input-v2 {
+  background-position: left 0.65rem center;
+}
+
+/* ---- Semantic value colouring (financial figures) ----
+   Never the sole indicator of status in this app -- see
+   StatusBadge/TransactionBadges/DocumentStatusBadge/
+   CalendarStatusBadge/GlassStatCard, all pair colour with a text label. */
+.value-positive { color: var(--semantic-success); }
+.value-negative { color: var(--semantic-error); }
+.value-warning { color: var(--semantic-warning); }
+
+/* ---- Status pills (Mollie transaction-list style) ----
+   Compact, rounded, low-saturation fills -- green=paid/success,
+   grey=expired/neutral, blue=refunded/info, amber=pending, red=failed. */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  line-height: 1.4;
+}
+/* Tint alpha kept low enough (0.06, not the earlier 0.12) that the
+   WCAG AA 4.5:1 text contrast holds against the blended background --
+   0.12 measured ~4.25:1 for warning/success text, a real failure caught
+   by axe-core's color-contrast rule run against the live, rendered page. */
+.status-pill-success { background: rgba(21, 128, 61, 0.06); color: var(--semantic-success); }
+.status-pill-neutral { background: var(--color-token-muted); color: var(--text-secondary); }
+.status-pill-info { background: rgba(29, 78, 216, 0.06); color: var(--semantic-info); }
+.status-pill-warning { background: rgba(180, 83, 9, 0.06); color: var(--semantic-warning); }
+.status-pill-danger { background: rgba(185, 28, 28, 0.06); color: var(--semantic-error); }
+
+/* ---- Compact financial tables (Mollie banking-list style) ----
+   Applied to the 27 pages still using a plain <table> (see
+   docs/mollie-ui-transformation-audit.md) without requiring a
+   per-page rewrite to the GlassTable component. */
+.table-v3 {
+  width: 100%;
+  font-size: var(--font-size-body);
+  border-collapse: collapse;
+}
+.table-v3 thead th {
+  text-align: start;
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.table-v3 tbody td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  height: 2.25rem;
+}
+.table-v3 tbody tr:last-child td {
+  border-bottom: none;
+}
+.table-v3 .col-amount {
+  /* Deliberately NOT logical (not text-align: end): monetary/numeric
+     columns stay right-aligned regardless of interface direction, the
+     same convention Excel/Google Sheets use in RTL mode -- digits are
+     always rendered left-to-right regardless of surrounding text
+     direction, so anchoring them to a fixed edge keeps the decimal
+     point aligned down the column and the figures scannable, in both
+     Arabic and Persian accounting contexts just as much as in Dutch/
+     English ones. */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---- Typography scale (unchanged roles) ---- */
+.text-page-title { font-size: var(--font-size-page-title); font-weight: 600; line-height: 1.3; color: var(--text-primary); }
+.text-section-heading { font-size: var(--font-size-section-heading); font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.text-card-heading { font-size: var(--font-size-card-heading); font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.text-body-v2 { font-size: var(--font-size-body); line-height: 1.55; color: var(--text-primary); }
+.text-secondary-v2 { font-size: var(--font-size-secondary); line-height: 1.5; color: var(--text-secondary); }
+.text-label-v2 { font-size: var(--font-size-label); font-weight: 500; line-height: 1.3; color: var(--text-secondary); letter-spacing: 0.01em; }
+.text-helper-v2 { font-size: var(--font-size-helper); line-height: 1.4; color: var(--text-secondary); }
+
+.financial-value {
+  font-size: var(--font-size-financial);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+.financial-value-sm {
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  color: var(--text-primary);
+}
+table, .financial-table { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* ---- Scrollbar: subtle, theme-aware ---- */
+.glass-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.glass-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+.glass-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- Phase 16: RTL icon mirroring ----
+   Only icons whose MEANING is directional get flipped -- an arrow that
+   means "go to the previous/next item in reading order" points the
+   wrong way once reading order reverses. Deliberately opt-in via these
+   two classes rather than a blanket rule: search/settings/currency/
+   status icons etc. must never mirror (a magnifying glass or a euro
+   sign doesn't have a "direction"), so nothing is flipped unless a
+   component explicitly applies one of these. */
+[dir="rtl"] .icon-directional {
+  transform: scaleX(-1);
+}
+.chevron-closed { transform: rotate(-90deg); }
+[dir="rtl"] .chevron-closed { transform: rotate(90deg); }

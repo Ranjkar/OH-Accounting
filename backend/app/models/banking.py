@@ -7,7 +7,7 @@ imported: only reconciliation_status and match bookkeeping ever change."""
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import JSON, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Date, DateTime, Enum, ForeignKey, LargeBinary, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -28,12 +28,24 @@ class BankAccount(Base):
     account_name: Mapped[str] = mapped_column(String(255))
     currency: Mapped[str] = mapped_column(String(3), default="EUR")
 
-    # Open Banking groundwork -- never actually connected in this build.
+    # Open Banking (Phase 12): real provider abstraction + stub provider,
+    # see app/services/open_banking_provider.py -- no authorised AISP
+    # agreement/credentials exist for this project, so `provider_name`
+    # is always "stub" and nothing here is a live bank connection yet.
     consent_status: Mapped[BankConsentStatus] = mapped_column(
         Enum(BankConsentStatus, name="bank_consent_status"), default=BankConsentStatus.not_connected
     )
     consent_granted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     consent_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    provider_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    provider_account_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Encrypted with app.core.token_crypto (a key dedicated to Open Banking
+    # tokens, separate from BSN encryption) -- never returned by any API
+    # response, never logged.
+    encrypted_access_token: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    encrypted_refresh_token: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_sync_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

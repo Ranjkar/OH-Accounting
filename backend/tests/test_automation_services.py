@@ -247,6 +247,56 @@ def test_detect_aging_unmatched_payments(db_session):
     assert flags[0].rule_code == "UNMATCHED_PAYMENT_AGING"
 
 
+def test_detect_duplicate_invoices(db_session):
+    tenant, company, fy, user, bank_account, batch = _setup(db_session)
+    _invoice(db_session, company, fy, user, invoice_number="INV-42", counterparty="Acme Supplies", invoice_date=date(2027, 1, 1))
+    _invoice(db_session, company, fy, user, invoice_number="INV-42", counterparty="Acme Supplies", invoice_date=date(2027, 1, 15))
+    db_session.commit()
+
+    flags = anomaly_detection.detect_duplicate_invoices(db_session, company.id, tenant.id)
+    assert len(flags) == 1
+    assert flags[0].rule_code == "DUPLICATE_INVOICE"
+    assert len(flags[0].evidence["transaction_ids"]) == 2
+
+
+def test_detect_duplicate_invoices_ignores_different_invoice_numbers(db_session):
+    tenant, company, fy, user, bank_account, batch = _setup(db_session)
+    _invoice(db_session, company, fy, user, invoice_number="INV-1", counterparty="Acme Supplies")
+    _invoice(db_session, company, fy, user, invoice_number="INV-2", counterparty="Acme Supplies")
+    db_session.commit()
+
+    flags = anomaly_detection.detect_duplicate_invoices(db_session, company.id, tenant.id)
+    assert flags == []
+
+
+def test_detect_unusual_cash_withdrawal_flags_large_unexplained_outflow(db_session):
+    tenant, company, fy, user, bank_account, batch = _setup(db_session)
+    _bank_tx(db_session, company, bank_account, batch, amount=Decimal("-800.00"), counterparty_name=None)
+    db_session.commit()
+
+    flags = anomaly_detection.detect_unusual_cash_withdrawals(db_session, company.id, tenant.id)
+    assert len(flags) == 1
+    assert flags[0].rule_code == "UNUSUAL_CASH_WITHDRAWAL"
+
+
+def test_detect_unusual_cash_withdrawal_ignores_normal_supplier_payments(db_session):
+    tenant, company, fy, user, bank_account, batch = _setup(db_session)
+    _bank_tx(db_session, company, bank_account, batch, amount=Decimal("-800.00"), counterparty_name="Acme Supplies B.V.")
+    db_session.commit()
+
+    flags = anomaly_detection.detect_unusual_cash_withdrawals(db_session, company.id, tenant.id)
+    assert flags == []
+
+
+def test_detect_unusual_cash_withdrawal_ignores_small_amounts(db_session):
+    tenant, company, fy, user, bank_account, batch = _setup(db_session)
+    _bank_tx(db_session, company, bank_account, batch, amount=Decimal("-50.00"), counterparty_name=None)
+    db_session.commit()
+
+    flags = anomaly_detection.detect_unusual_cash_withdrawals(db_session, company.id, tenant.id)
+    assert flags == []
+
+
 def test_run_all_rules_never_marks_fraudulent(db_session):
     tenant, company, fy, user, bank_account, batch = _setup(db_session)
     _invoice(db_session, company, fy, user, invoice_number="INV-1", counterparty="Acme Supplies", iban="NL80RABO0123456789", invoice_date=date(2027, 1, 1))

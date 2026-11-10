@@ -20,9 +20,22 @@ class BankAccountOut(BaseModel):
     account_name: str
     currency: str
     consent_status: BankConsentStatus
+    provider_name: str | None
+    consent_granted_at: datetime | None
+    consent_expires_at: datetime | None
+    last_synced_at: datetime | None
+    last_sync_error: str | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OpenBankingConnectRequest(BaseModel):
+    redirect_uri: str
+
+
+class OpenBankingCallbackRequest(BaseModel):
+    callback_params: dict = {}
 
 
 class BankImportBatchOut(BaseModel):

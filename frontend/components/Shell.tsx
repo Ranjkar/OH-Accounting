@@ -1,82 +1,80 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
-
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/companies", label: "Companies" },
-  { href: "/documents", label: "Documents" },
-  { href: "/sales/upload", label: "Sales" },
-  { href: "/purchases/upload", label: "Purchases" },
-  { href: "/batches", label: "Batches" },
-  { href: "/ledger", label: "Accounting" },
-  { href: "/banking", label: "Banking" },
-  { href: "/bank-transactions", label: "Transactions" },
-  { href: "/reconciliation", label: "Reconciliation" },
-  { href: "/automation", label: "Automation Centre" },
-  { href: "/categories", label: "Expense Categories" },
-  { href: "/anomalies", label: "Anomalies" },
-  { href: "/cash-flow", label: "Cash Flow" },
-  { href: "/financial-overview", label: "Financial Overview" },
-  { href: "/profit-and-loss", label: "Profit & Loss" },
-  { href: "/balance-sheet", label: "Balance Sheet" },
-  { href: "/budgets", label: "Budgets" },
-  { href: "/forecasts", label: "Forecasts" },
-  { href: "/scenarios", label: "Scenario Planning" },
-  { href: "/kpis", label: "Financial KPIs" },
-  { href: "/working-capital", label: "Working Capital" },
-  { href: "/management-reports", label: "Management Reports" },
-  { href: "/vat", label: "VAT Returns" },
-  { href: "/calendar", label: "Tax Calendar" },
-  { href: "/assistant", label: "Accountant Assistant" },
-  { href: "/reports", label: "Reports" },
-  { href: "/settings", label: "Settings" },
-];
+import GlassSidebar, { useMobileNav } from "@/components/glass/GlassSidebar";
+import GlassNavSearch from "@/components/glass/GlassNavSearch";
+import CompanySwitcher from "@/components/glass/CompanySwitcher";
+import ThemeToggle from "@/components/glass/ThemeToggle";
+import LanguageSelector from "@/components/glass/LanguageSelector";
+import { IconMenu, IconPlus, IconBell, IconArrowLeft, IconArrowRight } from "@/components/glass/icons";
 
 export default function Shell({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
-  const pathname = usePathname();
+  const { user } = useAuth();
+  const { mobileOpen, setMobileOpen } = useMobileNav();
+  const router = useRouter();
+  const t = useTranslations("shell");
 
   return (
-    <div className="flex-1 flex flex-col">
-      <header className="bg-navy text-white">
-        <div className="px-6 py-3 flex items-center justify-between border-b border-white/10">
-          <Link href="/" className="font-semibold tracking-tight text-lg">
-            OnHolland <span className="text-slate-300 font-normal">Accounting</span>
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
-            {user && (
-              <span className="text-slate-300">
-                {user.full_name} <span className="text-slate-500">· {user.role}</span>
-              </span>
-            )}
+    <div className="flex-1 flex app-shell-v2 min-h-screen">
+      <GlassSidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-[68px] border-b border-border bg-surface-page px-3 sm:px-5 flex items-center justify-between gap-3 flex-shrink-0 relative z-30">
+          <div className="flex items-center gap-2 min-w-0">
             <button
-              onClick={logout}
-              className="rounded-md border border-slate-600 px-3 py-1.5 hover:bg-navy-light transition-colors"
+              onClick={() => setMobileOpen(true)}
+              aria-label={t("openNavigation")}
+              className="lg:hidden text-text-secondary hover:text-text-primary p-1.5 -ms-1"
             >
-              Log out
+              <IconMenu size={20} />
             </button>
+            <div className="hidden lg:flex items-center gap-0.5 text-text-secondary">
+              <button onClick={() => router.back()} aria-label={t("goBack")} className="p-1.5 rounded-lg hover:bg-muted hover:text-text-primary">
+                <IconArrowLeft size={16} className="icon-directional" />
+              </button>
+              <button onClick={() => router.forward()} aria-label={t("goForward")} className="p-1.5 rounded-lg hover:bg-muted hover:text-text-primary">
+                <IconArrowRight size={16} className="icon-directional" />
+              </button>
+            </div>
+            <div className="hidden lg:block w-px h-5 bg-border mx-1" aria-hidden />
+            <div className="hidden sm:flex items-center gap-2 text-sm text-text-secondary min-w-0">
+              <span className="truncate">
+                {t("welcomeBack", { name: user ? user.full_name.split(" ")[0] : "none" })}
+              </span>
+            </div>
+            <CompanySwitcher />
           </div>
-        </div>
-        <nav className="px-6 py-2 flex items-center gap-5 text-sm flex-wrap">
-          {NAV_ITEMS.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={active ? "text-white font-medium" : "text-slate-300 hover:text-white transition-colors"}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </header>
-      <main className="flex-1 bg-slate-50 p-6">{children}</main>
+
+          <div className="hidden md:flex items-center flex-1 max-w-sm">
+            <GlassNavSearch />
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <div className="hidden lg:block">
+              <LanguageSelector compact />
+            </div>
+            <div className="hidden sm:block">
+              <ThemeToggle compact />
+            </div>
+            <button
+              aria-label={t("notifications")}
+              title={t("notificationsUnavailable")}
+              className="relative text-text-secondary hover:text-text-primary p-2 rounded-lg hover:bg-muted"
+            >
+              <IconBell size={18} />
+            </button>
+            <Link href="/sales/upload" className="btn-primary-v2 px-3 sm:px-4 py-2 text-sm inline-flex items-center gap-1.5">
+              <IconPlus size={15} />
+              <span className="hidden sm:inline">{t("createInvoice")}</span>
+            </Link>
+          </div>
+        </header>
+        <main className="flex-1 p-3 sm:p-4 lg:p-6">{children}</main>
+      </div>
     </div>
   );
 }

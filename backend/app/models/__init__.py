@@ -6,6 +6,7 @@ from app.models.banking import BankAccount, BankImportBatch, BankTransaction, Pa
 from app.models.budget import Budget, BudgetLine
 from app.models.categorization import CategorizationRule
 from app.models.company import Company
+from app.models.company_invitation import CompanyInvitation
 from app.models.customer import Customer
 from app.models.document import (
     Document,
@@ -16,11 +17,18 @@ from app.models.document import (
     ExtractedInvoiceFields,
     UploadBatch,
 )
+from app.models.employee import Employee
 from app.models.financial_year import FinancialYear, VatPeriod
+from app.models.legal_form import CompanyLegalForm, LegalFormDefinition, Partner, Shareholder
+from app.models.loonheffingen import LoonheffingenDeclaration
 from app.models.note import AccountantNote
+from app.models.password_reset import PasswordResetToken
+from app.models.payroll import PayrollRun, Payslip
 from app.models.recurring import RecurringPattern
 from app.models.scenario import Scenario
+from app.models.subscription import BillingEvent, Plan, Subscription
 from app.models.tenant import Tenant
+from app.models.timesheet import EmployeeTimesheetEntry, EntrepreneurHoursEntry
 from app.models.user import User, user_companies
 
 __all__ = [
@@ -35,19 +43,34 @@ __all__ = [
     "BankTransaction",
     "CategorizationRule",
     "Company",
+    "CompanyInvitation",
+    "CompanyLegalForm",
     "Customer",
     "Document",
     "DocumentExtraction",
     "DocumentLineItem",
     "DocumentProcessingAttempt",
     "DocumentValidationResult",
+    "Employee",
+    "EmployeeTimesheetEntry",
+    "EntrepreneurHoursEntry",
     "ExtractedInvoiceFields",
     "FinancialYear",
+    "LegalFormDefinition",
+    "LoonheffingenDeclaration",
     "ManualBalanceSheetItem",
+    "Partner",
+    "PasswordResetToken",
     "Payment",
     "PaymentMatch",
+    "PayrollRun",
+    "Payslip",
     "RecurringPattern",
     "Scenario",
+    "BillingEvent",
+    "Plan",
+    "Subscription",
+    "Shareholder",
     "TransactionLineItem",
     "UploadBatch",
     "VatPeriod",

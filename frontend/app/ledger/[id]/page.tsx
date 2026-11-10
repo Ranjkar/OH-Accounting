@@ -2,13 +2,18 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
 import { useAuth } from "@/lib/auth-context";
 import { api, TransactionDetail } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
 function TransactionDetailContent({ transactionId }: { transactionId: number }) {
+  const t = useTranslations("ledger");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token, user } = useAuth();
   const router = useRouter();
   const canEdit = user?.role === "admin" || user?.role === "accountant";
@@ -41,7 +46,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
       setPaymentReference("");
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to record payment");
+      setError(err instanceof Error ? err.message : t("recordPaymentFailed"));
     }
   }
 
@@ -51,21 +56,21 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
       await api.approveTransaction(token, transactionId);
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to approve");
+      setError(err instanceof Error ? err.message : t("approveFailed"));
     }
   }
 
-  if (!transaction) return <p className="text-slate-500">Loading…</p>;
+  if (!transaction) return <p className="text-text-secondary">{tCommon("loading")}</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <button onClick={() => router.push("/ledger")} className="text-sm text-navy hover:underline">
-            ← Back to ledger
+            {t("backToLedger")}
           </button>
           <h1 className="text-xl font-semibold text-navy mt-1">
-            {transaction.transaction_type.replaceAll("_", " ")} · {transaction.counterparty_name ?? "No counterparty"}
+            {transaction.transaction_type.replaceAll("_", " ")} · {transaction.counterparty_name ?? t("noCounterparty")}
           </h1>
         </div>
         <div className="flex gap-2">
@@ -76,113 +81,117 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Net / VAT / Gross</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">{t("netVatGross")}</p>
           <p className="text-lg font-semibold text-navy mt-1">
-            {transaction.net_amount} / {transaction.vat_amount} / {transaction.gross_amount} {transaction.currency}
+            {formatEUR(transaction.net_amount, locale)} / {formatEUR(transaction.vat_amount, locale)} / {formatEUR(transaction.gross_amount, locale)} {transaction.currency}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Paid / Remaining</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">{t("paidRemaining")}</p>
           <p className="text-lg font-semibold text-navy mt-1">
-            {transaction.amount_paid} / {transaction.remaining_balance}
+            {formatEUR(transaction.amount_paid, locale)} / {formatEUR(transaction.remaining_balance, locale)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-xs text-slate-500">Dates</p>
+        <div className="card-v2 p-4">
+          <p className="text-xs text-text-secondary">{tCommon("date")}</p>
           <p className="text-sm text-navy mt-1">
-            Invoice {transaction.invoice_date}
-            {transaction.due_date && <> · Due {transaction.due_date}</>}
+            {t("invoiceDateLabel", { date: transaction.invoice_date })}
+            {transaction.due_date && <> · {t("dueDateLabel", { date: transaction.due_date })}</>}
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
-          <h2 className="text-sm font-medium text-navy">Line items</h2>
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
+          <h2 className="text-sm font-medium text-text-primary">{t("lineItems")}</h2>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="table-v3">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-200">
-              <th className="px-5 py-2 font-medium">#</th>
-              <th className="px-5 py-2 font-medium">Description</th>
-              <th className="px-5 py-2 font-medium">Net</th>
-              <th className="px-5 py-2 font-medium">Rate</th>
-              <th className="px-5 py-2 font-medium">VAT</th>
-              <th className="px-5 py-2 font-medium">Treatment</th>
-              <th className="px-5 py-2 font-medium">Eligibility</th>
-              <th className="px-5 py-2 font-medium">Deductible</th>
+            <tr>
+              <th>#</th>
+              <th>{tCommon("description")}</th>
+              <th className="text-right">{t("net")}</th>
+              <th className="text-right">{t("rate")}</th>
+              <th className="text-right">{t("vat")}</th>
+              <th>{t("treatment")}</th>
+              <th>{t("eligibility")}</th>
+              <th className="text-right">{t("deductible")}</th>
             </tr>
           </thead>
           <tbody>
             {transaction.line_items.map((l) => (
-              <tr key={l.line_number} className="border-b border-slate-100 last:border-0">
-                <td className="px-5 py-2.5">{l.line_number}</td>
-                <td className="px-5 py-2.5">{l.description ?? "—"}</td>
-                <td className="px-5 py-2.5">{l.net_amount}</td>
-                <td className="px-5 py-2.5">{l.vat_rate}%</td>
-                <td className="px-5 py-2.5">{l.vat_amount}</td>
-                <td className="px-5 py-2.5 text-xs">{l.vat_treatment.replaceAll("_", " ")}</td>
-                <td className="px-5 py-2.5 text-xs">{l.input_vat_eligibility ?? "—"}</td>
-                <td className="px-5 py-2.5">{l.deductible_vat_amount ?? "—"}</td>
+              <tr key={l.line_number}>
+                <td className="text-text-secondary">{l.line_number}</td>
+                <td className="text-text-primary">{l.description ?? "—"}</td>
+                <td className="col-amount">{formatEUR(l.net_amount, locale)}</td>
+                <td className="text-right text-text-secondary">{l.vat_rate}%</td>
+                <td className="col-amount">{formatEUR(l.vat_amount, locale)}</td>
+                <td className="text-xs text-text-secondary">{l.vat_treatment.replaceAll("_", " ")}</td>
+                <td className="text-xs text-text-secondary">{l.input_vat_eligibility ?? "—"}</td>
+                <td className="col-amount">{l.deductible_vat_amount != null ? formatEUR(l.deductible_vat_amount, locale) : "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-200">
-          <h2 className="text-sm font-medium text-navy">Payments</h2>
+      <div className="card-v2">
+        <div className="px-5 py-3 border-b border-border-subtle">
+          <h2 className="text-sm font-medium text-text-primary">{t("payments")}</h2>
         </div>
         {transaction.payments.length > 0 && (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <tbody>
               {transaction.payments.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-5 py-2">{p.payment_date}</td>
-                  <td className="px-5 py-2">{p.amount}</td>
-                  <td className="px-5 py-2 text-slate-500">{p.reference ?? ""}</td>
+                <tr key={p.id}>
+                  <td className="text-text-secondary">{p.payment_date}</td>
+                  <td className="col-amount">{formatEUR(p.amount, locale)}</td>
+                  <td className="text-text-secondary">{p.reference ?? ""}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
         {canEdit && (
-          <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-slate-100">
+          <form onSubmit={handleRecordPayment} className="px-5 py-3 flex items-end gap-3 border-t border-border">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Amount</label>
+              <label className="text-xs font-medium text-text-secondary">{tCommon("amount")}</label>
               <input
                 required
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                className="w-28 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="w-28 input-v2 px-2 py-1.5 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Date</label>
+              <label className="text-xs font-medium text-text-secondary">{tCommon("date")}</label>
               <input
                 type="date"
                 required
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="input-v2 px-2 py-1.5 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Reference</label>
+              <label className="text-xs font-medium text-text-secondary">{t("reference")}</label>
               <input
                 value={paymentReference}
                 onChange={(e) => setPaymentReference(e.target.value)}
-                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="input-v2 px-2 py-1.5 text-sm"
               />
             </div>
             <button
               type="submit"
-              className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+              className="btn-primary-v2 px-4 py-2 text-sm"
             >
-              Record payment
+              {t("recordPayment")}
             </button>
           </form>
         )}
@@ -193,7 +202,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           onClick={handleApprove}
           className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors"
         >
-          Approve transaction
+          {t("approveTransaction")}
         </button>
       )}
     </div>

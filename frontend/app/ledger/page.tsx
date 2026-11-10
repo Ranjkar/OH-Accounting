@@ -2,10 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { ApprovalBadge, PaymentBadge } from "@/components/TransactionBadges";
 import { useAuth } from "@/lib/auth-context";
+import { formatEUR } from "@/lib/format";
 import {
   api,
   Company,
@@ -17,13 +19,15 @@ import {
   VatTreatment,
 } from "@/lib/api";
 
-const TYPE_FILTERS: { value: TransactionType | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "SALES_INVOICE", label: "Sales invoices" },
-  { value: "PURCHASE_INVOICE", label: "Purchase invoices" },
-  { value: "CREDIT_NOTE", label: "Credit notes" },
-  { value: "RECEIPT", label: "Receipts" },
-  { value: "MANUAL_ENTRY", label: "Manual entries" },
+/** labelKey resolved against the "ledger" namespace at render time --
+ * this is a plain module-level array, not a component. */
+const TYPE_FILTERS: { value: TransactionType | "all"; labelKey: string }[] = [
+  { value: "all", labelKey: "allTypes" },
+  { value: "SALES_INVOICE", labelKey: "salesInvoices" },
+  { value: "PURCHASE_INVOICE", labelKey: "purchaseInvoices" },
+  { value: "CREDIT_NOTE", labelKey: "creditNotes" },
+  { value: "RECEIPT", labelKey: "receipts" },
+  { value: "MANUAL_ENTRY", labelKey: "manualEntries" },
 ];
 
 interface LineForm {
@@ -39,6 +43,9 @@ function emptyLine(): LineForm {
 }
 
 function LedgerContent() {
+  const t = useTranslations("ledger");
+  const locale = useLocale();
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -86,7 +93,7 @@ function LedgerContent() {
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     if (!token || !companyId || !financialYearId) {
-      setError("Select a company and financial year first.");
+      setError(t("selectCompanyAndYearFirst"));
       return;
     }
     setError(null);
@@ -113,35 +120,36 @@ function LedgerContent() {
       setDueDate("");
       refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create entry");
+      setError(err instanceof Error ? err.message : t("createEntryFailed"));
     }
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Accounting Ledger</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+          className="btn-primary-v2 px-4 py-2 text-sm"
         >
-          {showForm ? "Cancel" : "New manual entry"}
+          {showForm ? tCommon("cancel") : t("newManualEntry")}
         </button>
       </div>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
-          <div className="grid grid-cols-4 gap-3">
+        <form onSubmit={handleCreate} className="card-v2 p-5 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Company</label>
+              <label htmlFor="ledger-form-company" className="text-xs font-medium text-text-secondary">{tCommon("company")}</label>
               <select
+                id="ledger-form-company"
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
-                <option value="">Select…</option>
+                <option value="">{t("selectEllipsis")}</option>
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -150,13 +158,14 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Financial year</label>
+              <label htmlFor="ledger-form-fy" className="text-xs font-medium text-text-secondary">{t("financialYearLabel")}</label>
               <select
+                id="ledger-form-fy"
                 value={financialYearId}
                 onChange={(e) => setFinancialYearId(e.target.value ? Number(e.target.value) : "")}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
-                <option value="">Select…</option>
+                <option value="">{t("selectEllipsis")}</option>
                 {financialYears.map((fy) => (
                   <option key={fy.id} value={fy.id}>
                     {fy.year}
@@ -165,87 +174,91 @@ function LedgerContent() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Ledger side</label>
+              <label htmlFor="ledger-form-side" className="text-xs font-medium text-text-secondary">{t("ledgerSide")}</label>
               <select
+                id="ledger-form-side"
                 value={ledgerSide}
                 onChange={(e) => setLedgerSide(e.target.value as LedgerSide)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               >
-                <option value="SALES">Sales</option>
-                <option value="PURCHASES">Purchases</option>
+                <option value="SALES">{t("salesOption")}</option>
+                <option value="PURCHASES">{t("purchasesOption")}</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Counterparty</label>
+              <label htmlFor="ledger-form-counterparty" className="text-xs font-medium text-text-secondary">{t("counterparty")}</label>
               <input
+                id="ledger-form-counterparty"
                 value={counterpartyName}
                 onChange={(e) => setCounterpartyName(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Invoice date</label>
+              <label htmlFor="ledger-form-invoice-date" className="text-xs font-medium text-text-secondary">{t("invoiceDate")}</label>
               <input
+                id="ledger-form-invoice-date"
                 type="date"
                 required
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-500">Due date</label>
+              <label htmlFor="ledger-form-due-date" className="text-xs font-medium text-text-secondary">{t("dueDate")}</label>
               <input
+                id="ledger-form-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="w-full input-v2 px-2.5 py-1.5 text-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-500">Line items</label>
+            <label className="text-xs font-medium text-text-secondary">{t("lineItems")}</label>
             {lines.map((line, i) => (
-              <div key={i} className="grid grid-cols-6 gap-2 items-end">
+              <div key={i} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
                 <input
-                  placeholder="Description"
+                  placeholder={tCommon("description")}
                   value={line.description}
                   onChange={(e) => updateLine(i, { description: e.target.value })}
-                  className="col-span-2 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="col-span-2 input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
-                  placeholder="Net"
+                  placeholder={t("net")}
                   required
                   value={line.net_amount}
                   onChange={(e) => updateLine(i, { net_amount: e.target.value })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
-                  placeholder="VAT rate %"
+                  placeholder={t("vatRatePercent")}
                   required
                   value={line.vat_rate}
                   onChange={(e) => updateLine(i, { vat_rate: e.target.value })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <input
-                  placeholder="VAT amount"
+                  placeholder={t("vatAmount")}
                   required
                   value={line.vat_amount}
                   onChange={(e) => updateLine(i, { vat_amount: e.target.value })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 />
                 <select
                   value={line.vat_treatment}
                   onChange={(e) => updateLine(i, { vat_treatment: e.target.value as VatTreatment })}
-                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="input-v2 px-2 py-1.5 text-sm"
                 >
-                  {treatmentOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t.replaceAll("_", " ")}
+                  {treatmentOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt.replaceAll("_", " ")}
                     </option>
                   ))}
                 </select>
@@ -257,15 +270,15 @@ function LedgerContent() {
                 onClick={() => setLines((prev) => [...prev, emptyLine()])}
                 className="text-sm text-navy hover:underline"
               >
-                + Add line
+                {t("addLine")}
               </button>
               {lines.length > 1 && (
                 <button
                   type="button"
                   onClick={() => setLines((prev) => prev.slice(0, -1))}
-                  className="text-sm text-slate-500 hover:underline"
+                  className="text-sm text-text-secondary hover:underline"
                 >
-                  Remove last
+                  {t("removeLast")}
                 </button>
               )}
             </div>
@@ -273,20 +286,21 @@ function LedgerContent() {
 
           <button
             type="submit"
-            className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium hover:bg-navy-light transition-colors"
+            className="btn-primary-v2 px-4 py-2 text-sm"
           >
-            Create entry
+            {t("createEntry")}
           </button>
         </form>
       )}
 
       <div className="flex items-center gap-4">
         <select
+          aria-label={t("filterByCompany")}
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input-v2 px-3 py-2 text-sm"
         >
-          <option value="">All companies</option>
+          <option value="">{tCommon("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -299,55 +313,57 @@ function LedgerContent() {
               key={f.value}
               onClick={() => setTypeFilter(f.value)}
               className={`rounded-full px-3 py-1 ${
-                typeFilter === f.value ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                typeFilter === f.value ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"
               }`}
             >
-              {f.label}
+              {t(f.labelKey as never)}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         {transactions.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No transactions yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">{t("noTransactionsYet")}</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-5 py-2 font-medium">Date</th>
-                <th className="px-5 py-2 font-medium">Type</th>
-                <th className="px-5 py-2 font-medium">Counterparty</th>
-                <th className="px-5 py-2 font-medium">Net</th>
-                <th className="px-5 py-2 font-medium">VAT</th>
-                <th className="px-5 py-2 font-medium">Gross</th>
-                <th className="px-5 py-2 font-medium">Payment</th>
-                <th className="px-5 py-2 font-medium">Approval</th>
+              <tr>
+                <th>{tCommon("date")}</th>
+                <th>{t("type")}</th>
+                <th>{t("counterparty")}</th>
+                <th className="text-right">{t("net")}</th>
+                <th className="text-right">{t("vat")}</th>
+                <th className="text-right">{t("gross")}</th>
+                <th>{t("payment")}</th>
+                <th>{t("approval")}</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t) => (
-                <tr key={t.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="px-5 py-2.5">
-                    <Link href={`/ledger/${t.id}`} className="text-navy hover:underline">
-                      {t.invoice_date}
+              {transactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-muted">
+                  <td>
+                    <Link href={`/ledger/${tx.id}`} className="text-navy hover:underline">
+                      {tx.invoice_date}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">{t.transaction_type.replaceAll("_", " ")}</td>
-                  <td className="px-5 py-2.5">{t.counterparty_name ?? "—"}</td>
-                  <td className="px-5 py-2.5">{t.net_amount}</td>
-                  <td className="px-5 py-2.5">{t.vat_amount}</td>
-                  <td className="px-5 py-2.5">{t.gross_amount}</td>
-                  <td className="px-5 py-2.5">
-                    <PaymentBadge status={t.payment_status} />
+                  <td className="text-text-secondary">{tx.transaction_type.replaceAll("_", " ")}</td>
+                  <td className="text-text-primary">{tx.counterparty_name ?? "—"}</td>
+                  <td className="col-amount">{formatEUR(tx.net_amount, locale)}</td>
+                  <td className="col-amount text-text-secondary">{formatEUR(tx.vat_amount, locale)}</td>
+                  <td className="col-amount font-medium">{formatEUR(tx.gross_amount, locale)}</td>
+                  <td>
+                    <PaymentBadge status={tx.payment_status} />
                   </td>
-                  <td className="px-5 py-2.5">
-                    <ApprovalBadge status={t.approval_status} />
+                  <td>
+                    <ApprovalBadge status={tx.approval_status} />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

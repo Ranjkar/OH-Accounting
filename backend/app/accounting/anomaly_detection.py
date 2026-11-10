@@ -17,6 +17,8 @@ from app.models.enums import AnomalySeverity, LedgerSide, ReconciliationStatus
 
 UNMATCHED_AGING_DAYS = 14
 EXPENSE_INCREASE_THRESHOLD_PCT = Decimal("50")
+CASH_WITHDRAWAL_THRESHOLD = Decimal("500")
+CASH_WITHDRAWAL_KEYWORDS = ("atm", "geldautomaat", "cash", "contant", "kasopname")
 
 
 def _clear_open_flags(db: Session, company_id: int, rule_code: str) -> None:
@@ -149,10 +151,80 @@ def detect_aging_unmatched_payments(db: Session, company_id: int, tenant_id: int
     return flags
 
 
+def detect_duplicate_invoices(db: Session, company_id: int, tenant_id: int) -> list[AnomalyFlag]:
+    """Same supplier, same invoice_number, entered more than once -- a
+    distinct pattern from DUPLICATE_PAYMENT (which looks at amount+date on
+    the payment side); this catches the data-entry/double-upload mistake
+    on the invoice side, even before any payment is made."""
+    _clear_open_flags(db, company_id, "DUPLICATE_INVOICE")
+    transactions = (
+        db.query(AccountingTransaction)
+        .filter(
+            AccountingTransaction.company_id == company_id,
+            AccountingTransaction.ledger_side == LedgerSide.purchases,
+            AccountingTransaction.invoice_number.isnot(None),
+        )
+        .all()
+    )
+    groups: dict[tuple, list[AccountingTransaction]] = defaultdict(list)
+    for tx in transactions:
+        key = ((tx.counterparty_name or "").strip().lower(), tx.invoice_number.strip().lower())
+        groups[key].append(tx)
+
+    flags = []
+    for (supplier, invoice_number), group in groups.items():
+        if len(group) > 1:
+            flag = AnomalyFlag(
+                tenant_id=tenant_id, company_id=company_id, rule_code="DUPLICATE_INVOICE",
+                severity=AnomalySeverity.warning,
+                message=f"Invoice number '{group[0].invoice_number}' from '{group[0].counterparty_name}' appears on {len(group)} separate transactions -- verify this wasn't entered twice before paying it twice.",
+                evidence={"supplier": supplier, "invoice_number": invoice_number, "transaction_ids": [t.id for t in group]},
+                related_entity_type="accounting_transaction", related_entity_id=group[0].id,
+            )
+            db.add(flag)
+            flags.append(flag)
+    db.flush()
+    return flags
+
+
+def detect_unusual_cash_withdrawals(db: Session, company_id: int, tenant_id: int) -> list[AnomalyFlag]:
+    """Large outgoing bank transactions that look like a cash withdrawal
+    (ATM/cash keyword, or no counterparty at all) rather than a normal
+    supplier payment -- worth an accountant's eye on a business account."""
+    _clear_open_flags(db, company_id, "UNUSUAL_CASH_WITHDRAWAL")
+    candidates = (
+        db.query(BankTransaction)
+        .filter(BankTransaction.company_id == company_id, BankTransaction.amount < 0)
+        .all()
+    )
+    flags = []
+    for tx in candidates:
+        if -tx.amount < CASH_WITHDRAWAL_THRESHOLD:
+            continue
+        description = (tx.description or "").lower()
+        counterparty = (tx.counterparty_name or "").strip()
+        looks_like_cash = any(kw in description for kw in CASH_WITHDRAWAL_KEYWORDS) or not counterparty
+        if not looks_like_cash:
+            continue
+        flag = AnomalyFlag(
+            tenant_id=tenant_id, company_id=company_id, rule_code="UNUSUAL_CASH_WITHDRAWAL",
+            severity=AnomalySeverity.info,
+            message=f"Outgoing payment of {-tx.amount} {tx.currency} on {tx.booking_date} looks like a cash withdrawal (no clear business counterparty) -- confirm it's a legitimate business expense.",
+            evidence={"amount": str(tx.amount), "booking_date": str(tx.booking_date), "description": tx.description, "counterparty_name": tx.counterparty_name, "bank_transaction_id": tx.id},
+            related_entity_type="bank_transaction", related_entity_id=tx.id,
+        )
+        db.add(flag)
+        flags.append(flag)
+    db.flush()
+    return flags
+
+
 def run_all_rules(db: Session, company_id: int, tenant_id: int) -> list[AnomalyFlag]:
     flags = []
     flags += detect_duplicate_payments(db, company_id, tenant_id)
+    flags += detect_duplicate_invoices(db, company_id, tenant_id)
     flags += detect_supplier_bank_detail_changes(db, company_id, tenant_id)
     flags += detect_unexpected_expense_increases(db, company_id, tenant_id)
     flags += detect_aging_unmatched_payments(db, company_id, tenant_id)
+    flags += detect_unusual_cash_withdrawals(db, company_id, tenant_id)
     return flags

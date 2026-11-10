@@ -1,17 +1,25 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, CategorizationRule, CategorizationRuleType, CategorySuggestion, Company, Transaction } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
 
+// Stored verbatim as the transaction's `category` value (no separate
+// code), so these are never translated -- same rule as any other
+// stored/API value, see the file-level translation conventions.
 const EXPENSE_CATEGORIES = [
   "Office expenses", "Travel", "Fuel", "Software subscriptions", "Telecommunications",
   "Rent", "Insurance", "Professional services", "Equipment", "Marketing", "Other",
 ];
 
 function CategoriesContent() {
+  const t = useTranslations("categories");
+  const locale = useLocale();
+  const tCommon = useTranslations("common");
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -76,10 +84,9 @@ function CategoriesContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">Expense Categories</h1>
-      <p className="text-sm text-slate-500">
-        Rules are company-specific -- a rule created for one company is never applied to another. AI suggestions are
-        advisory only and always require accountant confirmation before being applied.
+      <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+      <p className="text-sm text-text-secondary">
+        {t("pageExplainer")}
       </p>
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
@@ -87,9 +94,9 @@ function CategoriesContent() {
       <select
         value={companyId}
         onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="input-v2 px-3 py-2 text-sm"
       >
-        <option value="">Select a company</option>
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -99,86 +106,89 @@ function CategoriesContent() {
 
       {companyId && (
         <>
-          <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
-            <h2 className="font-medium text-navy">Rules</h2>
+          <div className="card-v2 p-4 space-y-3">
+            <h2 className="font-medium text-text-primary">{t("rules")}</h2>
             <form onSubmit={createRule} className="flex items-end gap-3">
-              <select value={ruleType} onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
-                <option value="SUPPLIER_NAME">Supplier name contains</option>
-                <option value="IBAN">IBAN equals</option>
-                <option value="DESCRIPTION_PATTERN">Description matches pattern</option>
+              <select value={ruleType} aria-label={t("ruleType")} onChange={(e) => setRuleType(e.target.value as CategorizationRuleType)} className="input-v2 px-2 py-2 text-sm">
+                <option value="SUPPLIER_NAME">{t("ruleTypeSupplierName")}</option>
+                <option value="IBAN">{t("ruleTypeIban")}</option>
+                <option value="DESCRIPTION_PATTERN">{t("ruleTypeDescriptionPattern")}</option>
               </select>
               <input
                 required
                 value={matchValue}
                 onChange={(e) => setMatchValue(e.target.value)}
-                placeholder="match value"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                placeholder={t("matchValuePlaceholder")}
+                className="input-v2 px-3 py-2 text-sm"
               />
-              <select value={ruleCategory} onChange={(e) => setRuleCategory(e.target.value)} className="rounded-md border border-slate-300 px-2 py-2 text-sm">
+              <select value={ruleCategory} aria-label={t("ruleCategory")} onChange={(e) => setRuleCategory(e.target.value)} className="input-v2 px-2 py-2 text-sm">
                 {EXPENSE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
                 ))}
               </select>
-              <button type="submit" className="rounded-md bg-navy text-white px-4 py-2 text-sm font-medium">
-                Add rule
+              <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
+                {t("addRule")}
               </button>
             </form>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="table-v3">
               <tbody>
                 {rules.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-100">
-                    <td className="py-1.5 text-xs text-slate-500">{r.rule_type}</td>
-                    <td className="py-1.5">{r.match_value}</td>
-                    <td className="py-1.5 font-medium">{r.category}</td>
+                  <tr key={r.id}>
+                    <td className="text-xs text-text-secondary">{r.rule_type}</td>
+                    <td className="text-text-primary">{r.match_value}</td>
+                    <td className="font-medium text-text-primary">{r.category}</td>
                   </tr>
                 ))}
                 {rules.length === 0 && (
                   <tr>
-                    <td className="py-2 text-slate-500">No rules yet for this company.</td>
+                    <td className="text-text-secondary">{t("noRulesYet")}</td>
                   </tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-            <h2 className="font-medium text-navy p-4 pb-0">Purchase transactions</h2>
-            <table className="w-full text-sm">
+          <div className="card-v2 overflow-hidden">
+            <h2 className="font-medium text-text-primary p-4 pb-0">{t("purchaseTransactions")}</h2>
+            <div className="overflow-x-auto">
+            <table className="table-v3">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
-                  <th className="px-4 py-2 font-medium">Invoice</th>
-                  <th className="px-4 py-2 font-medium">Counterparty</th>
-                  <th className="px-4 py-2 font-medium">Amount</th>
-                  <th className="px-4 py-2 font-medium">Suggestion</th>
-                  <th className="px-4 py-2 font-medium">Category</th>
-                  <th className="px-4 py-2 font-medium" />
+                <tr>
+                  <th>{t("invoice")}</th>
+                  <th>{t("counterparty")}</th>
+                  <th className="text-right">{tCommon("amount")}</th>
+                  <th>{t("suggestion")}</th>
+                  <th>{t("category")}</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
-                {uncategorized.map((t) => (
-                  <tr key={t.id} className="border-b border-slate-100 last:border-0">
-                    <td className="px-4 py-2.5">{t.invoice_number ?? `#${t.id}`}</td>
-                    <td className="px-4 py-2.5">{t.counterparty_name ?? "—"}</td>
-                    <td className="px-4 py-2.5 font-mono">{t.net_amount}</td>
-                    <td className="px-4 py-2.5">
-                      {suggestions[t.id] ? (
-                        <span className="text-xs text-slate-500">
-                          {suggestions[t.id].suggested_category} ({Math.round(suggestions[t.id].confidence * 100)}%)
-                          {suggestions[t.id].requires_accountant_review && " · review"}
+                {uncategorized.map((t2) => (
+                  <tr key={t2.id}>
+                    <td className="text-text-primary" dir="ltr">{t2.invoice_number ?? `#${t2.id}`}</td>
+                    <td className="text-text-secondary">{t2.counterparty_name ?? "—"}</td>
+                    <td className="col-amount">{formatEUR(t2.net_amount, locale)}</td>
+                    <td>
+                      {suggestions[t2.id] ? (
+                        <span className="text-xs text-text-secondary">
+                          {suggestions[t2.id].suggested_category} ({Math.round(suggestions[t2.id].confidence * 100)}%)
+                          {suggestions[t2.id].requires_accountant_review && ` · ${t("review")}`}
                         </span>
                       ) : (
-                        <button onClick={() => suggest(t.id)} className="text-xs text-navy underline">
-                          Suggest
+                        <button onClick={() => suggest(t2.id)} className="text-xs text-navy hover:underline">
+                          {t("suggest")}
                         </button>
                       )}
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td>
                       <select
-                        value={chosenCategory[t.id] ?? ""}
-                        onChange={(e) => setChosenCategory((prev) => ({ ...prev, [t.id]: e.target.value }))}
-                        className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={chosenCategory[t2.id] ?? ""}
+                        onChange={(e) => setChosenCategory((prev) => ({ ...prev, [t2.id]: e.target.value }))}
+                        className="input-v2 px-2 py-1 text-xs"
                       >
                         <option value="">—</option>
                         {EXPENSE_CATEGORIES.map((c) => (
@@ -188,26 +198,27 @@ function CategoriesContent() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td>
                       <button
-                        onClick={() => categorize(t.id, true)}
-                        disabled={!chosenCategory[t.id]}
-                        className="rounded-md bg-navy text-white px-3 py-1 text-xs disabled:opacity-50"
+                        onClick={() => categorize(t2.id, true)}
+                        disabled={!chosenCategory[t2.id]}
+                        className="rounded-md bg-navy-solid text-white px-3 py-1 text-xs disabled:opacity-50"
                       >
-                        Apply &amp; remember
+                        {t("applyAndRemember")}
                       </button>
                     </td>
                   </tr>
                 ))}
                 {uncategorized.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-4 text-slate-500">
-                      No purchase transactions to categorize.
+                    <td colSpan={6} className="text-text-secondary">
+                      {t("noPurchaseTransactions")}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

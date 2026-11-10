@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
 import { useAuth } from "@/lib/auth-context";
 import { api, Batch, Company, LedgerSide } from "@/lib/api";
 
 function BatchesContent() {
+  const t = useTranslations("batches");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -30,13 +34,13 @@ function BatchesContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy">Batch Processing</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <div className="flex gap-2">
           <Link href="/sales/upload" className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors">
-            Upload sales invoices
+            {t("uploadSalesInvoices")}
           </Link>
           <Link href="/purchases/upload" className="rounded-md bg-amber-600 text-white px-4 py-2 text-sm font-medium hover:bg-amber-700 transition-colors">
-            Upload purchase invoices
+            {t("uploadPurchaseInvoices")}
           </Link>
         </div>
       </div>
@@ -44,8 +48,8 @@ function BatchesContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="flex items-center gap-4">
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">All companies</option>
+        <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
+          <option value="">{tCommon("allCompanies")}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -57,50 +61,52 @@ function BatchesContent() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy text-white" : "bg-white border border-slate-200 text-slate-600"}`}
+              className={`rounded-full px-3 py-1 ${category === c ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary"}`}
             >
-              {c === "all" ? "All" : c}
+              {c === "all" ? t("categoryAll") : c}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="card-v2 overflow-hidden">
         {batches.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-slate-500">No batches yet.</p>
+          <p className="px-5 py-4 text-sm text-text-secondary">{t("noBatchesYet")}</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-5 py-2 font-medium">Uploaded</th>
-                <th className="px-5 py-2 font-medium">Category</th>
-                <th className="px-5 py-2 font-medium">Total</th>
-                <th className="px-5 py-2 font-medium">Extracted</th>
-                <th className="px-5 py-2 font-medium">Needs review</th>
-                <th className="px-5 py-2 font-medium">Duplicates</th>
-                <th className="px-5 py-2 font-medium">Failed</th>
-                <th className="px-5 py-2 font-medium">Approved</th>
+              <tr>
+                <th>{t("uploaded")}</th>
+                <th>{t("category")}</th>
+                <th className="text-right">{tCommon("total")}</th>
+                <th className="text-right">{t("extracted")}</th>
+                <th className="text-right">{t("needsReview")}</th>
+                <th className="text-right">{t("duplicates")}</th>
+                <th className="text-right">{t("failed")}</th>
+                <th className="text-right">{t("approved")}</th>
               </tr>
             </thead>
             <tbody>
               {batches.map((b) => (
-                <tr key={b.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="px-5 py-2.5">
+                <tr key={b.id} className="hover:bg-muted">
+                  <td>
                     <Link href={`/batches/${b.id}`} className="text-navy hover:underline">
-                      {new Date(b.created_at).toLocaleString()}
+                      {new Date(b.created_at).toLocaleString(locale)}
                     </Link>
                   </td>
-                  <td className="px-5 py-2.5">{b.category}</td>
-                  <td className="px-5 py-2.5">{b.counts.total}</td>
-                  <td className="px-5 py-2.5">{b.counts.extracted}</td>
-                  <td className="px-5 py-2.5 text-pending">{b.counts.needs_review}</td>
-                  <td className="px-5 py-2.5 text-error">{b.counts.duplicates}</td>
-                  <td className="px-5 py-2.5 text-error">{b.counts.failed}</td>
-                  <td className="px-5 py-2.5 text-approved">{b.counts.approved}</td>
+                  <td className="text-text-secondary">{b.category}</td>
+                  <td className="text-right">{b.counts.total}</td>
+                  <td className="text-right">{b.counts.extracted}</td>
+                  <td className="text-right text-pending">{b.counts.needs_review}</td>
+                  <td className="text-right text-error">{b.counts.duplicates}</td>
+                  <td className="text-right text-error">{b.counts.failed}</td>
+                  <td className="text-right text-approved">{b.counts.approved}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

@@ -2,12 +2,56 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
+import GlassPageHeader from "@/components/glass/GlassPageHeader";
+import GlassPanel from "@/components/glass/GlassPanel";
+import GlassButton from "@/components/glass/GlassButton";
+import { GlassSelect } from "@/components/glass/GlassInput";
+import { GlassErrorState } from "@/components/glass/GlassLoadingState";
 import { useAuth } from "@/lib/auth-context";
 import { api, Company, FinancialYear, VatReturn } from "@/lib/api";
+import { formatEUR } from "@/lib/format";
+
+function LockControl({ companyId, fy, onChange }: { companyId: number; fy: FinancialYear; onChange: (fy: FinancialYear) => void }) {
+  const t = useTranslations("vat");
+  const tErrors = useTranslations("errors");
+  const { token } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle() {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = fy.is_locked ? await api.unlockFinancialYear(token, companyId, fy.id) : await api.lockFinancialYear(token, companyId, fy.id);
+      onChange(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : tErrors("generic"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {error && <span className="text-xs value-negative">{error}</span>}
+      <span className={`text-xs font-medium rounded-full px-2.5 py-1 ${fy.is_locked ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}>
+        {fy.is_locked ? t("locked") : t("open")}
+      </span>
+      <GlassButton size="sm" variant="secondary" onClick={toggle} disabled={busy}>
+        {busy ? "…" : fy.is_locked ? t("unlock") : t("lock")}
+      </GlassButton>
+    </div>
+  );
+}
 
 function VatContent() {
+  const t = useTranslations("vat");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
@@ -37,65 +81,64 @@ function VatContent() {
   }, [token, companyId, financialYears]);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-navy">VAT Overview</h1>
+    <div className="space-y-5">
+      <GlassPageHeader title={t("title")} subtitle={t("subtitle")} />
 
-      {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
+      {error && <GlassErrorState message={error} />}
 
-      <select
-        value={companyId}
-        onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}
-        className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-      >
-        <option value="">Select a company</option>
+      <GlassSelect aria-label={tCommon("company")} value={companyId} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")}>
+        <option value="">{tCommon("selectCompany")}</option>
         {companies.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
           </option>
         ))}
-      </select>
+      </GlassSelect>
 
       {financialYears.map((fy) => (
-        <div key={fy.id} className="bg-white rounded-lg border border-slate-200">
-          <div className="px-5 py-3 border-b border-slate-200">
-            <h2 className="text-sm font-medium text-navy">Financial year {fy.year}</h2>
-          </div>
-          <table className="w-full text-sm">
+        <GlassPanel
+          key={fy.id}
+          title={t("financialYear", { year: fy.year })}
+          actions={<LockControl companyId={Number(companyId)} fy={fy} onChange={(updated) => setFinancialYears((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))} />}
+        >
+          <div className="overflow-x-auto">
+          <table className="table-v3">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-200">
-                <th className="px-5 py-2 font-medium">Period</th>
-                <th className="px-5 py-2 font-medium">Filing deadline</th>
-                <th className="px-5 py-2 font-medium">VAT due (5a)</th>
-                <th className="px-5 py-2 font-medium">Deductible (5b)</th>
-                <th className="px-5 py-2 font-medium">Net payable</th>
-                <th className="px-5 py-2 font-medium">Status</th>
+              <tr>
+                <th>{t("period")}</th>
+                <th>{t("filingDeadline")}</th>
+                <th className="text-right">{t("vatDue")}</th>
+                <th className="text-right">{t("deductible")}</th>
+                <th className="text-right">{t("netPayable")}</th>
+                <th>{tCommon("status")}</th>
               </tr>
             </thead>
             <tbody>
               {fy.vat_periods.map((p) => {
                 const vr = returns[p.id];
                 return (
-                  <tr key={p.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                    <td className="px-5 py-2.5">
+                  <tr key={p.id} className="hover:bg-muted">
+                    <td>
                       {vr ? (
                         <Link href={`/vat/${vr.id}`} className="text-navy hover:underline">
                           {p.label}
                         </Link>
                       ) : (
-                        p.label
+                        <span className="text-text-primary">{p.label}</span>
                       )}
                     </td>
-                    <td className="px-5 py-2.5">{p.filing_deadline}</td>
-                    <td className="px-5 py-2.5">{vr?.box_5a_vat ?? "—"}</td>
-                    <td className="px-5 py-2.5">{vr?.box_5b_vat ?? "—"}</td>
-                    <td className="px-5 py-2.5 font-medium">{vr?.net_payable ?? "—"}</td>
-                    <td className="px-5 py-2.5 text-xs uppercase text-slate-500">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
+                    <td className="text-text-secondary">{p.filing_deadline}</td>
+                    <td className="col-amount">{vr ? formatEUR(vr.box_5a_vat, locale) : "—"}</td>
+                    <td className="col-amount">{vr ? formatEUR(vr.box_5b_vat, locale) : "—"}</td>
+                    <td className="col-amount font-medium">{vr ? formatEUR(vr.net_payable, locale) : "—"}</td>
+                    <td className="text-xs uppercase text-text-secondary">{vr?.status.replaceAll("_", " ") ?? "—"}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </GlassPanel>
       ))}
     </div>
   );

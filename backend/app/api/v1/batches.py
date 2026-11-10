@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.accounting import ledger_service
 from app.core.config import settings
-from app.core.deps import get_current_user, require_company_access, require_editor, require_uploader
+from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access, require_editor, require_uploader
 from app.core.rate_limit import enforce as enforce_rate_limit
 from app.db.session import SessionLocal, get_db
 from app.models.company import Company
@@ -162,7 +162,7 @@ def list_batches(
     user: User = Depends(get_current_user),
 ):
     query = db.query(UploadBatch).filter(UploadBatch.tenant_id == user.tenant_id)
-    if user.role != UserRole.admin:
+    if user.role not in ADMIN_ROLES:
         accessible_ids = [c.id for c in user.companies]
         query = query.filter(UploadBatch.company_id.in_(accessible_ids))
     if company_id is not None:
@@ -238,8 +238,14 @@ def bulk_reject(
 
 @router.get("/{batch_id}/export")
 def export_batch(batch_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Headers are stable, untranslated snake_case identifiers (this is
+    for re-import/scripting, not reading) -- same convention as every
+    other CSV exporter in app/reporting/, see financial_report.render_csv's
+    docstring. UTF-8 BOM so Excel correctly decodes non-ASCII content in
+    filenames/error messages regardless of the viewer's locale."""
     batch = _get_batch_or_404(db, user, batch_id)
     buf = io.StringIO()
+    buf.write("﻿")
     writer = csv.writer(buf)
     writer.writerow(["document_id", "filename", "category", "document_type", "status", "is_duplicate", "error_message"])
     for d in batch.documents:

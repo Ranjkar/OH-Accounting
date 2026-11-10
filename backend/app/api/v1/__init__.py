@@ -2,19 +2,29 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     assistant,
+    audit_log,
     auth,
     automation,
     banking,
     batches,
+    billing,
     budgets,
     companies,
     dashboard,
     documents,
+    employee_self_service,
+    employees,
     financial_reports,
     forecasts,
+    kvk,
+    legal_forms,
+    loonheffingen,
+    payroll,
     reports,
     tax_calendar,
+    tax_centre,
     transactions,
+    users,
     vat_returns,
     workspace,
 )
@@ -36,3 +46,13 @@ router.include_router(automation.router)
 router.include_router(financial_reports.router)
 router.include_router(budgets.router)
 router.include_router(forecasts.router)
+router.include_router(legal_forms.router)
+router.include_router(employees.router)
+router.include_router(employee_self_service.router)
+router.include_router(payroll.router)
+router.include_router(loonheffingen.router)
+router.include_router(tax_centre.router)
+router.include_router(kvk.router)
+router.include_router(billing.router)
+router.include_router(users.router)
+router.include_router(audit_log.router)

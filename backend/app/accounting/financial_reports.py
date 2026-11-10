@@ -70,10 +70,42 @@ def resolve_period(period_type: ReportPeriod, reference_date: date, custom_start
     return DateRange(start, end)
 
 
+def _whole_calendar_months(period: DateRange) -> int | None:
+    """How many whole calendar months `period` spans, or None when it is not
+    calendar-aligned (start on the 1st, end on the last day of its month)."""
+    if period.start.day != 1:
+        return None
+    day_after_end = period.end + relativedelta(days=1)
+    if day_after_end.day != 1:
+        return None
+    months = (day_after_end.year - period.start.year) * 12 + (day_after_end.month - period.start.month)
+    return months if months > 0 else None
+
+
 def previous_period(period: DateRange) -> DateRange:
-    """Same-length period immediately before this one, for period-over-period comparison."""
-    length = (period.end - period.start).days
-    return DateRange(period.start - relativedelta(days=length + 1), period.start - relativedelta(days=1))
+    """The calendar period immediately before this one, for period-over-period
+    comparison.
+
+    Phase 19 (audit finding 7.3): this counted DAYS -- `start - (length + 1)`
+    -- which is wrong for any period that is not an exact multiple of the
+    month it precedes. Q1 (90 days, non-leap) produced a "previous quarter"
+    starting on 3 October instead of 1 October, silently dropping two days
+    from every quarterly comparison; an annual period spanning a leap year was
+    shifted by a day. `year_on_year_period` immediately below already did this
+    correctly with `relativedelta`.
+
+    Calendar-aligned periods -- which is everything `resolve_period` produces
+    -- now step back by whole months. An arbitrary range falls back to the day
+    count, which is the best available answer when there is no calendar shape
+    to preserve.
+    """
+    end = period.start - relativedelta(days=1)
+    months = _whole_calendar_months(period)
+    if months is not None:
+        start = period.start - relativedelta(months=months)
+    else:
+        start = period.start - relativedelta(days=(period.end - period.start).days + 1)
+    return DateRange(start, end)
 
 
 def year_on_year_period(period: DateRange) -> DateRange:

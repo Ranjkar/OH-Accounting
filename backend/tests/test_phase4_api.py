@@ -196,7 +196,10 @@ def test_dashboard_flags_company_with_overdue_vat_return(client, db_session):
     assert dashboard["overdue_vat_returns"] >= 1
     flagged = [c for c in dashboard["companies_requiring_attention"] if c["company_id"] == company_id]
     assert flagged
-    assert any("overdue" in r for r in flagged[0]["reasons"])
+    # Reason text is locale-dependent (see app/core/messages_i18n.py) --
+    # the overdue count itself, never translated, is the stable thing
+    # to assert on here.
+    assert any(str(dashboard["overdue_vat_returns"]) in r for r in flagged[0]["reasons"])
 
 
 # ---- Assistant ----
