@@ -136,9 +136,47 @@ def _parse_camt_entries(root, entry_tag: str = "Ntry") -> list[ParsedBankTransac
     return transactions
 
 
+# Phase 17.4 (audit 7.19) -- XXE / entity-expansion hardening.
+#
+# `<!DOCTYPE` and `<!ENTITY` are matched case-insensitively because XML
+# keywords are, and the scan is a single regex over the buffer so it costs
+# no extra allocation on a 20 MB upload.
+_DTD_PROBE = re.compile(rb"<!(?:doctype|entity)", re.IGNORECASE)
+
+
+def _safe_fromstring(content: bytes, label: str) -> ElementTree.Element:
+    """Parse XML after rejecting any document type declaration.
+
+    CAMT.053/054 bank statements never legitimately carry a DOCTYPE -- they
+    identify themselves with `xmlns` attributes on the root element. A
+    DOCTYPE is therefore either a malformed file or an attack, and refusing
+    it outright removes the whole entity-expansion ("billion laughs") class
+    before the parser is ever reached.
+
+    Why an explicit check rather than relying on the stdlib: stock
+    `xml.etree.ElementTree` installs no external-entity handler, so
+    file-disclosure XXE was never reachable here -- but internal-entity
+    expansion is blocked only INCIDENTALLY, by the bundled expat's
+    amplification limit. CPython 3.12 aborts at roughly 100x amplification;
+    3.9 does not block it at all. `requirements.txt` pins no Python version,
+    so the guarantee would silently depend on which interpreter the image was
+    built with. This makes it a property of the code instead.
+
+    Residual note: with a single-process uvicorn worker and a 20 MB upload
+    cap, ~100x amplification before expat aborts was still enough to OOM the
+    service. Rejecting the DTD removes that path entirely.
+    """
+    if _DTD_PROBE.search(content):
+        raise BankFileParseError(
+            f"Invalid {label} XML: bank statements must not contain a DOCTYPE or ENTITY "
+            "declaration; the file was rejected before parsing"
+        )
+    return ElementTree.fromstring(content)
+
+
 def parse_camt053(content: bytes) -> list[ParsedBankTransaction]:
     try:
-        root = ElementTree.fromstring(content)
+        root = _safe_fromstring(content, "CAMT.053")
     except ElementTree.ParseError as exc:
         raise BankFileParseError(f"Invalid CAMT.053 XML: {exc}") from exc
     transactions = _parse_camt_entries(root)
@@ -149,7 +187,7 @@ def parse_camt053(content: bytes) -> list[ParsedBankTransaction]:
 
 def parse_camt054(content: bytes) -> list[ParsedBankTransaction]:
     try:
-        root = ElementTree.fromstring(content)
+        root = _safe_fromstring(content, "CAMT.054")
     except ElementTree.ParseError as exc:
         raise BankFileParseError(f"Invalid CAMT.054 XML: {exc}") from exc
     transactions = _parse_camt_entries(root)

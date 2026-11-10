@@ -9,7 +9,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, mfaCode?: string) => Promise<{ mfaRequired: boolean }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -47,11 +47,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { mfaRequired: false };
   }
 
-  function logout() {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-    router.push("/login");
+  async function logout() {
+    // Phase 17.3 (audit 6.13): revoke server-side, not just locally.
+    // POST /auth/logout bumps the user's token_version, which makes the
+    // backend reject every token ever issued for this account. Before this,
+    // "Log out" only removed the token from localStorage -- so a JWT copied
+    // beforehand (XSS, a shared device, browser history, an intercepting
+    // proxy) stayed valid for its full 24-hour lifetime.
+    //
+    // Fall back to localStorage in case state has not hydrated yet, so a
+    // logout pressed early still revokes the stored token.
+    const current = token ?? localStorage.getItem("token");
+    try {
+      if (current) {
+        await api.logout(current);
+      }
+    } catch {
+      // Deliberately swallowed. The user asked to leave; a network failure
+      // or an already-expired token (401) must not strand them on an
+      // authenticated page. Local state is cleared below either way, and if
+      // the revocation call never landed the token still expires on its own.
+    } finally {
+      localStorage.removeItem("token");
+      setToken(null);
+      setUser(null);
+      router.push("/login");
+    }
   }
 
   async function refreshUser() {

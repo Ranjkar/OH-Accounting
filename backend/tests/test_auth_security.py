@@ -60,6 +60,51 @@ def test_logging_in_again_after_logout_issues_a_new_valid_token(client, db_sessi
     assert me.status_code == 200
 
 
+def test_logout_revokes_the_token_for_protected_resources_not_just_auth_me(client, db_session):
+    """Phase 17.3 (audit 6.13). The frontend never called POST /auth/logout
+    -- `lib/api.ts` had no logout method at all -- so a JWT captured before
+    the user "logged out" stayed cryptographically valid AND kept passing the
+    token_version check for its full 24-hour lifetime.
+
+    The backend revocation itself was already correct and is covered by
+    test_logout_revokes_the_token_immediately above, but only against
+    /auth/me. This pins the same guarantee against real company-scoped data
+    routes, so a regression that revoked the session for the profile route
+    while leaving the financial ones reachable cannot slip through. It also
+    asserts token_version actually incremented, which is the mechanism the
+    whole revocation design rests on."""
+    user = _create_user(db_session)
+    token_version_before = user.token_version
+    token = _login(client, "admin@acme.nl").json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    company = client.post("/api/v1/companies", json={"name": "Revocation BV"}, headers=headers)
+    assert company.status_code == 201, company.text
+    company_id = company.json()["id"]
+
+    # Sanity: the token genuinely works on these routes before logout.
+    assert client.get(f"/api/v1/companies/{company_id}/financial-years", headers=headers).status_code == 200
+    assert client.get(f"/api/v1/companies/{company_id}/notes", headers=headers).status_code == 200
+
+    logout = client.post("/api/v1/auth/logout", headers=headers)
+    assert logout.status_code == 204
+
+    db_session.refresh(user)
+    assert user.token_version == token_version_before + 1
+
+    # The very same token is now rejected everywhere, not just on /auth/me.
+    assert client.get("/api/v1/auth/me", headers=headers).status_code == 401
+    assert client.get("/api/v1/companies", headers=headers).status_code == 401
+    assert client.get(f"/api/v1/companies/{company_id}/financial-years", headers=headers).status_code == 401
+    assert client.get(f"/api/v1/companies/{company_id}/notes", headers=headers).status_code == 401
+    assert client.get(f"/api/v1/companies/{company_id}/workspace", headers=headers).status_code == 401
+
+    # And the rejection is specifically the revocation path, not a generic
+    # auth failure -- the token is still well-formed and unexpired.
+    body = client.get("/api/v1/auth/me", headers=headers).json()
+    assert body["detail"] == "Session has been revoked, please sign in again"
+
+
 def test_account_locks_after_repeated_failed_logins(client, db_session):
     _create_user(db_session)
     for _ in range(settings.max_failed_login_attempts):
@@ -136,3 +181,12 @@ def test_data_export_returns_only_my_own_profile(client, db_session):
     body = export.json()
     assert body["user"]["email"] == "me@acme.nl"
     assert "other@acme.nl" not in str(body)
+
+
+def test_login_normalizes_email_case_and_whitespace(client, db_session):
+    _create_user(db_session, email="admin@acme.nl")
+
+    response = _login(client, "  ADMIN@ACME.NL  ")
+
+    assert response.status_code == 200
+    assert response.json()["access_token"]

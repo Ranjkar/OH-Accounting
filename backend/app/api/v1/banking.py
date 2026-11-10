@@ -241,7 +241,21 @@ def bulk_approve_high_confidence(
     require_company_access(company_id, user, db)
     matches = (
         db.query(PaymentMatch)
-        .filter(PaymentMatch.company_id == company_id, PaymentMatch.status == "SUGGESTED", PaymentMatch.confidence_level == "HIGH")
+        # Phase 17.1 (audit CRITICAL-2): the tenant predicate was missing
+        # entirely, and `require_company_access` used to no-op for
+        # owner/admin -- so any admin of any tenant could bulk-approve
+        # every HIGH-confidence suggested match on an arbitrary company's
+        # books, posting real Payment rows and flipping reconciliation
+        # state on someone else's ledger in one request. The helper now
+        # rejects a foreign company; this predicate is defence-in-depth so
+        # the query itself can never select across a tenant boundary even
+        # if a future caller reaches it another way.
+        .filter(
+            PaymentMatch.tenant_id == user.tenant_id,
+            PaymentMatch.company_id == company_id,
+            PaymentMatch.status == "SUGGESTED",
+            PaymentMatch.confidence_level == "HIGH",
+        )
         .all()
     )
     approved = []

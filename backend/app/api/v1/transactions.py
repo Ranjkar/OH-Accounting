@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.accounting import ledger_service, payment_engine
-from app.accounting.period_assignment import determine_vat_period
+from app.accounting.period_assignment import assign_vat_period_on_payment
 from app.core.deps import ADMIN_ROLES, get_current_user, require_company_access, require_editor
 from app.db.session import get_db
 from app.models.accounting import AccountingTransaction, Payment, TransactionLineItem
@@ -246,6 +246,13 @@ def record_payment(
     )
     db.add(payment)
     db.flush()
+
+    # Phase 19 (audit 6.2): for a cash-based company the VAT period is the one
+    # containing the payment date, which is not knowable until now. Without
+    # this the transaction keeps vat_period=NULL forever and is excluded from
+    # every VAT return. No-op for invoice-based companies and for transactions
+    # that already have a period.
+    assign_vat_period_on_payment(db, transaction, payment.payment_date)
 
     transaction.payment_status = payment_engine.compute_payment_status(
         transaction.gross_amount, transaction.due_date, transaction.payments, date.today()

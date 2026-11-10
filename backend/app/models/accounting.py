@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -23,6 +23,23 @@ FX_RATE = Numeric(12, 6)
 
 class AccountingTransaction(Base):
     __tablename__ = "accounting_transactions"
+    # Phase 19 (audit finding 6.6): one document may post to the ledger at most
+    # once. `post_document_to_ledger` already guards this with a SELECT-then-
+    # INSERT, but that is single-threaded only -- two concurrent
+    # POST /documents/{id}/approve requests (a double-click, a browser retry, a
+    # load-balancer replay) both see no existing row and both insert, double-
+    # counting revenue and input VAT all the way through to the VAT return.
+    # Payroll got exactly this guard in Phase 12 (uq_payroll_run_period plus an
+    # IntegrityError -> 409 mapping); the far more consequential document ->
+    # ledger path did not.
+    #
+    # Manual entries and corrections set source_document_id = NULL, and
+    # Postgres treats NULLs as distinct in a unique index, so they are
+    # unaffected -- verified: create_manual_entry passes None explicitly and
+    # create_correction routes through it.
+    __table_args__ = (
+        UniqueConstraint("source_document_id", name="uq_accounting_transaction_source_document"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))

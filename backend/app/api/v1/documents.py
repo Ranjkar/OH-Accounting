@@ -215,6 +215,20 @@ def approve_document(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except ledger_service.LedgerPostingError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        # Phase 19 (audit 6.6): uq_accounting_transaction_source_document means
+        # a concurrent approval of this same document won the race and already
+        # posted it. Report a conflict rather than a 500, and roll back so the
+        # session is usable again -- an IntegrityError leaves it in a failed
+        # state that would otherwise break every subsequent query on it.
+        db.rollback()
+        logger.warning(
+            "concurrent_approval_blocked document_id=%s user_id=%s", document_id, user.id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This document has already been posted to the ledger by a concurrent request",
+        ) from exc
     db.commit()
     db.refresh(document)
     return document

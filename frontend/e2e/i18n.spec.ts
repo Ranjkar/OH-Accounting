@@ -95,6 +95,86 @@ test.describe("Locale resolution (unauthenticated)", () => {
   }
 });
 
+test.describe("Locale font selection (computed, unauthenticated)", () => {
+  /** Phase 17.5 (audit 6.12). jsdom cannot resolve CSS `var()` through
+   * getComputedStyle, so the wiring is unit-tested structurally in
+   * test/locale-fonts.test.ts -- but the thing that actually broke in
+   * Phase 16.3 was the COMPUTED result: two Arabic-script webfonts were
+   * downloaded on every page and never applied, because the rule used a
+   * `:root[lang="fa"]` attribute selector that cannot match the full
+   * BCP-47 tag layout.tsx emits. Only a real browser catches that, so it
+   * is asserted here against getComputedStyle.
+   *
+   * Runs against /login, which needs no session, so this block does not
+   * depend on the seeded test account or on a backend login. */
+  const EXPECTED_PRIMARY: Record<string, RegExp> = {
+    nl: /geist/i,
+    en: /geist/i,
+    fa: /vazirmatn/i,
+    ar: /noto sans arabic/i,
+  };
+
+  for (const { code, lang, dir } of LOCALES) {
+    test(`${lang} renders body text in the intended primary face`, async ({ page, context }) => {
+      await context.addCookies([{ name: "onholland-locale", value: code, domain: "localhost", path: "/" }]);
+      await page.goto("/login", { waitUntil: "networkidle" });
+
+      await expect(page.locator("html")).toHaveAttribute("lang", lang);
+      await expect(page.locator("html")).toHaveAttribute("dir", dir);
+
+      const { bodyFont, rootSans, vazirmatnVar, notoVar, appSansVar } = await page.evaluate(() => {
+        const rootStyle = getComputedStyle(document.documentElement);
+        return {
+          bodyFont: getComputedStyle(document.body).fontFamily,
+          rootSans: rootStyle.getPropertyValue("--font-app-sans").trim(),
+          vazirmatnVar: rootStyle.getPropertyValue("--font-vazirmatn").trim(),
+          notoVar: rootStyle.getPropertyValue("--font-noto-sans-arabic").trim(),
+          appSansVar: rootStyle.getPropertyValue("--font-app-sans").trim(),
+        };
+      });
+
+      // next/font must actually have injected both faces, or the stack would
+      // resolve to nothing and fall back silently -- the Phase 16.3 failure.
+      expect(vazirmatnVar, "--font-vazirmatn was never injected by next/font").not.toBe("");
+      expect(notoVar, "--font-noto-sans-arabic was never injected by next/font").not.toBe("");
+      expect(appSansVar, "--font-app-sans is empty, so body falls back to Arial").not.toBe("");
+
+      expect(bodyFont, `body font-family for ${lang} was: ${bodyFont}`).toMatch(EXPECTED_PRIMARY[code]);
+      expect(rootSans).toMatch(EXPECTED_PRIMARY[code]);
+
+      // A form control must inherit the same face -- native controls do not
+      // inherit font-family by default.
+      const emailFont = await page.evaluate(() => {
+        const input = document.querySelector("input");
+        return input ? getComputedStyle(input).fontFamily : "";
+      });
+      if (emailFont) expect(emailFont, `input font-family for ${lang}`).toMatch(EXPECTED_PRIMARY[code]);
+    });
+  }
+
+  test("a Latin-script locale does not load the Arabic-script faces", async ({ page, context }) => {
+    /** The other half of 6.12: at the broken commit both faces were declared
+     * and fetched on every page, including Dutch and English, while never
+     * being applied. A browser only downloads an @font-face it actually needs
+     * to render text, so `document.fonts` is the observable: on a Dutch page
+     * the Arabic-script faces must never reach the "loaded" state. */
+    await context.addCookies([{ name: "onholland-locale", value: "nl", domain: "localhost", path: "/" }]);
+    await page.goto("/login", { waitUntil: "networkidle" });
+
+    const bodyFont = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
+    expect(bodyFont).toMatch(/geist/i);
+    expect(bodyFont, "Dutch must not resolve to an Arabic-script face").not.toMatch(/vazirmatn|noto sans arabic/i);
+
+    const loadedArabicFaces = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return Array.from(document.fonts)
+        .filter((face) => face.status === "loaded" && /vazirmatn|noto\s*sans\s*arabic/i.test(face.family))
+        .map((face) => face.family);
+    });
+    expect(loadedArabicFaces, "Dutch page loaded Arabic-script webfonts it cannot use").toEqual([]);
+  });
+});
+
 test.describe("Authenticated pages, all four locales", () => {
   for (const { code, lang, dir, label } of LOCALES) {
     test.describe(`${code} (${lang}, ${dir})`, () => {

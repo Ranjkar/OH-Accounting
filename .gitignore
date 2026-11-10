@@ -1,6 +1,7 @@
 backend/.venv/
 backend/__pycache__/
 backend/**/__pycache__/
+.pytest_cache/
 backend/.pytest_cache/
 backend/.env
 backend/storage/
@@ -9,7 +10,24 @@ backend/storage/
 frontend/node_modules/
 frontend/.next/
 frontend/.env.local
+frontend/tsconfig.tsbuildinfo
+frontend/test-results/
+frontend/e2e/.auth/
+frontend/e2e/.screenshots/
 
 .env.prod
+
+# Phase 17.4 (audit 8.1): editor/tool backup copies. Three were sitting
+# untracked in the working tree -- backend/app/main.py.bak and two
+# frontend/app/globals.css.backup-* files. None was committed, but the CSS
+# backups live inside Next.js's app/ directory (where the router treats files
+# as route candidates) and all three would be swept up by `git add -A` or by
+# a `COPY . .` build context that does not exclude them.
+*.bak
+*.backup-*
+*.orig
+*.rej
+*.save
+*~
 
 .DS_Store

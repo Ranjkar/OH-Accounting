@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -43,7 +44,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/login", response_model=TokenResponse)
 def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
     enforce_rate_limit(request, "login", settings.rate_limit_login_per_minute)
-    user = db.query(User).filter(User.email == payload.email).first()
+    normalized_email = payload.email.strip().lower()
+    user = (
+        db.query(User)
+        .filter(func.lower(func.trim(User.email)) == normalized_email)
+        .first()
+    )
 
     # Deliberately the same generic message whether the email doesn't
     # exist, the password is wrong, or the account is locked -- except

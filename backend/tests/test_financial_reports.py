@@ -367,8 +367,41 @@ def test_year_on_year_period():
     assert yoy == fr.DateRange(date(2026, 1, 1), date(2026, 3, 31))
 
 
-def test_previous_period_same_length():
+def test_previous_period_is_the_whole_preceding_calendar_period():
+    """Phase 19 (audit finding 7.3) -- this test previously asserted
+    `(prev.end - prev.start).days == (period.end - period.start).days`, i.e.
+    that the previous period has the SAME DAY COUNT as the current one.
+
+    That invariant is only satisfiable by the buggy day-arithmetic
+    implementation, and it is wrong: for February 2027 it demanded a 28-day
+    predecessor ending 31 January, which is 4-31 January -- silently dropping
+    1-3 January out of every period-over-period comparison. Quarters were
+    worse (Q1's "previous quarter" started on 3 October). Months and quarters
+    genuinely differ in length, so equal day counts is not the property worth
+    pinning; covering the preceding calendar period exactly once is.
+
+    The first assertion below is unchanged from the original test and always
+    passed -- it is the second that encoded the defect.
+    """
     period = fr.DateRange(date(2027, 2, 1), date(2027, 2, 28))
     prev = fr.previous_period(period)
+
     assert prev.end == date(2027, 1, 31)
-    assert (prev.end - prev.start).days == (period.end - period.start).days
+    assert prev.start == date(2027, 1, 1)
+    # Contiguous and non-overlapping: the previous period ends the day before
+    # the current one begins.
+    assert prev.end == period.start - timedelta(days=1)
+    assert prev == fr.DateRange(date(2027, 1, 1), date(2027, 1, 31))
+
+
+def test_previous_period_of_a_quarter_is_the_exact_previous_quarter():
+    """Q1 is 90 days in a non-leap year; the preceding quarter is 92. The old
+    day-count logic returned 3 Oct - 31 Dec."""
+    prev = fr.previous_period(fr.DateRange(date(2026, 1, 1), date(2026, 3, 31)))
+    assert prev == fr.DateRange(date(2025, 10, 1), date(2025, 12, 31))
+
+
+def test_previous_period_of_a_leap_year_is_the_exact_previous_year():
+    """2024 has 366 days; the old logic shifted the whole comparison by a day."""
+    prev = fr.previous_period(fr.DateRange(date(2024, 1, 1), date(2024, 12, 31)))
+    assert prev == fr.DateRange(date(2023, 1, 1), date(2023, 12, 31))

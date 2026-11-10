@@ -103,7 +103,14 @@ def list_notes(company_id: int, db: Session = Depends(get_db), user: User = Depe
     require_company_access(company_id, user, db)
     return (
         db.query(AccountantNote)
-        .filter(AccountantNote.company_id == company_id)
+        # Phase 17.1 (audit MEDIUM-1): the tenant predicate was missing and
+        # `require_company_access` used to no-op for owner/admin, so any
+        # authenticated user in any tenant -- including a read-only `viewer`
+        # -- could read another firm's free-text accountant notes about a
+        # client. The three sibling endpoints in this file were already
+        # correct; only this one was missed. Defence-in-depth on top of the
+        # now-authoritative helper.
+        .filter(AccountantNote.tenant_id == user.tenant_id, AccountantNote.company_id == company_id)
         .order_by(AccountantNote.created_at.desc())
         .all()
     )

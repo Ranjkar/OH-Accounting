@@ -141,7 +141,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
             )}
           </div>
         )}
-        <button onClick={logout} className="nav-item-v2 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-start">
+        <button onClick={() => void logout()} className="nav-item-v2 w-full flex items-center gap-2.5 px-3 py-2 text-sm text-start">
           <IconLogout size={16} className="flex-shrink-0" />
           {!collapsed && <span>{tShell("logOut")}</span>}
         </button>

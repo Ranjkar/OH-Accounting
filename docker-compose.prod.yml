@@ -43,6 +43,15 @@ services:
       - .env.prod
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-onholland}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-onholland_accounting}
+      # Phase 17.4 (audit 6.4): makes the backend's fail-closed secret and
+      # CORS validation active. Without a permissive ENVIRONMENT the app
+      # REFUSES TO START while JWT_SECRET, BSN_ENCRYPTION_KEY,
+      # OPEN_BANKING_TOKEN_ENCRYPTION_KEY, MFA_SECRET_ENCRYPTION_KEY or
+      # BILLING_WEBHOOK_SECRET is unset, blank, or still a value that is
+      # public in this repository -- previously it merely logged a warning
+      # and booted. Defaults to production here so an .env.prod that forgets
+      # the variable still fails safe rather than failing open.
+      ENVIRONMENT: ${ENVIRONMENT:-production}
     volumes:
       - backend_storage:/app/storage
     depends_on:

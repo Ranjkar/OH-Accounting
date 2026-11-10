@@ -1,4 +1,28 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+/**
+ * Base URL for every API call.
+ *
+ * Phase 21 (audit finding 6.10). This used to default to the ABSOLUTE string
+ * "http://localhost:8000/api/v1". Next.js statically inlines `NEXT_PUBLIC_*`
+ * into the client bundle at BUILD time, and neither frontend/Dockerfile nor
+ * docker-compose.prod.yml supplied it as a build argument -- compose set it
+ * under `environment:`, which is RUNTIME and therefore never reaches an
+ * already-compiled bundle. Every production build therefore shipped the
+ * localhost fallback, so each visitor's browser called their own machine.
+ *
+ * The default is now the SAME-ORIGIN relative path "/api/v1": the browser
+ * resolves it against whatever origin served the page, and next.config.ts
+ * proxies it to the backend. No URL is compiled into the bundle, so there is
+ * nothing to get wrong per environment, and requests are same-origin -- CORS
+ * is not involved in a normal deployment at all.
+ *
+ * `NEXT_PUBLIC_API_URL` is still honoured, for deployments that want the
+ * browser to call the API directly (cross-origin, so the backend's
+ * CORS_ALLOWED_ORIGINS must then allow the frontend origin). If you set it in
+ * Docker you MUST pass it as a build argument:
+ *   docker build --build-arg NEXT_PUBLIC_API_URL=https://api.example/api/v1 .
+ * A runtime environment variable cannot reach the compiled bundle.
+ */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 export class ApiError extends Error {
   status: number;
@@ -815,6 +839,12 @@ export const api = {
       body: JSON.stringify({ email, password, mfa_code: mfaCode }),
     }),
   me: (token: string) => request<User>("/auth/me", { token }),
+  /** Phase 17.3 (audit 6.13): this method did not exist, so the sidebar's
+   * "Log out" button only cleared localStorage -- the JWT stayed valid for
+   * its full 24h lifetime and kept passing the backend's token_version
+   * check. Calling this bumps token_version server-side, which revokes
+   * every token ever issued for the account. */
+  logout: (token: string) => request<void>("/auth/logout", { method: "POST", token }),
   mfaSetup: (token: string) => request<{ secret: string; provisioning_uri: string }>("/auth/mfa/setup", { method: "POST", token }),
   mfaEnable: (token: string, secret: string, code: string) =>
     request<void>("/auth/mfa/enable", { method: "POST", token, body: JSON.stringify({ secret, code }) }),

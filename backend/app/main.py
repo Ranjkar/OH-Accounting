@@ -1,15 +1,18 @@
+import ipaddress
 import json
 import logging
 import os
 import time
 import uuid
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.api.v1 import router as api_v1_router
+from app.core.config import PERMISSIVE_ENVIRONMENTS, settings
 from app.core.request_context import request_id_ctx as _request_id_ctx
 from app.db.session import SessionLocal, engine
 
@@ -83,7 +86,7 @@ app = FastAPI(title="OnHolland Accounting API", lifespan=lifespan)
 # local dev frontend. Production deployments must set this explicitly --
 # never widen this to "*" once credentials are allowed.
 _allowed_origins = [
-    o.strip() for o in os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()
+    o.strip() for o in os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://192.168.68.105:3000").split(",") if o.strip()
 ]
 
 app.add_middleware(
@@ -93,6 +96,79 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _validate_cors_origins() -> None:
+    """Phase 17.4 (audit 6.9/8.1): fail closed on a CORS allow-list that is
+    not safe to serve credentialed requests from.
+
+    `allow_credentials=True` means any origin on this list can make
+    authenticated cross-origin calls to the API, so the list is a security
+    boundary rather than a convenience. Three things are rejected outside
+    local development:
+
+      * `*` -- with credentials this is refused by browsers anyway, but it
+        signals the list was never thought about;
+      * a host that is a private, loopback or link-local IP address -- e.g.
+        the `192.168.68.105` developer LAN address currently baked into the
+        default above, which would let any device on that network make
+        credentialed calls to a deployed API;
+      * a plain `http://` origin -- credentialed cross-origin calls over
+        cleartext are interceptable.
+
+    In local development these are warnings, so `npm run dev` against
+    `http://localhost:3000` keeps working unchanged.
+    """
+    # (origin, reason, worth-warning-about-in-a-permissive-environment)
+    problems: list[tuple[str, str, bool]] = []
+    for origin in _allowed_origins:
+        if origin == "*":
+            problems.append((origin, "wildcard origin with allow_credentials=True", True))
+            continue
+        parsed = urlparse(origin)
+        if parsed.scheme not in ("http", "https"):
+            problems.append((origin, "not an http(s) origin", False))
+            continue
+        host = parsed.hostname or ""
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError:
+            address = None  # a DNS name, not a literal IP
+        is_loopback = host in ("localhost", "[::1]") or (address is not None and address.is_loopback)
+        if address is not None and (address.is_private or address.is_loopback or address.is_link_local):
+            kind = "host is a private/loopback/link-local address"
+        elif parsed.scheme != "https" and address is None:
+            kind = "plain http:// origin carrying credentials"
+        else:
+            continue
+        # Loopback is the documented local-dev default, so flagging it in a
+        # permissive environment would print noise on every startup and train
+        # people to ignore the warning that actually matters -- the LAN address.
+        problems.append((origin, kind, not is_loopback))
+
+    if not problems:
+        return
+
+    if settings.environment.strip().lower() in PERMISSIVE_ENVIRONMENTS:
+        for origin, kind, worth_warning in problems:
+            if worth_warning:
+                logger.warning(
+                    "CORS_ALLOWED_ORIGINS contains %r: %s (acceptable in local development only).",
+                    origin,
+                    kind,
+                )
+        return
+
+    detail = "\n".join(f"  - {origin!r}: {kind}" for origin, kind, _ in problems)
+    raise RuntimeError(
+        "Refusing to start: CORS_ALLOWED_ORIGINS is not safe for a credentialed deployment:\n"
+        + detail
+        + "\n\nSet CORS_ALLOWED_ORIGINS to the public https origin(s) of the deployed frontend. "
+        "See docs/QWEN_TECHNICAL_AUDIT_REPORT.md sections 6.9 and 8.1."
+    )
+
+
+_validate_cors_origins()
 
 @app.middleware("http")
 async def _security_headers(request, call_next):

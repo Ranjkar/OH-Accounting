@@ -26,3 +26,17 @@ def decrypt_token(token: bytes) -> str:
         return _fernet().decrypt(token).decode()
     except InvalidToken as exc:
         raise ValueError("Token could not be decrypted -- wrong key(s) or corrupted data") from exc
+
+
+def reencrypt_token_with_current_key(token: bytes) -> bytes:
+    """Decrypts with whichever key (current or previous) matches, then
+    re-encrypts with only the current key.
+
+    Phase 17.4 (audit 7.5): this function did not exist, although the module
+    docstring already claimed the "same MultiFernet rotation pattern as
+    crypto.py". Without it there was no way to migrate stored Open Banking
+    tokens off a retired key, so a compromised key could be added to
+    OPEN_BANKING_TOKEN_ENCRYPTION_KEY_PREVIOUS but never actually removed --
+    every existing ciphertext stayed decryptable with it indefinitely.
+    Driven by scripts/rotate_encryption_keys.py."""
+    return _fernet().rotate(token)

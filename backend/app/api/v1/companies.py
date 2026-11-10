@@ -184,6 +184,15 @@ def create_financial_year(
 def list_financial_years(
     company_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
+    # Phase 17.1 (audit HIGH-1): this was the only company-resolving
+    # endpoint in this file with no tenant comparison of its own, and
+    # `require_company_access` used to no-op for owner/admin -- so it leaked
+    # every fiscal year, its `is_locked` flag, and (via FinancialYearOut's
+    # nested periods) every VAT period label, start/end, filing and payment
+    # deadline for any integer company_id in any tenant. It was also the
+    # reconnaissance primitive for the cross-tenant lock/unlock below,
+    # since it handed over the exact financial_year_id values to target.
+    # Both are closed by the helper now enforcing tenancy for every role.
     require_company_access(company_id, user, db)
     return (
         db.query(FinancialYear)
@@ -194,6 +203,14 @@ def list_financial_years(
 
 
 def _get_financial_year_or_404(db: Session, user: User, company_id: int, financial_year_id: int) -> FinancialYear:
+    # Phase 17.1 (audit CRITICAL-1): `require_company_access` used to return
+    # immediately for owner/admin, and the check below only tied
+    # financial_year_id to the ATTACKER-SUPPLIED company_id -- so an owner of
+    # tenant A could lock or unlock tenant B's financial year, halting their
+    # bookkeeping (ledger_service._ensure_financial_year_open) or removing
+    # the period-integrity control, with the AuditLog row written into the
+    # attacker's own tenant so the victim's trail showed nothing. The helper
+    # now rejects a company outside the caller's tenant for every role.
     require_company_access(company_id, user, db)
     financial_year = db.get(FinancialYear, financial_year_id)
     if financial_year is None or financial_year.company_id != company_id:
@@ -304,10 +321,18 @@ def create_invitation(company_id: int, payload: CompanyInvitationCreate, db: Ses
 
 @router.get("/{company_id}/invitations", response_model=list[CompanyInvitationOut])
 def list_invitations(company_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    # Phase 17.1 (audit HIGH-2): `_require_company_owner` is
+    # `require_company_access` plus a role check, and the former used to
+    # no-op for owner/admin -- so this leaked another tenant's pending
+    # accountant invitations: invited_email, intended_role, status,
+    # invited_by_user_id, expires_at and token_hash. (token_hash is
+    # SHA-256 of a 256-bit token, so the tokens themselves were not
+    # recoverable; the exposure was the PII and the invitation graph.)
+    # Closed by the helper; the predicate below is defence-in-depth.
     _require_company_owner(company_id, user, db)
     return (
         db.query(CompanyInvitation)
-        .filter(CompanyInvitation.company_id == company_id)
+        .filter(CompanyInvitation.tenant_id == user.tenant_id, CompanyInvitation.company_id == company_id)
         .order_by(CompanyInvitation.created_at.desc())
         .all()
     )
@@ -317,7 +342,14 @@ def list_invitations(company_id: int, db: Session = Depends(get_db), user: User 
 def revoke_invitation(company_id: int, invitation_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     _require_company_owner(company_id, user, db)
     invitation = db.get(CompanyInvitation, invitation_id)
-    if invitation is None or invitation.company_id != company_id:
+    # Phase 17.1 (audit HIGH-3): `_require_company_owner` -> `require_company_access`
+    # now rejects a company in another tenant, which closes the cross-tenant
+    # revocation on its own. The `invitation.tenant_id` comparison below is
+    # deliberate defence-in-depth and mirrors the check `users.py` has always
+    # had for the equivalent user-invitation revoke: the invitation is a
+    # resource id in its own right, so it is validated against the caller's
+    # tenant directly rather than only through the company it hangs off.
+    if invitation is None or invitation.tenant_id != user.tenant_id or invitation.company_id != company_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
     if invitation.status != CompanyInvitationStatus.pending:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Invitation is {invitation.status.value}, not pending")
@@ -351,6 +383,39 @@ def accept_invitation(payload: AcceptInvitationRequest, db: Session = Depends(ge
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This invitation was issued to a different email address")
 
     company = db.get(Company, invitation.company_id)
+    # Phase 17.1 (audit HIGH-4): this endpoint previously appended the
+    # accepting user to `company.users` with no tenant comparison at all,
+    # and no None check -- so it created cross-tenant `user_companies` rows
+    # (User.email is globally unique, not per-tenant, so a tenant-B admin
+    # could invite an address that already belongs to a tenant-A user) and
+    # raised AttributeError/500 if the company had been deleted while an
+    # invitation was pending.
+    #
+    # The cross-tenant grant was documented as an intentional "accountant
+    # ecosystem" feature (docs/accountant-ecosystem.md), but it never
+    # worked: every data endpoint additionally filters on
+    # `tenant_id == user.tenant_id`, so the grantee got 404 on all of the
+    # company's documents, transactions and returns, and the company never
+    # appeared in their GET /companies. What it DID do was defeat the
+    # membership check in require_company_access for the endpoints that
+    # relied on that alone. Rejecting it makes the boundary explicit
+    # instead of half-open.
+    #
+    # Genuine cross-tenant delegation needs a first-class CompanyAccess
+    # grant (per-company role, revocable, expiring) that resource queries
+    # authorise against INSTEAD of tenant_id -- audit 6.7(b), roadmap
+    # Tier 4.2. That is a feature, not a security fix, and is deliberately
+    # not attempted here.
+    if company is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The company this invitation was issued for no longer exists",
+        )
+    if company.tenant_id != user.tenant_id or invitation.tenant_id != user.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This invitation was issued by a different organisation and cannot be accepted from this account",
+        )
     if user not in company.users:
         company.users.append(user)
 

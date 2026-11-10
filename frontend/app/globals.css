@@ -266,10 +266,48 @@
   }
 }
 
+/* Locale-aware application font.
+   Dutch/English retain Geist. Persian leads with Vazirmatn, which is designed
+   for Persian and carries the glyph shapes and metrics that language needs;
+   Arabic leads with Noto Sans Arabic. Each stack keeps the other as a
+   fallback so a string mixing both scripts still renders, and both end in a
+   generic sans-serif.
+
+   Phase 17.5 (audit 6.12): these MUST use the `:lang()` pseudo-class and NOT
+   a `[lang="fa"]` attribute selector. app/layout.tsx emits the full BCP-47
+   tag ("fa-IR", "ar-SA"), and an attribute selector demands an exact match --
+   so an earlier `:root[lang="fa"]` never matched anything and Persian and
+   Arabic silently fell back to Geist while both webfonts were downloaded and
+   never used. `:lang(fa)` matches "fa-IR" correctly.
+   test/locale-fonts.test.ts pins this, including a jsdom assertion that
+   `:lang(fa)` matches lang="fa-IR" while `[lang="fa"]` does not. */
+:root {
+  --font-app-sans: var(--font-geist-sans);
+}
+
+:root:lang(fa) {
+  --font-app-sans: var(--font-vazirmatn), var(--font-noto-sans-arabic), sans-serif;
+  --font-sans: var(--font-vazirmatn), var(--font-noto-sans-arabic), sans-serif;
+}
+
+:root:lang(ar) {
+  --font-app-sans: var(--font-noto-sans-arabic), var(--font-vazirmatn), sans-serif;
+  --font-sans: var(--font-noto-sans-arabic), var(--font-vazirmatn), sans-serif;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-app-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Keep native form controls consistent with the active locale font. */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
 }
 
 ::selection {
