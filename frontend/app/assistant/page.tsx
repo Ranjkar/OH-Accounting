@@ -82,7 +82,7 @@ function AssistantContent() {
           </button>
         </div>
 
-        <form onSubmit={handleAsk} className="flex items-end gap-3">
+        <form onSubmit={handleAsk} className="flex flex-wrap items-end gap-3">
           <div className="flex-1 space-y-1">
             <label className="text-xs font-medium text-text-secondary">{t("askAQuestion")}</label>
             <input
@@ -110,7 +110,7 @@ function AssistantContent() {
           </div>
           <details className="text-xs text-text-secondary">
             <summary className="cursor-pointer hover:text-navy">{t("viewUnderlyingFacts")}</summary>
-            <pre className="mt-2 overflow-x-auto bg-muted rounded-md p-3 text-xs" dir="ltr">{JSON.stringify(response.facts, null, 2)}</pre>
+            <pre className="mt-2 overflow-x-auto bg-muted rounded-md p-3 text-xs" dir="ltr" tabIndex={0}>{JSON.stringify(response.facts, null, 2)}</pre>
           </details>
         </div>
       )}

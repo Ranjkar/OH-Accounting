@@ -70,7 +70,7 @@ function TeamAccessSection({ companyId }: { companyId: number }) {
       <p className="text-xs text-text-secondary">{t("intro")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <form onSubmit={handleInvite} className="flex items-end gap-3">
+      <form onSubmit={handleInvite} className="flex flex-wrap items-end gap-3">
         <div className="space-y-1 flex-1 max-w-sm">
           <label htmlFor="invite-email" className="text-xs font-medium text-text-secondary">{t("inviteByEmail")}</label>
           <input
@@ -187,7 +187,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">{company.name}</h1>
           <p className="text-sm text-text-secondary">
@@ -220,7 +220,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
         </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-text-secondary">{t("proRataLabel")}</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               disabled={!canEdit}
               value={proRata}
@@ -242,7 +242,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
 
       {canManageAccess && <TeamAccessSection companyId={companyId} />}
 
-      <form onSubmit={handleAddYear} className="flex items-end gap-3">
+      <form onSubmit={handleAddYear} className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <label className="text-sm font-medium text-text-primary">{t("addFinancialYear")}</label>
           <input
@@ -266,7 +266,7 @@ function CompanyDetailContent({ companyId }: { companyId: number }) {
             <div className="px-5 py-4 border-b border-border-subtle">
               <h2 className="font-medium text-text-primary">{t("financialYearHeading", { year: fy.year })}</h2>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
             <table className="table-v3">
               <thead>
                 <tr>

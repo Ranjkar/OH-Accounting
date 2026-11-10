@@ -8,7 +8,7 @@ interface GlassTabsProps<T extends string> {
 
 export default function GlassTabs<T extends string>({ tabs, value, onChange }: GlassTabsProps<T>) {
   return (
-    <div role="tablist" className="inline-flex items-center gap-1 glass-panel p-1">
+    <div role="tablist" className="inline-flex flex-wrap items-center gap-1 glass-panel p-1 max-w-full">
       {tabs.map((tab) => (
         <button
           key={tab.value}

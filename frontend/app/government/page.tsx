@@ -115,7 +115,7 @@ function GovernmentContent() {
         <form onSubmit={handleLookup} className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
             <label htmlFor="kvk-number" className="text-label-v2">{t("kvkNumber")}</label>
-            <GlassInput id="kvk-number" required dir="ltr" value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)} placeholder="68750110" />
+            <GlassInput id="kvk-number" required dir="ltr" inputMode="numeric" value={kvkNumber} onChange={(e) => setKvkNumber(e.target.value)} placeholder="68750110" />
           </div>
           <GlassButton type="submit" loading={loading}>
             {t("lookUp")}

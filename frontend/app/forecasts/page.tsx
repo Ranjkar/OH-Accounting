@@ -46,7 +46,7 @@ function ForecastsContent() {
       <p className="text-sm text-text-secondary">{t("subtitle")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
@@ -65,7 +65,7 @@ function ForecastsContent() {
       {forecast && (
         <>
           <div className="card-v2 p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-medium text-text-primary">{t("revenueExpenseProfitTrend")}</h2>
               <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t("estimate")}</span>
             </div>
@@ -92,7 +92,7 @@ function ForecastsContent() {
             </ul>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="card-v2 p-4">
               <h2 className="font-medium text-text-primary mb-2">{t("outstandingInvoicesTitle")}</h2>
               <p className="text-sm">{t("receivablesOutstanding")}: <span className="font-mono">{formatEUR(forecast.outstanding_invoices.confirmed_receivables_outstanding, locale)}</span></p>
@@ -114,7 +114,7 @@ function ForecastsContent() {
           <div className="card-v2 p-4">
             <h2 className="font-medium text-text-primary mb-2">{t("cashFlowForecastTitle")}</h2>
             <p className="text-xs text-pending">{forecast.cash_flow.net_bank_transaction_movement_disclaimer}</p>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
             <table className="table-v3">
               <thead>
                 <tr>

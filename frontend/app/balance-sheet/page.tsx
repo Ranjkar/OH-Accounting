@@ -75,7 +75,7 @@ function BalanceSheetContent() {
       <p className="text-sm text-text-secondary">{t("manualItemsNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
@@ -148,13 +148,13 @@ function BalanceSheetContent() {
               ))}
             </select>
             <input required value={label} aria-label={tCommon("name")} onChange={(e) => setLabel(e.target.value)} placeholder={t("labelPlaceholder")} className="input-v2 px-3 py-2 text-sm" />
-            <input required value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
+            <input inputMode="decimal" required value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
             <input type="date" value={itemDate} aria-label={t("itemDate")} onChange={(e) => setItemDate(e.target.value)} className="input-v2 px-3 py-2 text-sm" />
             <button type="submit" className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium">
               {tCommon("create")}
             </button>
           </form>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

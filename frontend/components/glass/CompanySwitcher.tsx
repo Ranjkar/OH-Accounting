@@ -19,7 +19,6 @@ export default function CompanySwitcher() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label="Switch active company"
         className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-text-primary hover:bg-muted transition-colors max-w-[10rem] sm:max-w-[14rem]"
       >
         <span className="truncate font-medium">{selectedCompany?.name ?? "Select a company"}</span>

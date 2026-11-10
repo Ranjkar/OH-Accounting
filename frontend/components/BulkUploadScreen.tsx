@@ -91,7 +91,7 @@ export default function BulkUploadScreen({ category, title, description, acceptH
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
       <div className="card-v2 p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-4 max-w-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary">{tCommon("company")}</label>
             <select

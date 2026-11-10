@@ -112,7 +112,7 @@ function LoonheffingenContent() {
             {runs.length === 0 ? (
               <GlassEmptyState title={t("noPayrollRunsYet")} description={t("createOneFromPayrollFirst")} icon={<IconTax size={28} />} />
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
               <table className="table-v3">
                 <thead>
                   <tr>
@@ -156,11 +156,11 @@ function LoonheffingenContent() {
               </div>
             ) : (
               <div className="space-y-4 text-sm">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="font-medium text-text-primary">{t("declarationHash", { id: declaration.id })}</h3>
                   <StatusBadge status={String(declaration.status)} />
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <p className="flex justify-between"><span className="text-text-secondary">{t("grossWages")}</span><span className="font-mono">€{String(declaration.total_gross_wages)}</span></p>
                   <p className="flex justify-between"><span className="text-text-secondary">{t("wageTaxWithheld")}</span><span className="font-mono">€{String(declaration.total_wage_tax_withheld)}</span></p>
                   <p className="flex justify-between"><span className="text-text-secondary">{t("employerPremiums")}</span><span className="font-mono">€{String(declaration.total_employer_premiums)}</span></p>
@@ -203,7 +203,7 @@ function LoonheffingenContent() {
                   <div className="space-y-2 pt-2 border-t border-border">
                     <GlassInput aria-label={t("governmentResponseReference")} placeholder={t("governmentResponseReferencePlaceholder")} value={responseRef} onChange={(e) => setResponseRef(e.target.value)} />
                     <GlassInput aria-label={t("rejectionReason")} placeholder={t("rejectionReasonPlaceholder")} value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <GlassButton
                         size="sm"
                         disabled={busy || !responseRef.trim()}

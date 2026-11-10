@@ -103,7 +103,7 @@ function AiIntelligenceContent() {
             )}
           </GlassPanel>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
             <GlassStatCard
               label={t("openAnomalies")}
               value={anomalies.length}

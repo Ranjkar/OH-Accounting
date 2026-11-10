@@ -132,9 +132,9 @@ function PayrollContent() {
         </form>
       )}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card-v2 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>
@@ -175,7 +175,7 @@ function PayrollContent() {
                 {selectedRun.period_type} {selectedRun.period_number}/{selectedRun.period_year} -- {t(`runStatus.${selectedRun.status}` as never)}
               </h3>
               {selectedRun.status === "DRAFT" && (
-                <div className="flex items-end gap-2">
+                <div className="flex flex-wrap items-end gap-2">
                   <select aria-label={t("employee")} value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-2 py-1.5 text-xs">
                     <option value="">{t("employee")}</option>
                     {employees.map((emp) => (

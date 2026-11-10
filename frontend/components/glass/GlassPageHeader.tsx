@@ -10,8 +10,8 @@ interface GlassPageHeaderProps {
 
 export default function GlassPageHeader({ title, subtitle, actions }: GlassPageHeaderProps) {
   return (
-    <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
-      <div>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="min-w-0">
         <h1 className="text-page-title">{title}</h1>
         {subtitle && <p className="text-secondary-v2 mt-1 max-w-3xl">{subtitle}</p>}
       </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Arabic, Vazirmatn } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
@@ -68,6 +68,13 @@ export const metadata: Metadata = {
 // generation and cookies() throws DYNAMIC_SERVER_USAGE.
 // `instant` only disables instant-navigation validation for this tree.
 export const instant = false;
+
+// viewport-fit=cover lets the shell extend under notches/home indicators and
+// pad itself with env(safe-area-inset-*) (see globals.css). No maximum-scale
+// or user-scalable=no: pinch-zoom stays available (WCAG 1.4.4). Input-focus
+// zoom on iOS is avoided by giving form controls a 16px font on coarse
+// pointers instead (globals.css), not by disabling zoom.
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Server-resolved (cookie, then Accept-Language, then Dutch -- see

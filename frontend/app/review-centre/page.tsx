@@ -33,7 +33,7 @@ function AcknowledgeDismiss({ anomaly, onChange }: { anomaly: AnomalyFlag; onCha
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <button disabled={busy} onClick={() => act("acknowledge")} className="text-xs text-brand-purple-600 hover:underline disabled:opacity-50">
         {t("acknowledge")}
       </button>

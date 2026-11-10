@@ -126,7 +126,7 @@ function LedgerContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
@@ -196,7 +196,7 @@ function LedgerContent() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label htmlFor="ledger-form-invoice-date" className="text-xs font-medium text-text-secondary">{t("invoiceDate")}</label>
               <input
@@ -230,21 +230,21 @@ function LedgerContent() {
                   onChange={(e) => updateLine(i, { description: e.target.value })}
                   className="col-span-2 input-v2 px-2 py-1.5 text-sm"
                 />
-                <input
+                <input inputMode="decimal"
                   placeholder={t("net")}
                   required
                   value={line.net_amount}
                   onChange={(e) => updateLine(i, { net_amount: e.target.value })}
                   className="input-v2 px-2 py-1.5 text-sm"
                 />
-                <input
+                <input inputMode="decimal"
                   placeholder={t("vatRatePercent")}
                   required
                   value={line.vat_rate}
                   onChange={(e) => updateLine(i, { vat_rate: e.target.value })}
                   className="input-v2 px-2 py-1.5 text-sm"
                 />
-                <input
+                <input inputMode="decimal"
                   placeholder={t("vatAmount")}
                   required
                   value={line.vat_amount}
@@ -264,7 +264,7 @@ function LedgerContent() {
                 </select>
               </div>
             ))}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setLines((prev) => [...prev, emptyLine()])}
@@ -293,7 +293,7 @@ function LedgerContent() {
         </form>
       )}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <select
           aria-label={t("filterByCompany")}
           value={companyId}
@@ -326,7 +326,7 @@ function LedgerContent() {
         {transactions.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">{t("noTransactionsYet")}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

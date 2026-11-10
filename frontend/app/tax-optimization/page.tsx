@@ -39,7 +39,7 @@ function TaxOptimizationContent() {
       <p className="text-sm text-text-secondary">{t("intro")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <select value={companyId} aria-label={t("companyLabel")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{t("selectCompanyOption")}</option>
           {companies.map((c) => (
@@ -48,8 +48,8 @@ function TaxOptimizationContent() {
             </option>
           ))}
         </select>
-        <input value={annualProfit} aria-label={t("annualProfitLabel")} onChange={(e) => setAnnualProfit(e.target.value)} placeholder={t("annualProfitLabel")} className="input-v2 px-3 py-2 text-sm w-36" />
-        <input value={annualRevenue} aria-label={t("annualRevenueLabel")} onChange={(e) => setAnnualRevenue(e.target.value)} placeholder={t("annualRevenueLabel")} className="input-v2 px-3 py-2 text-sm w-36" />
+        <input inputMode="decimal" value={annualProfit} aria-label={t("annualProfitLabel")} onChange={(e) => setAnnualProfit(e.target.value)} placeholder={t("annualProfitLabel")} className="input-v2 px-3 py-2 text-sm w-36" />
+        <input inputMode="decimal" value={annualRevenue} aria-label={t("annualRevenueLabel")} onChange={(e) => setAnnualRevenue(e.target.value)} placeholder={t("annualRevenueLabel")} className="input-v2 px-3 py-2 text-sm w-36" />
         <button onClick={load} disabled={!companyId} className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50">
           {t("findOpportunities")}
         </button>
@@ -58,7 +58,7 @@ function TaxOptimizationContent() {
       <div className="space-y-3">
         {opportunities.map((o, i) => (
           <div key={i} className="card-v2 p-4 space-y-1">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-medium text-text-primary">{o.recommendation}</h2>
               <span className={`pill-v2 px-2 py-0.5 text-xs ${RISK_COLOR[o.risk as string] ?? ""}`}>
                 {RISK_KEY[o.risk as string] ? t(`riskLabels.${RISK_KEY[o.risk as string]}` as never) : o.risk}

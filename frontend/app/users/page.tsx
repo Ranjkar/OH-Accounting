@@ -140,7 +140,7 @@ function UsersContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
           <p className="text-sm text-text-secondary mt-1">{t("subtitle")}</p>
@@ -207,7 +207,7 @@ function UsersContent() {
         <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-text-primary">{t("teamCount", { count: users.length })}</h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>
@@ -300,7 +300,7 @@ function UsersContent() {
           <div className="px-5 py-3 border-b border-border-subtle">
             <h2 className="text-sm font-medium text-text-primary">{t("invitations")}</h2>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
             <table className="table-v3">
               <thead>
                 <tr>

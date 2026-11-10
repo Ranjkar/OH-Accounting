@@ -57,7 +57,7 @@ function LegalStructureContent() {
       <p className="text-sm text-text-secondary">{t("planningAidNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
@@ -66,8 +66,8 @@ function LegalStructureContent() {
             </option>
           ))}
         </select>
-        <input value={annualRevenue} aria-label={t("annualRevenue")} onChange={(e) => setAnnualRevenue(e.target.value)} placeholder={t("annualRevenue")} className="input-v2 px-3 py-2 text-sm w-40" />
-        <input value={annualExpenses} aria-label={t("annualOperatingExpenses")} onChange={(e) => setAnnualExpenses(e.target.value)} placeholder={t("annualOperatingExpenses")} className="input-v2 px-3 py-2 text-sm w-48" />
+        <input inputMode="decimal" value={annualRevenue} aria-label={t("annualRevenue")} onChange={(e) => setAnnualRevenue(e.target.value)} placeholder={t("annualRevenue")} className="input-v2 px-3 py-2 text-sm w-40" />
+        <input inputMode="decimal" value={annualExpenses} aria-label={t("annualOperatingExpenses")} onChange={(e) => setAnnualExpenses(e.target.value)} placeholder={t("annualOperatingExpenses")} className="input-v2 px-3 py-2 text-sm w-48" />
         <button onClick={compare} disabled={!companyId} className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50">
           {t("compare")}
         </button>

@@ -62,7 +62,7 @@ function KpisContent() {
       <p className="text-sm text-text-secondary">{t("subtitle")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (

@@ -651,3 +651,68 @@ table, .financial-table { font-variant-numeric: tabular-nums; font-feature-setti
 }
 .chevron-closed { transform: rotate(-90deg); }
 [dir="rtl"] .chevron-closed { transform: rotate(90deg); }
+
+/* ---- Responsive / mobile (phones, tablets, touch) ---- */
+
+/* Device safe areas (notch, home indicator) -- only non-zero when the
+   viewport meta sets viewport-fit=cover (app/layout.tsx). */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* WCAG 2.5.8: every button is at least 24px tall even when its text is
+   small (links in running text are exempt by the spec; standalone buttons
+   are not). Touch devices get a 44px comfortable target for form controls. */
+button, [role="button"] { min-height: 1.5rem; }
+@media (pointer: coarse) {
+  .input-v2, .btn-primary-v2, .btn-secondary-v2, .btn-outline-v2, .btn-danger-v2, .btn-success-v2 { min-height: 2.75rem; }
+  /* Prevents iOS Safari's automatic zoom-on-focus (triggered by any control
+     below 16px) WITHOUT disabling user zoom. `max()` keeps larger sizes. */
+  input, select, textarea { font-size: max(16px, 1em); }
+}
+
+/* Financial tables: identifiers, dates and amounts never wrap mid-value --
+   the table scrolls inside its container instead (every .table-v3 is wrapped
+   in an overflow-x-auto div). Free-text columns still wrap. */
+.table-v3 th,
+.table-v3 td:first-child,
+.table-v3 .col-amount,
+.table-v3 .text-right { white-space: nowrap; }
+
+/* Scroll affordance for horizontally scrollable tables: fading shadows on
+   the hidden edge(s), pure CSS (background-attachment: local trick). */
+.overflow-x-auto {
+  background:
+    linear-gradient(to right, var(--surface-card) 30%, transparent) left / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--surface-card) 30%, transparent) right / 2.5rem 100% no-repeat local,
+    linear-gradient(to right, rgba(0, 0, 0, 0.12), transparent) left / 0.75rem 100% no-repeat scroll,
+    linear-gradient(to left, rgba(0, 0, 0, 0.12), transparent) right / 0.75rem 100% no-repeat scroll;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Reflow at 320px / 400% zoom: page titles and KPI figures scale down a step
+   so long Dutch/German-style compound words don't force a horizontal scroll. */
+@media (max-width: 400px) {
+  :root { --font-size-page-title: 1.375rem; }
+  .text-2xl { font-size: 1.375rem; line-height: 1.3; }
+}
+
+/* Phones: compact cell padding so more columns fit, and the first column
+   (date / box number / name -- the row's identifier) stays pinned while the
+   rest of the row scrolls sideways under it. Hover rows keep their own
+   background; the pinned cell inherits the card surface. */
+@media (max-width: 639px) {
+  .table-v3 { font-size: var(--font-size-secondary); }
+  .table-v3 thead th, .table-v3 tbody td { padding-inline: 0.5rem; }
+  .table-v3 th:first-child, .table-v3 td:first-child {
+    position: sticky;
+    inset-inline-start: 0;
+    background: var(--surface-card);
+    z-index: 1;
+  }
+  .table-v3 tbody tr:hover td:first-child { background: var(--color-token-muted); }
+}

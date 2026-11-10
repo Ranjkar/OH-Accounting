@@ -12,7 +12,7 @@ type Format = "pdf" | "xlsx" | "csv";
 
 function DownloadButtons({ onDownload }: { onDownload: (format: Format) => void }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {(["pdf", "xlsx", "csv"] as Format[]).map((fmt) => (
         <button
           key={fmt}
@@ -74,7 +74,7 @@ function ReportsContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <select
           value={companyId}
           aria-label={tCommon("company")}
@@ -110,7 +110,7 @@ function ReportsContent() {
       {companyId && financialYearId && (
         <>
           <div className="card-v2 p-5 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-sm font-medium text-text-primary">{t("financialOverviewReport")}</h2>
               <DownloadButtons onDownload={downloadFinancialOverview} />
             </div>
@@ -122,7 +122,7 @@ function ReportsContent() {
               <div className="px-5 py-3 border-b border-border-subtle">
                 <h2 className="text-sm font-medium text-text-primary">{t("periodComparisonHeading", { year: comparison.financial_year })}</h2>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
               <table className="table-v3">
                 <thead>
                   <tr>

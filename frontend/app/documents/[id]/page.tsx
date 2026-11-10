@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Suspense, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState, useId } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
@@ -29,10 +29,12 @@ function FieldInput({
   type?: string;
   dir?: "ltr";
 }) {
+  const id = useId();
   return (
     <div className="space-y-1">
-      <label className="text-xs font-medium text-text-secondary">{label}</label>
+      <label htmlFor={id} className="text-xs font-medium text-text-secondary">{label}</label>
       <input
+        id={id}
         type={type}
         dir={dir}
         value={value ?? ""}
@@ -158,7 +160,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <button onClick={() => router.push("/documents")} className="text-sm text-navy hover:underline">
             {t("backToDocuments")}
@@ -176,7 +178,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: preview */}
         <div className="card-v2 overflow-hidden">
           <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
@@ -185,7 +187,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
               {doc.content_type} · {(doc.file_size / 1024).toFixed(0)} KB
             </span>
           </div>
-          <div className="h-[600px] bg-muted flex items-center justify-center">
+          <div className="h-[60dvh] lg:h-[600px] bg-muted flex items-center justify-center">
             {!fileUrl && <p className="text-sm text-text-secondary">{t("loadingPreview")}</p>}
             {fileUrl && isPdf && <iframe src={fileUrl} className="w-full h-full" title={t("documentPreview")} />}
             {fileUrl && isImage && (
@@ -226,7 +228,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
 
           <form onSubmit={handleSaveCorrections} className="card-v2 p-4 space-y-4">
             <h2 className="text-sm font-medium text-text-primary">{t("extractedFields")}</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FieldInput label={t("invoiceNumber")} value={form.invoice_number ?? null} onChange={(v) => setField("invoice_number", v)} />
               <FieldInput label={t("invoiceDate")} type="date" value={form.invoice_date ?? null} onChange={(v) => setField("invoice_date", v)} />
               <FieldInput label={t("dueDate")} type="date" value={form.due_date ?? null} onChange={(v) => setField("due_date", v)} />
@@ -248,8 +250,9 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary">{tCommon("description")}</label>
+              <label htmlFor="doc-description" className="text-xs font-medium text-text-secondary">{tCommon("description")}</label>
               <textarea
+                id="doc-description"
                 value={form.description ?? ""}
                 onChange={(e) => setField("description", e.target.value)}
                 className="w-full input-v2 px-2.5 py-1.5 text-sm"
@@ -271,7 +274,7 @@ function DocumentReviewContent({ documentId }: { documentId: number }) {
           {doc.line_items.length > 0 && (
             <div className="card-v2 p-4">
               <h2 className="text-sm font-medium text-text-primary mb-2">{t("lineItems")}</h2>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
               <table className="table-v3">
                 <thead>
                   <tr>

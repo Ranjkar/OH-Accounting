@@ -62,7 +62,7 @@ function AnomaliesContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button onClick={detect} disabled={!companyId} className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
           {t("runDetection")}
@@ -72,7 +72,7 @@ function AnomaliesContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <select
           value={companyId}
           aria-label={t("companyLabel")}
@@ -89,7 +89,7 @@ function AnomaliesContent() {
             </option>
           ))}
         </select>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           {(["OPEN", "ACKNOWLEDGED", "DISMISSED", "all"] as const).map((s) => (
             <button
               key={s}
@@ -105,14 +105,14 @@ function AnomaliesContent() {
       <div className="space-y-3">
         {flags.map((f) => (
           <div key={f.id} className="card-v2 p-4 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <span className={`text-xs rounded-full px-2 py-0.5 ${SEVERITY_COLOR[f.severity]}`}>
                 {t.has(`severityLabels.${f.severity}`) ? t(`severityLabels.${f.severity}` as never) : f.severity}
               </span>
               <span className="text-xs text-text-secondary" dir="ltr">{f.rule_code}</span>
             </div>
             <p className="text-sm">{f.message}</p>
-            <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto" dir="ltr">{JSON.stringify(f.evidence, null, 2)}</pre>
+            <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto" dir="ltr" tabIndex={0}>{JSON.stringify(f.evidence, null, 2)}</pre>
             {f.status === "OPEN" && (
               <div className="flex items-center gap-2">
                 <button onClick={() => acknowledge(f.id)} className="btn-primary-v2 px-3 py-1.5 text-xs">

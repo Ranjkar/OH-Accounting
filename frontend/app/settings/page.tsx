@@ -75,7 +75,7 @@ function MfaSection() {
           <p className="text-sm text-text-secondary">
             {t.rich("mfaEnabledBody", { status: (chunks) => <span className="font-medium text-navy">{chunks}</span> })}
           </p>
-          <form onSubmit={handleDisable} className="flex items-end gap-3">
+          <form onSubmit={handleDisable} className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <label htmlFor="mfa-disable-code" className="text-label-v2">{t("mfaCurrentCode")}</label>
               <input id="mfa-disable-code" required value={disableCode} onChange={(e) => setDisableCode(e.target.value)} placeholder={t("mfaDigitCode")} className="input-v2 px-3 py-2 text-sm w-40" />
@@ -88,7 +88,7 @@ function MfaSection() {
           <p className="text-sm text-text-secondary">{t("mfaSetupInstructions")}</p>
           <p className="font-mono text-xs break-all rounded-md bg-muted px-3 py-2" dir="ltr">{setupSecret}</p>
           <p className="text-xs text-text-secondary break-all" dir="ltr">{provisioningUri}</p>
-          <div className="flex items-end gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <label htmlFor="mfa-enable-code" className="text-label-v2">{t("mfaCodeFromApp")}</label>
               <input id="mfa-enable-code" required autoFocus value={code} onChange={(e) => setCode(e.target.value)} placeholder={t("mfaDigitCode")} className="input-v2 px-3 py-2 text-sm w-40" />

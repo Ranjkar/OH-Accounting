@@ -14,7 +14,7 @@ function JsonSnapshot({ label, value }: { label: string; value: Record<string, u
   return (
     <div>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">{label}</p>
-      <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto" dir="ltr">{JSON.stringify(value, null, 2)}</pre>
+      <pre className="text-xs bg-muted rounded-md p-2 overflow-x-auto" dir="ltr" tabIndex={0}>{JSON.stringify(value, null, 2)}</pre>
     </div>
   );
 }
@@ -150,7 +150,7 @@ function AuditLogContent() {
       </div>
 
       <div className="card-v2 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

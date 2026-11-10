@@ -64,7 +64,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <button onClick={() => router.push("/ledger")} className="text-sm text-navy hover:underline">
             {t("backToLedger")}
@@ -73,7 +73,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
             {transaction.transaction_type.replaceAll("_", " ")} · {transaction.counterparty_name ?? t("noCounterparty")}
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <ApprovalBadge status={transaction.approval_status} />
           <PaymentBadge status={transaction.payment_status} />
         </div>
@@ -107,7 +107,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
         <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-medium text-text-primary">{t("lineItems")}</h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
         <table className="table-v3">
           <thead>
             <tr>
@@ -144,7 +144,7 @@ function TransactionDetailContent({ transactionId }: { transactionId: number }) 
           <h2 className="text-sm font-medium text-text-primary">{t("payments")}</h2>
         </div>
         {transaction.payments.length > 0 && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <tbody>
               {transaction.payments.map((p) => (

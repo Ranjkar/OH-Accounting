@@ -88,7 +88,7 @@ function AutomationContent() {
             <Tile label={t("pendingNotes")} value={summary.pending_notes} href="/companies" />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() =>
                 run(async () => {

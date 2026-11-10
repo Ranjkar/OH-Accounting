@@ -59,7 +59,7 @@ function EntrepreneurHoursContent() {
       <p className="text-sm text-text-secondary">{t("urencriteriumNotice")}</p>
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
@@ -105,7 +105,7 @@ function EntrepreneurHoursContent() {
               </option>
             ))}
           </select>
-          <input value={durationHours} aria-label={t("durationHours")} onChange={(e) => setDurationHours(e.target.value)} placeholder={t("hours")} className="input-v2 px-3 py-2 text-sm w-24" />
+          <input inputMode="decimal" value={durationHours} aria-label={t("durationHours")} onChange={(e) => setDurationHours(e.target.value)} placeholder={t("hours")} className="input-v2 px-3 py-2 text-sm w-24" />
           <input value={description} aria-label={tCommon("description")} onChange={(e) => setDescription(e.target.value)} placeholder={tCommon("description")} className="input-v2 px-3 py-2 text-sm flex-1" />
           <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
             {t("logHours")}
@@ -114,7 +114,7 @@ function EntrepreneurHoursContent() {
       )}
 
       <div className="card-v2 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
         <table className="table-v3">
           <thead>
             <tr>

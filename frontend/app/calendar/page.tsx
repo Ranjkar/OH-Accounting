@@ -49,9 +49,9 @@ function TaxCalendarContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <button
             onClick={() => setView("list")}
             className={`rounded-full px-3 py-1 ${view === "list" ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}
@@ -69,7 +69,7 @@ function TaxCalendarContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <select
           value={companyId}
           aria-label={t("companyLabel")}
@@ -83,7 +83,7 @@ function TaxCalendarContent() {
             </option>
           ))}
         </select>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
@@ -102,7 +102,7 @@ function TaxCalendarContent() {
         <p className="text-sm text-text-secondary">{t("noMatches")}</p>
       ) : view === "list" ? (
         <div className="card-v2 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

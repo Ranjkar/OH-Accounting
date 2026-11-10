@@ -112,7 +112,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <button onClick={() => router.back()} className="text-sm text-navy hover:underline">
             ← {tCommon("back")}
@@ -161,7 +161,7 @@ function BatchDetailContent({ batchId }: { batchId: number }) {
       )}
 
       <div className="card-v2 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
         <table className="table-v3">
           <thead>
             <tr>

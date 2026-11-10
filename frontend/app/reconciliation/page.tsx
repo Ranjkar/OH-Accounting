@@ -87,7 +87,7 @@ function ReconciliationContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button
           onClick={bulkApprove}
@@ -129,7 +129,7 @@ function ReconciliationContent() {
             {tx.matches
               .filter((m) => m.status === "SUGGESTED")
               .map((m) => (
-                <div key={m.id} className="rounded-md border border-border-subtle p-3 flex items-center justify-between gap-3 text-sm">
+                <div key={m.id} className="rounded-md border border-border-subtle p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
                   <div>
                     <p dir="ltr">
                       {t("invoiceLabel", { id: m.accounting_transaction_id })} · <span className="font-semibold">{m.confidence_level}</span> ({m.confidence_score})
@@ -161,7 +161,7 @@ function ReconciliationContent() {
             {tx.matches
               .filter((m) => m.status === "APPROVED")
               .map((m) => (
-                <div key={m.id} className="rounded-md border border-border-subtle p-3 flex items-center justify-between gap-3 text-sm">
+                <div key={m.id} className="rounded-md border border-border-subtle p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
                   <p dir="ltr">
                     {t("invoiceLabel", { id: m.accounting_transaction_id })} · {t("allocatedShort", { amount: formatEUR(m.allocated_amount, locale) })}
                   </p>

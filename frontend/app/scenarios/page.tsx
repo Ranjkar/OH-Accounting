@@ -97,7 +97,7 @@ function ScenariosContent() {
         <div className="card-v2 p-4 space-y-3">
           <h2 className="font-medium text-text-primary">{t("newScenario")}</h2>
           <form onSubmit={createScenario} className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <input required value={name} aria-label={tCommon("name")} onChange={(e) => setName(e.target.value)} placeholder={t("scenarioNamePlaceholder")} className="input-v2 px-3 py-2 text-sm w-56" />
               <select value={scenarioType} aria-label={t("scenarioType")} onChange={(e) => setScenarioType(e.target.value as ScenarioType)} className="input-v2 px-2 py-2 text-sm">
                 <option value="BASE">{t("baseCase")}</option>
@@ -125,7 +125,7 @@ function ScenariosContent() {
       )}
 
       <div className="card-v2 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
         <table className="table-v3">
           <thead>
             <tr>
@@ -162,7 +162,7 @@ function ScenariosContent() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button onClick={compare} disabled={selectedIds.length < 2} className="rounded-md bg-navy-solid text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
           {t("compareSelected")}
         </button>
@@ -176,7 +176,7 @@ function ScenariosContent() {
       {comparison && (
         <div className="card-v2 p-4">
           <h2 className="font-medium text-text-primary mb-2">{t("comparison")}</h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

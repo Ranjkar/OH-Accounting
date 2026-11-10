@@ -67,7 +67,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             >
               <IconBell size={18} />
             </button>
-            <Link href="/sales/upload" className="btn-primary-v2 px-3 sm:px-4 py-2 text-sm inline-flex items-center gap-1.5">
+            <Link href="/sales/upload" aria-label={t("createInvoice")} className="btn-primary-v2 px-3 sm:px-4 py-2 text-sm inline-flex items-center gap-1.5">
               <IconPlus size={15} />
               <span className="hidden sm:inline">{t("createInvoice")}</span>
             </Link>

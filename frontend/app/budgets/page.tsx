@@ -114,7 +114,7 @@ function BudgetsContent() {
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
       {message && <div className="rounded-md bg-green-50 text-green-700 text-sm px-3 py-2">{message}</div>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("selectCompany")}</option>
           {companies.map((c) => (
@@ -151,7 +151,7 @@ function BudgetsContent() {
           )}
           <form onSubmit={createBudget} className="space-y-3">
             <input required value={name} aria-label={tCommon("name")} onChange={(e) => setName(e.target.value)} placeholder={t("budgetName")} className="input-v2 px-3 py-2 text-sm w-64" />
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2">
               <input value={category} aria-label={t("category")} onChange={(e) => setCategory(e.target.value)} placeholder={t("categoryPlaceholder")} className="input-v2 px-3 py-2 text-sm w-48" />
               <select value={month} aria-label={t("month")} onChange={(e) => setMonth(Number(e.target.value))} className="input-v2 px-2 py-2 text-sm">
                 {MONTHS.map((m) => (
@@ -160,7 +160,7 @@ function BudgetsContent() {
                   </option>
                 ))}
               </select>
-              <input value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
+              <input inputMode="decimal" value={amount} aria-label={tCommon("amount")} onChange={(e) => setAmount(e.target.value)} placeholder={tCommon("amount")} className="input-v2 px-3 py-2 text-sm w-32" />
               <button type="button" onClick={addDraftLine} className="input-v2 px-3 py-2 text-sm">
                 {t("addLine")}
               </button>
@@ -181,9 +181,9 @@ function BudgetsContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card-v2 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

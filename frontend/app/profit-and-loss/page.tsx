@@ -97,7 +97,7 @@ function PnlContent() {
 
       {report && (
         <div className="card-v2 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

@@ -33,9 +33,9 @@ function BatchesContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/sales/upload" className="rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition-colors">
             {t("uploadSalesInvoices")}
           </Link>
@@ -47,7 +47,7 @@ function BatchesContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <select value={companyId} aria-label={tCommon("company")} onChange={(e) => setCompanyId(e.target.value ? Number(e.target.value) : "")} className="input-v2 px-3 py-2 text-sm">
           <option value="">{tCommon("allCompanies")}</option>
           {companies.map((c) => (
@@ -56,7 +56,7 @@ function BatchesContent() {
             </option>
           ))}
         </select>
-        <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap gap-2 text-sm">
           {(["all", "SALES", "PURCHASES"] as const).map((c) => (
             <button
               key={c}
@@ -73,7 +73,7 @@ function BatchesContent() {
         {batches.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">{t("noBatchesYet")}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

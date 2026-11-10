@@ -40,9 +40,9 @@ function CashFlowContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <button onClick={() => setTab("forecast")} className={`rounded-full px-3 py-1 ${tab === "forecast" ? "bg-navy-solid text-white" : "bg-surface-card border border-border text-text-secondary hover:bg-muted"}`}>
             {t("forecast")}
           </button>
@@ -54,7 +54,7 @@ function CashFlowContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <select
           value={companyId}
           aria-label={t("companyLabel")}
@@ -158,7 +158,7 @@ function CashFlowContent() {
               <h2 className="font-medium text-text-primary">{t("monthlyProjection")}</h2>
               <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t("estimateNotConfirmed")}</span>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0}>
             <table className="table-v3">
               <thead>
                 <tr>

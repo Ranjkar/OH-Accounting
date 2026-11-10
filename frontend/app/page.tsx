@@ -346,7 +346,7 @@ function DashboardContent() {
         {summary.upcoming_deadlines.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">{t("noOpenVatPeriods")}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

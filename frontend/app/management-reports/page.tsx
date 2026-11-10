@@ -54,7 +54,7 @@ function ManagementReportsContent() {
           <div className="card-v2 p-4 space-y-3">
             <h2 className="font-medium text-text-primary">{t("pnlPackTitle")}</h2>
             <p className="text-xs text-text-secondary">{t("pnlPackHint")}</p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <select aria-label={t("periodType")} value={periodType} onChange={(e) => setPeriodType(e.target.value as typeof periodType)} className="input-v2 px-3 py-2 text-sm">
                 <option value="MONTHLY">{t("monthly")}</option>
                 <option value="QUARTERLY">{t("quarterly")}</option>
@@ -67,7 +67,7 @@ function ManagementReportsContent() {
                 </a>
               ))}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
                 <a key={fmt} href={api.balanceSheetReportUrl(Number(companyId), referenceDate, fmt)} className="input-v2 px-3 py-1.5 text-sm">
                   {t("balanceSheet")} {fmt.toUpperCase()}
@@ -96,7 +96,7 @@ function ManagementReportsContent() {
             <h2 className="font-medium text-text-primary">{t("scenarioComparison")}</h2>
             {scenarios.length === 0 && <p className="text-sm text-text-secondary">{t("noScenariosYet")}</p>}
             {scenarios.map((s) => (
-              <label key={s.id} className="flex items-center gap-2 text-sm">
+              <label key={s.id} className="flex flex-wrap items-center gap-2 text-sm">
                 <input type="checkbox" checked={scenarioIds.includes(s.id)} onChange={() => toggleScenario(s.id)} />
                 {s.name} ({s.scenario_type})
               </label>

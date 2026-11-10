@@ -103,7 +103,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
                 <p className="font-medium text-navy text-sm">{p.label}</p>
                 <span className="text-xs text-text-secondary">{t("filingDeadlineOn", { date: p.filing_deadline })}</span>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0}>
               <table className="table-v3">
                 <tbody>
                   {p.rows.map((row) => (
@@ -185,7 +185,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
         {workspace.vat_returns.length === 0 ? (
           <p className="px-5 py-4 text-sm text-text-secondary">{t("noVatReturnsYet")}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0}>
           <table className="table-v3">
             <thead>
               <tr>

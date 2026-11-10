@@ -67,7 +67,7 @@ function DocumentsContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <label className="btn-primary-v2 px-4 py-2 text-sm cursor-pointer">
           {uploading ? t("uploading") : t("uploadDocument")}
@@ -83,7 +83,7 @@ function DocumentsContent() {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <select
           value={companyId}
           aria-label={t("companyLabel")}
@@ -97,7 +97,7 @@ function DocumentsContent() {
             </option>
           ))}
         </select>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}

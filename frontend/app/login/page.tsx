@@ -40,7 +40,7 @@ export default function LoginPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4 min-h-screen app-shell-v2">
       <form onSubmit={handleSubmit} className="glass-panel p-8 w-full max-w-sm space-y-5">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="w-10 h-10 rounded-xl hero-gradient-v2 flex items-center justify-center text-base font-bold text-white flex-shrink-0">O</div>
           <div>
             <h1 className="text-lg font-semibold text-text-primary">OnHolland Accounting</h1>

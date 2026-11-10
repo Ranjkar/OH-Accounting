@@ -102,7 +102,7 @@ function TaxCentreContent() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="card-v2 p-4">
               <h2 className="font-medium text-text-primary mb-2">{t("btwVat")}</h2>
               {overview.btw.length === 0 && <p className="text-sm text-text-secondary">{t("noVatReturnsYet")}</p>}
@@ -127,9 +127,9 @@ function TaxCentreContent() {
           {overview.current_legal_form && ["EENMANSZAAK", "VOF", "MAATSCHAP", "CV"].includes(overview.current_legal_form) && (
             <div className="card-v2 p-4 space-y-3">
               <h2 className="font-medium text-text-primary">{t("incomeTaxEstimate")}</h2>
-              <div className="flex items-end gap-3">
-                <input aria-label={t("annualProfit")} value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder={t("annualProfit")} className="input-v2 px-3 py-2 text-sm w-40" />
-                <label className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-end gap-3">
+                <input inputMode="decimal" aria-label={t("annualProfit")} value={annualProfit} onChange={(e) => setAnnualProfit(e.target.value)} placeholder={t("annualProfit")} className="input-v2 px-3 py-2 text-sm w-40" />
+                <label className="flex flex-wrap items-center gap-2 text-sm">
                   <input type="checkbox" checked={hoursCriterionMet} onChange={(e) => setHoursCriterionMet(e.target.checked)} /> {t("hoursCriterionMet")}
                 </label>
                 <button onClick={estimateIncomeTax} className="btn-secondary-v2 px-3 py-1.5 text-sm">
@@ -137,7 +137,7 @@ function TaxCentreContent() {
                 </button>
               </div>
               {incomeEstimate && (
-                <pre className="text-xs bg-surface-page rounded-md p-3 overflow-x-auto" dir="ltr">{JSON.stringify(incomeEstimate, null, 2)}</pre>
+                <pre className="text-xs bg-surface-page rounded-md p-3 overflow-x-auto" dir="ltr" tabIndex={0}>{JSON.stringify(incomeEstimate, null, 2)}</pre>
               )}
             </div>
           )}

@@ -64,7 +64,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <button onClick={() => router.push("/vat")} className="text-sm text-navy hover:underline">
             <span className="icon-directional" style={{ display: "inline-block" }}>←</span> {t("backToVatOverview")}
@@ -76,7 +76,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         {STATUS_STEPS.map((step, i) => (
           <span
             key={step}
@@ -107,7 +107,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       <div className="card-v2">
         <div className="px-5 py-3 border-b border-border-subtle flex items-center justify-between">
           <h2 className="text-sm font-medium text-text-primary">{t("declarationPreview")}</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {(["pdf", "xlsx", "csv"] as const).map((fmt) => (
               <button
                 key={fmt}
@@ -124,7 +124,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
             ))}
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
         <table className="table-v3">
           <thead>
             <tr>
@@ -200,7 +200,7 @@ function VatReturnDetailContent({ vatReturnId }: { vatReturnId: number }) {
       </div>
 
       {canEdit && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {vatReturn.status === "draft" || vatReturn.status === "needs_review" ? (
             <>
               <button

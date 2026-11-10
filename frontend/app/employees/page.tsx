@@ -87,12 +87,12 @@ function EmployeesContent() {
               <option value="HOURLY">{t("hourlyRate")}</option>
             </select>
             {salaryBasis === "MONTHLY" ? (
-              <input aria-label={t("monthlySalaryEur")} required value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder={t("monthlySalaryEur")} className="input-v2 px-3 py-2 text-sm" />
+              <input inputMode="decimal" aria-label={t("monthlySalaryEur")} required value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} placeholder={t("monthlySalaryEur")} className="input-v2 px-3 py-2 text-sm" />
             ) : (
-              <input aria-label={t("hourlyRateEur")} required value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder={t("hourlyRateEur")} className="input-v2 px-3 py-2 text-sm" />
+              <input inputMode="decimal" aria-label={t("hourlyRateEur")} required value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder={t("hourlyRateEur")} className="input-v2 px-3 py-2 text-sm" />
             )}
           </div>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex flex-wrap items-center gap-2 text-sm">
             <input type="checkbox" checked={isDga} onChange={(e) => setIsDga(e.target.checked)} /> {t("director")}
           </label>
           <button type="submit" className="btn-primary-v2 px-4 py-2 text-sm">
@@ -102,7 +102,7 @@ function EmployeesContent() {
       )}
 
       <div className="card-v2 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0}>
         <table className="table-v3">
           <thead>
             <tr>

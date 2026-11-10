@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
 import { ASSIGNABLE_ROLES } from "@/lib/api";
@@ -30,6 +30,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
   // persisted choice survives a language switch.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   const baseGroups = user?.role === "employee" ? EMPLOYEE_ROLE_NAV_GROUPS : NAV_GROUPS;
   const groups = user?.is_platform_admin ? [...baseGroups, PLATFORM_ADMIN_NAV_GROUP] : baseGroups;
@@ -75,6 +76,26 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, hydrated]);
 
+  // Mobile drawer is a modal dialog: Escape closes it, focus moves into it
+  // on open (and back to the opener on close), and the page behind it does
+  // not scroll while it is open.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawerRef.current?.querySelector<HTMLElement>("button, a[href]")?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onMobileClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      opener?.focus();
+    };
+  }, [mobileOpen, onMobileClose]);
+
   function toggleGroup(labelKey: string) {
     setOpenGroup((prev) => {
       const next = prev === labelKey ? null : labelKey;
@@ -104,7 +125,7 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
       <div className="flex items-center gap-2 px-4 py-5 flex-shrink-0">
         <div className="w-8 h-8 rounded-lg hero-gradient-v2 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">O</div>
         {!collapsed && <span className="font-semibold tracking-tight text-sidebar-text">OnHolland</span>}
-        <button onClick={onMobileClose} aria-label={tShell("closeNavigation")} className="ms-auto lg:hidden text-sidebar-text-secondary hover:text-sidebar-text p-1">
+        <button onClick={onMobileClose} aria-label={tShell("closeNavigation")} className="ms-auto lg:hidden text-sidebar-text-secondary hover:text-sidebar-text p-2 -me-2 rounded-lg">
           <IconX size={18} />
         </button>
       </div>
@@ -168,9 +189,9 @@ export default function GlassSidebar({ mobileOpen, onMobileClose }: GlassSidebar
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+        <div ref={drawerRef} className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={tShell("openNavigation")}>
           <div className="absolute inset-0 bg-black/50" onClick={onMobileClose} aria-hidden />
-          <aside className="nav-rail-v2 relative flex flex-col w-72 h-full">{content}</aside>
+          <aside className="nav-rail-v2 relative flex flex-col w-72 max-w-[85vw] h-full ps-[env(safe-area-inset-left)]">{content}</aside>
         </div>
       )}
     </>

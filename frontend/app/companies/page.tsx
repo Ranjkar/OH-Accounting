@@ -52,7 +52,7 @@ function CompaniesContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
@@ -75,7 +75,7 @@ function CompaniesContent() {
               className="w-full input-v2 px-3 py-2 text-sm"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-sm font-medium text-text-primary">{t("kvkNumberLabel")}</label>
               <input

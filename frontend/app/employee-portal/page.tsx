@@ -80,7 +80,7 @@ function PayslipsTab() {
 
   return (
     <GlassPanel title={t("myPayslips")}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0}>
       <table className="table-v3">
         <thead>
           <tr>
@@ -137,7 +137,7 @@ function StatementTab() {
 
   return (
     <GlassCard padding="lg" className="max-w-lg space-y-4">
-      <div className="flex items-end gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <GlassInput aria-label={t("taxYear")} type="number" value={taxYear} onChange={(e) => setTaxYear(Number(e.target.value))} className="w-24" />
         <GlassButton onClick={load} disabled={loading} size="sm">
           {loading ? tCommon("loading") : t("viewMyAnnualStatement")}
@@ -150,7 +150,7 @@ function StatementTab() {
       </div>
       {error && <GlassErrorState message={error} />}
       {statement && (
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <Row label={t("payslipsIncluded")} value={String(statement.number_of_payslips)} />
           <Row label={t("grossSalary")} value={formatEUR(statement.gross_salary, locale)} />
           <Row label={t("netSalaryPaid")} value={formatEUR(statement.net_salary, locale)} />

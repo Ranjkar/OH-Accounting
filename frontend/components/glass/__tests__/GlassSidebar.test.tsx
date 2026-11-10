@@ -77,7 +77,7 @@ describe("GlassSidebar accordion behaviour", () => {
     // scope the query to the drawer (role="dialog") specifically.
     const onMobileClose = vi.fn();
     renderSidebar({ mobileOpen: true, onMobileClose });
-    const drawer = screen.getByRole("dialog", { name: "Navigation" });
+    const drawer = screen.getByRole("dialog", { name: /navigation/i });
     const { getByRole } = within(drawer);
     fireEvent.click(getByRole("link", { name: "Overview" }));
     expect(onMobileClose).toHaveBeenCalled();
