@@ -11,6 +11,7 @@ from app.api.v1 import (
     budgets,
     companies,
     company_setup,
+    contracts,
     dashboard,
     documents,
     email_admin,
@@ -39,6 +40,7 @@ router.include_router(auth.router)
 router.include_router(company_setup.router)
 router.include_router(companies.router)
 router.include_router(email_admin.router)
+router.include_router(contracts.router)
 router.include_router(dashboard.router)
 router.include_router(documents.router)
 router.include_router(batches.router)

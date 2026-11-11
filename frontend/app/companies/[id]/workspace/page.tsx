@@ -5,8 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
+import GlassTabs from "@/components/glass/GlassTabs";
+import ContractsTable from "@/components/contracts/ContractsTable";
 import { useAuth } from "@/lib/auth-context";
-import { api, CompanyWorkspace, NoteType } from "@/lib/api";
+import { api, ApiError, CompanyWorkspace, Contract, NoteType } from "@/lib/api";
 import { formatEUR } from "@/lib/format";
 
 const NOTE_TYPE_KEY: Record<NoteType, string> = {
@@ -15,8 +17,39 @@ const NOTE_TYPE_KEY: Record<NoteType, string> = {
   MISSING_DOCUMENT_REQUEST: "noteTypeMissingDocumentRequest",
 };
 
+/** Phase 26: the company's agreements, reusing the global contracts table. */
+function CompanyContractsTab({ companyId }: { companyId: number }) {
+  const t = useTranslations("contracts");
+  const { token, user } = useAuth();
+  const [rows, setRows] = useState<Contract[] | null>(null);
+  const [disabled, setDisabled] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    api.listContracts(token, { company_id: companyId }).then(setRows).catch((e) => {
+      if (e instanceof ApiError && e.status === 404) setDisabled(true);
+      else setError(e instanceof ApiError ? e.message : t("loadFailed"));
+    });
+  }, [token, companyId, t]);
+  const canCreate = user?.role === "owner" || user?.role === "admin" || user?.role === "accountant";
+  if (disabled) return <p className="text-sm text-text-secondary">{t("featureDisabled")}</p>;
+  return (
+    <div className="card-v2 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border-subtle flex items-center justify-between gap-3">
+        <h2 className="text-sm font-medium text-text-primary">{t("title")}</h2>
+        {canCreate && <a href={`/contracts?company=${companyId}&new=1`} className="btn-primary-v2 px-3 py-1.5 text-sm">{t("newContract")}</a>}
+      </div>
+      {error && <div className="m-4 rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
+      {rows === null ? <p className="px-5 py-4 text-sm text-text-secondary">{t("detail.loading")}</p> : <ContractsTable rows={rows} showCompany={false} />}
+    </div>
+  );
+}
+
 function WorkspaceContent({ companyId }: { companyId: number }) {
   const t = useTranslations("companies.workspace");
+  const tContracts = useTranslations("contracts");
+  const tNav = useTranslations("nav.items");
+  const [tab, setTab] = useState<"overview" | "contracts">("overview");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const { token, user } = useAuth();
@@ -73,6 +106,11 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
 
       {error && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2">{error}</div>}
 
+      <GlassTabs tabs={[{ value: "overview", label: tNav("overview") }, { value: "contracts", label: tContracts("title") }]} value={tab} onChange={setTab} />
+
+      {tab === "contracts" && <CompanyContractsTab companyId={companyId} />}
+
+      <div className={tab === "overview" ? "space-y-6" : "hidden"}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="card-v2 p-4">
           <p className="text-xs text-text-secondary">{t("financialYears")}</p>
@@ -210,6 +248,7 @@ function WorkspaceContent({ companyId }: { companyId: number }) {
           </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

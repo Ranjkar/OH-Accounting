@@ -32,7 +32,7 @@ export const ROUTES = [
   "/", "/admin", "/admin/email", "/ai-intelligence", "/annual-statements", "/anomalies", "/assistant", "/audit-log",
   "/automation", "/balance-sheet", "/bank-transactions", "/banking", "/batches", "/batches/1", "/billing",
   "/budgets", "/calendar", "/cash-flow", "/categories", "/companies", "/companies/1", "/companies/1/workspace",
-  "/companies/new",
+  "/companies/new", "/contracts", "/contracts/templates",
   "/documents", "/documents/9", "/employee-portal", "/employees", "/entrepreneur-hours", "/financial-overview",
   "/forecasts", "/government", "/invitations/accept", "/kpis", "/ledger", "/ledger/1", "/legal-structure",
   "/loonheffingen", "/management-reports", "/payroll", "/profit-and-loss", "/purchases/upload", "/reconciliation",

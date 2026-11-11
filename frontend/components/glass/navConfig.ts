@@ -133,6 +133,7 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: IconSettings,
     items: [
       { labelKey: "companies", href: "/companies" },
+      { labelKey: "contracts", href: "/contracts" },
       { labelKey: "managementReports", href: "/management-reports" },
       { labelKey: "reports", href: "/reports" },
       { labelKey: "billingSubscription", href: "/billing" },

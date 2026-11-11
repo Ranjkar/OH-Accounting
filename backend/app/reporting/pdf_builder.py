@@ -143,6 +143,34 @@ class PdfReportBuilder:
         self._put(text, size, color, **self._leading_edge())
         self.y += size + 6
 
+    def paragraph(self, text: str, size: float = 10, color=BLACK, indent: float = 0) -> None:
+        """Word-wrapped body text (Phase 26: contract clauses). Wraps on the
+        measured glyph width of the active font, so Latin and shaped RTL
+        runs both fit the printable width; blank input still advances one
+        line so paragraph spacing survives."""
+        max_width = PAGE_WIDTH - 2 * MARGIN - indent
+        words = text.split()
+        lines: list[str] = []
+        current = ""
+        for word in words:
+            candidate = f"{current} {word}".strip()
+            if current and self._width(self._render(candidate), size) > max_width:
+                lines.append(current)
+                current = word
+            else:
+                current = candidate
+        lines.append(current)
+        for line in lines:
+            self._ensure_space(size + 4)
+            edge = {"right_edge": PAGE_WIDTH - MARGIN - indent} if self.rtl else {"x": MARGIN + indent}
+            self._put(line, size, color, **edge)
+            self.y += size + 4
+        self.y += 4
+
+    def new_page(self) -> None:
+        self.page = self.doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+        self.y = MARGIN
+
     def table(self, headers: list[str], rows: list[list[str]], col_widths: list[float] | None = None) -> None:
         """Columns flow from the page's leading edge: left-to-right for
         LTR locales, right-to-left for RTL ones (so the first header in

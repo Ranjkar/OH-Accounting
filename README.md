@@ -701,3 +701,19 @@ run → add a payslip (gross €4,500.00 → net €3,394.37) → download the L
   optional parameters to the estimate endpoints but nothing yet looks up a real comparable-
   salary benchmark or auto-fills the highest employee salary from payroll data -- both must
   currently be supplied by the caller.
+
+## What's implemented (Phase 26) — annual client agreements & e-signatures
+- Behind `CONTRACTS_ENABLED` (default off). When on, every newly registered company
+  (quick form or wizard) gets a 12-month draft accounting-services agreement; admins
+  complete the commercial terms, approve (freezes an immutable PDF + SHA-256 version),
+  and send a time-limited, hash-only signing link; the client signs on a public portal
+  with a **simple electronic signature** (eIDAS art. 3(10) — not qualified); a final
+  tamper-evident PDF with an evidence page is stored and verifiable.
+- Renewal scheduler (advisory-locked, dedup by unique constraints) prepares next year's
+  draft and sends 60/30/14-day reminders; renewals always require admin approval and
+  a new signature — an unsigned renewal is never treated as accepted.
+- UI: `/contracts`, `/contracts/[id]`, `/contracts/templates`, public `/sign/[token]`,
+  Contracts tab in the company workspace. Emails reuse the Phase 22 outbox.
+- Scheduler-originated email stays off until `CONTRACTS_EMAIL_AUTOMATION_ENABLED=true`.
+- Full report, limitations, deployment & rollback: `docs/phase-26-contracts.md`.
+  **The bundled template must be reviewed by a Dutch legal professional before production use.**

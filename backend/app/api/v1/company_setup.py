@@ -38,6 +38,7 @@ from app.schemas.company import (
     SetupValidationIssue,
     SetupValidationOut,
 )
+from app.services import contract_service
 from app.services.vat_period_generator import generate_vat_periods
 
 router = APIRouter(prefix="/companies/setup-drafts", tags=["company-setup"])
@@ -275,6 +276,7 @@ def complete_setup_draft(draft_id: int, db: Session = Depends(get_db), user: Use
                "vat_registered": vat_registered, "kor_participant": company.kor_participant, "financial_year": data.financial_year},
         request_id=get_request_id(),
     ))
+    contract_service.auto_create_for_new_company(db, company, user)  # Phase 26, no-op unless CONTRACTS_ENABLED
     db.commit()
     db.refresh(company)
     return SetupCompleteOut(company=company, financial_year_id=financial_year.id, bank_account_id=bank_account_id, already_completed=False)
