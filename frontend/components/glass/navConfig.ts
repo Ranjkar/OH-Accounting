@@ -149,7 +149,10 @@ export const NAV_GROUPS: NavGroup[] = [
 export const PLATFORM_ADMIN_NAV_GROUP: NavGroup = {
   labelKey: "administration",
   icon: IconSettings,
-  items: [{ labelKey: "platformOverview", href: "/admin" }],
+  items: [
+    { labelKey: "platformOverview", href: "/admin" },
+    { labelKey: "email", href: "/admin/email" },
+  ],
 };
 
 /** An employee-role account (app.core.deps.get_current_employee on the

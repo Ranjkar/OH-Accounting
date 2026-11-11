@@ -115,7 +115,8 @@
       "settings": "Instellingen",
       "usersPermissions": "Gebruikers & Rechten",
       "auditLog": "Auditlogboek",
-      "platformOverview": "Platformoverzicht"
+      "platformOverview": "Platformoverzicht",
+      "email": "E-mail"
     },
     "unavailable": {
       "chartOfAccountsUnavailable": "Nog niet geïmplementeerd -- deze app gebruikt BTW-rubriek/categorie-indeling in plaats van een traditioneel rekeningschema.",
@@ -1748,5 +1749,51 @@
         "required": "Geef de bankrekening een naam."
       }
     }
+  },
+  "emailAdmin": {
+    "title": "E-mailinfrastructuur",
+    "subtitle": "Providerstatus, afleverlog en testberichten. Configuratie gebeurt via omgevingsvariabelen op de server.",
+    "statusTitle": "Providerstatus",
+    "provider": "Provider",
+    "configured": "Geconfigureerd",
+    "configuredYes": "Ja",
+    "configuredNo": "Nee -- berichten worden alleen gelogd",
+    "fromAddress": "Afzenderadres",
+    "fromName": "Afzendernaam",
+    "appBaseUrl": "Basis-URL voor links",
+    "smtpHost": "SMTP-server",
+    "rateLimits": "Limieten (per ontvanger / per tenant, per uur)",
+    "last24h": "Laatste 24 uur",
+    "sent": "verzonden",
+    "failed": "mislukt",
+    "queued": "in wachtrij",
+    "missingSettings": "Provider niet geconfigureerd",
+    "missingSettingsHelp": "Zet deze omgevingsvariabelen op de server en herstart de backend. Er worden dan geen berichten verzonden; uitnodigings- en resetlinks blijven in de interface zichtbaar.",
+    "dnsTitle": "Dns-richtlijnen",
+    "dnsHelp": "Publiceer deze records bij het domein van het afzenderadres zodat berichten niet als spam eindigen.",
+    "dnsDomain": "Domein",
+    "testTitle": "Testbericht",
+    "testToLabel": "Ontvanger (leeg = uw eigen adres)",
+    "testToPlaceholder": "naam@voorbeeld.nl",
+    "testButton": "Verstuur test",
+    "testWorking": "Bezig…",
+    "testSent": "Testbericht in wachtrij met status \"{status}\".",
+    "testFailed": "Kon het testbericht niet versturen",
+    "testHelp": "Maximaal 3 testberichten per minuut. Alleen testberichten kunnen later opnieuw worden verstuurd; berichten met een eenmalige link niet.",
+    "outboxTitle": "Afleverlog",
+    "outboxEmpty": "Nog geen berichten in de wachtrij.",
+    "filterLabel": "Filter op status",
+    "filterAll": "Alle statussen",
+    "filterQueued": "In wachtrij",
+    "filterSent": "Verzonden",
+    "filterFailed": "Mislukt",
+    "colTo": "Ontvanger",
+    "colTemplate": "Sjabloon",
+    "colStatus": "Status",
+    "colAttempts": "Pogingen",
+    "colCreated": "Aangemaakt",
+    "retry": "Opnieuw versturen",
+    "retryFailed": "Kon het bericht niet opnieuw versturen",
+    "loadFailed": "Kon de e-mailstatus niet laden"
   }
 }

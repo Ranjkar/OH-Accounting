@@ -115,7 +115,8 @@
       "settings": "Settings",
       "usersPermissions": "Users & Permissions",
       "auditLog": "Audit Log",
-      "platformOverview": "Platform Overview"
+      "platformOverview": "Platform Overview",
+      "email": "Email"
     },
     "unavailable": {
       "chartOfAccountsUnavailable": "Not yet implemented -- this app uses VAT-box/category classification rather than a traditional chart of accounts.",
@@ -1748,5 +1749,51 @@
         "required": "Give the bank account a name."
       }
     }
+  },
+  "emailAdmin": {
+    "title": "Email infrastructure",
+    "subtitle": "Provider status, delivery log and test messages. Configuration lives in server environment variables.",
+    "statusTitle": "Provider status",
+    "provider": "Provider",
+    "configured": "Configured",
+    "configuredYes": "Yes",
+    "configuredNo": "No -- messages are logged only",
+    "fromAddress": "From address",
+    "fromName": "From name",
+    "appBaseUrl": "Base URL for links",
+    "smtpHost": "SMTP server",
+    "rateLimits": "Limits (per recipient / per tenant, per hour)",
+    "last24h": "Last 24 hours",
+    "sent": "sent",
+    "failed": "failed",
+    "queued": "queued",
+    "missingSettings": "Provider not configured",
+    "missingSettingsHelp": "Set these environment variables on the server and restart the backend. Until then nothing is sent; invitation and reset links stay visible in the interface instead.",
+    "dnsTitle": "DNS guidance",
+    "dnsHelp": "Publish these records for the from-address domain so mail does not land in spam.",
+    "dnsDomain": "Domain",
+    "testTitle": "Test message",
+    "testToLabel": "Recipient (empty = your own address)",
+    "testToPlaceholder": "name@example.com",
+    "testButton": "Send test",
+    "testWorking": "Working…",
+    "testSent": "Test message queued with status \"{status}\".",
+    "testFailed": "Could not send the test message",
+    "testHelp": "At most 3 test messages per minute. Only test messages can be retried later; messages carrying a one-time link cannot.",
+    "outboxTitle": "Delivery log",
+    "outboxEmpty": "No messages in the outbox yet.",
+    "filterLabel": "Filter by status",
+    "filterAll": "All statuses",
+    "filterQueued": "Queued",
+    "filterSent": "Sent",
+    "filterFailed": "Failed",
+    "colTo": "Recipient",
+    "colTemplate": "Template",
+    "colStatus": "Status",
+    "colAttempts": "Attempts",
+    "colCreated": "Created",
+    "retry": "Retry",
+    "retryFailed": "Could not retry the message",
+    "loadFailed": "Could not load the email status"
   }
 }

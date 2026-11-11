@@ -29,7 +29,7 @@ const SCREENSHOT_DIR = path.resolve(process.cwd(), "e2e/.screenshots/responsive"
 /** Route inventory (every app/**\/page.tsx). Dynamic segments use ids
  * that exist in the seeded dev database for the test account's tenant. */
 export const ROUTES = [
-  "/", "/admin", "/ai-intelligence", "/annual-statements", "/anomalies", "/assistant", "/audit-log",
+  "/", "/admin", "/admin/email", "/ai-intelligence", "/annual-statements", "/anomalies", "/assistant", "/audit-log",
   "/automation", "/balance-sheet", "/bank-transactions", "/banking", "/batches", "/batches/1", "/billing",
   "/budgets", "/calendar", "/cash-flow", "/categories", "/companies", "/companies/1", "/companies/1/workspace",
   "/companies/new",
@@ -43,7 +43,7 @@ export const ROUTES = [
 
 // Pages gated to a role the test account does not have: the API answers
 // 403 and the browser logs "Failed to load resource" -- expected, not a bug.
-const ROLE_GATED = new Set(["/admin", "/employee-portal"]);
+const ROLE_GATED = new Set(["/admin", "/admin/email", "/employee-portal"]);
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
