@@ -220,6 +220,16 @@ export interface User {
    * than reading this directly in UI code. */
   locale: string | null;
   tenant_default_locale: string;
+  // Phase 22: profile
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string | null;
+  phone: string | null;
+  address_line: string | null;
+  postal_code: string | null;
+  city: string | null;
+  country: string | null;
+  pending_email: string | null;
 }
 
 export interface Company {
@@ -231,6 +241,83 @@ export interface Company {
   vat_frequency: VatFrequency;
   vat_accounting_basis: VatAccountingBasis;
   input_vat_pro_rata_percentage: string | null;
+  rsin: string | null;
+  vat_registered: boolean;
+  kor_participant: boolean;
+  business_activity: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+// ---- Phase 22: company setup wizard ----
+
+export type LegalFormCode = "EENMANSZAAK" | "VOF" | "MAATSCHAP" | "CV" | "BV" | "NV" | "COOPERATIE" | "OWM" | "STICHTING" | "VERENIGING" | "VVE" | "REDERIJ" | "OTHER";
+
+export interface LegalFormDefinition {
+  id: number;
+  code: LegalFormCode;
+  name_nl: string;
+  name_en: string;
+  has_legal_personality: boolean;
+  liability: string;
+  min_partners: number;
+  max_partners: number | null;
+  requires_kvk_registration: boolean;
+  subject_to_income_tax: boolean;
+  subject_to_corporate_income_tax: boolean;
+  subject_to_vat_by_default: boolean;
+  payroll_tax_applies_if_employees: boolean;
+  notes: string | null;
+}
+
+export interface SetupDraftData {
+  name?: string;
+  legal_form_code?: string;
+  kvk_number?: string;
+  kvk_verified?: boolean;
+  vat_number?: string;
+  rsin?: string;
+  address?: string;
+  business_activity?: string;
+  email?: string;
+  phone?: string;
+  vat_registered?: boolean;
+  vat_frequency?: VatFrequency;
+  vat_accounting_basis?: VatAccountingBasis;
+  kor_participant?: boolean;
+  financial_year?: number;
+  bank_iban?: string;
+  bank_account_name?: string;
+  bank_skipped?: boolean;
+}
+
+export interface SetupDraft {
+  id: number;
+  data: SetupDraftData;
+  current_step: number;
+  created_company_id: number | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export interface SetupValidationIssue {
+  field: string;
+  code: "required" | "invalid" | "duplicate";
+  message: string;
+}
+
+export interface SetupValidation {
+  ok: boolean;
+  issues: SetupValidationIssue[];
+  warnings: SetupValidationIssue[];
+}
+
+export interface SetupCompleteResult {
+  company: Company;
+  financial_year_id: number | null;
+  bank_account_id: number | null;
+  already_completed: boolean;
 }
 
 export type CompanyInvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
@@ -595,7 +682,62 @@ export interface BankAccount {
   consent_expires_at: string | null;
   last_synced_at: string | null;
   last_sync_error: string | null;
+  pending_provider_accounts: ProviderAccountCandidate[] | null;
   created_at: string;
+}
+
+export interface ProviderAccountCandidate {
+  provider_account_id: string;
+  iban_masked: string;
+  account_name: string;
+  currency: string;
+}
+
+export interface OpenBankingBank {
+  id: string;
+  name: string;
+  bic: string;
+  available: boolean;
+  sandbox: boolean;
+}
+
+export interface OpenBankingStatus {
+  provider: string;
+  is_sandbox: boolean;
+  live_connectivity: boolean;
+}
+
+// ---- Phase 22: email administration (platform admin) ----
+
+export interface EmailStatus {
+  provider: string;
+  configured: boolean;
+  missing_settings: string[];
+  from_address: string;
+  from_name: string;
+  app_base_url: string;
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_security: string | null;
+  rate_limits: { per_recipient_per_hour: number; per_tenant_per_hour: number };
+  last_24h: { sent: number; failed: number; queued: number };
+  dns: { domain: string | null; spf: string | null; dkim: string; dmarc: string | null };
+}
+
+export interface EmailOutboxEntry {
+  id: number;
+  tenant_id: number | null;
+  to_email: string;
+  template: string;
+  subject: string;
+  locale: string;
+  status: "queued" | "sent" | "failed";
+  attempts: number;
+  last_error: string | null;
+  provider_name: string | null;
+  provider_message_id: string | null;
+  created_at: string;
+  sent_at: string | null;
 }
 
 export interface KvkLookupResult {
@@ -869,7 +1011,7 @@ export const api = {
   listCompanyInvitations: (token: string, companyId: number) =>
     request<CompanyInvitation[]>(`/companies/${companyId}/invitations`, { token }),
   createCompanyInvitation: (token: string, companyId: number, invitedEmail: string, intendedRole: UserRole = "accountant") =>
-    request<{ invitation: CompanyInvitation; raw_token: string }>(`/companies/${companyId}/invitations`, {
+    request<{ invitation: CompanyInvitation; raw_token: string | null; email_sent: boolean }>(`/companies/${companyId}/invitations`, {
       method: "POST",
       token,
       body: JSON.stringify({ invited_email: invitedEmail, intended_role: intendedRole }),
@@ -889,7 +1031,7 @@ export const api = {
   revokeUserSessions: (token: string, userId: number) => request<void>(`/users/${userId}/revoke-sessions`, { method: "POST", token }),
   listUserInvitations: (token: string) => request<UserInvitation[]>("/users/invitations", { token }),
   createUserInvitation: (token: string, invitedEmail: string, intendedRole: UserRole, initialCompanyIds?: number[]) =>
-    request<{ invitation: UserInvitation; raw_token: string }>("/users/invitations", {
+    request<{ invitation: UserInvitation; raw_token: string | null; email_sent: boolean }>("/users/invitations", {
       method: "POST",
       token,
       body: JSON.stringify({ invited_email: invitedEmail, intended_role: intendedRole, initial_company_ids: initialCompanyIds ?? null }),
@@ -901,6 +1043,50 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ token: invitationToken, full_name: fullName, password }),
     }),
+  resendUserInvitation: (token: string, invitationId: number) =>
+    request<{ invitation: UserInvitation; raw_token: string | null; email_sent: boolean }>(`/users/invitations/${invitationId}/resend`, { method: "POST", token }),
+  setUserCompanyAccess: (token: string, userId: number, companyIds: number[]) =>
+    request<TenantUser>(`/users/${userId}/companies`, { method: "PUT", token, body: JSON.stringify({ company_ids: companyIds }) }),
+
+  // ---- Phase 22: my profile & security ----
+  updateMyProfile: (token: string, payload: Partial<Pick<User, "first_name" | "last_name" | "display_name" | "phone" | "address_line" | "postal_code" | "city" | "country">>) =>
+    request<User>("/auth/me/profile", { method: "PATCH", token, body: JSON.stringify(payload) }),
+  changeMyPassword: (token: string, currentPassword: string, newPassword: string, confirmPassword: string) =>
+    request<{ access_token: string }>("/auth/me/password", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword, confirm_password: confirmPassword }),
+    }),
+  requestEmailChange: (token: string, newEmail: string, currentPassword: string) =>
+    request<User>("/auth/me/email/request-change", { method: "POST", token, body: JSON.stringify({ new_email: newEmail, current_password: currentPassword }) }),
+  cancelEmailChange: (token: string) => request<User>("/auth/me/email/request-change", { method: "DELETE", token }),
+  confirmEmailChange: (verificationToken: string) =>
+    request<void>("/auth/email/confirm-change", { method: "POST", body: JSON.stringify({ token: verificationToken }) }),
+  revokeOtherSessions: (token: string) => request<{ access_token: string }>("/auth/me/sessions/revoke-others", { method: "POST", token }),
+  requestPasswordReset: (email: string) =>
+    request<void>("/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) }),
+  confirmPasswordReset: (resetToken: string, newPassword: string) =>
+    request<void>("/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token: resetToken, new_password: newPassword }) }),
+
+  // ---- Phase 22: company setup wizard ----
+  listSetupDrafts: (token: string) => request<SetupDraft[]>("/companies/setup-drafts", { token }),
+  createSetupDraft: (token: string) => request<SetupDraft>("/companies/setup-drafts", { method: "POST", token }),
+  getSetupDraft: (token: string, draftId: number) => request<SetupDraft>(`/companies/setup-drafts/${draftId}`, { token }),
+  updateSetupDraft: (token: string, draftId: number, data: SetupDraftData, currentStep: number) =>
+    request<SetupDraft>(`/companies/setup-drafts/${draftId}`, { method: "PATCH", token, body: JSON.stringify({ data, current_step: currentStep }) }),
+  deleteSetupDraft: (token: string, draftId: number) => request<void>(`/companies/setup-drafts/${draftId}`, { method: "DELETE", token }),
+  validateSetupDraft: (token: string, draftId: number, data: SetupDraftData, currentStep: number) =>
+    request<SetupValidation>(`/companies/setup-drafts/${draftId}/validate`, { method: "POST", token, body: JSON.stringify({ data, current_step: currentStep }) }),
+  completeSetupDraft: (token: string, draftId: number) =>
+    request<SetupCompleteResult>(`/companies/setup-drafts/${draftId}/complete`, { method: "POST", token }),
+
+  // ---- Phase 22: email administration ----
+  emailStatus: (token: string) => request<EmailStatus>("/admin/email/status", { token }),
+  emailOutbox: (token: string, statusFilter?: string) =>
+    request<EmailOutboxEntry[]>(`/admin/email/outbox${statusFilter ? `?status_filter=${statusFilter}` : ""}`, { token }),
+  sendTestEmail: (token: string, toEmail?: string) =>
+    request<EmailOutboxEntry>("/admin/email/test", { method: "POST", token, body: JSON.stringify({ to_email: toEmail ?? null }) }),
+  retryEmail: (token: string, outboxId: number) => request<EmailOutboxEntry>(`/admin/email/outbox/${outboxId}/retry`, { method: "POST", token }),
 
   // ---- Phase 15: audit log ----
   listAuditLog: (token: string, filters: AuditLogFilters = {}) => {
@@ -1220,17 +1406,26 @@ export const api = {
     request<BankImportBatch[]>(`/bank-accounts/${bankAccountId}/import-batches`, { token }),
 
   // ---- Phase 12: Open Banking (sandbox stub provider only, see docs/open-banking.md) ----
-  connectOpenBanking: (token: string, bankAccountId: number, redirectUri: string) =>
-    request<{ authorization_url: string; provider: string }>(`/bank-accounts/${bankAccountId}/open-banking/connect`, {
+  openBankingStatus: (token: string) => request<OpenBankingStatus>("/open-banking/status", { token }),
+  listBanks: (token: string, q?: string) =>
+    request<{ banks: OpenBankingBank[] } & OpenBankingStatus>(`/open-banking/banks${q ? `?q=${encodeURIComponent(q)}` : ""}`, { token }),
+  connectOpenBanking: (token: string, bankAccountId: number, redirectUri: string, bankId?: string) =>
+    request<{ authorization_url: string; provider: string; is_sandbox: boolean }>(`/bank-accounts/${bankAccountId}/open-banking/connect`, {
       method: "POST",
       token,
-      body: JSON.stringify({ redirect_uri: redirectUri }),
+      body: JSON.stringify({ redirect_uri: redirectUri, bank_id: bankId ?? null }),
     }),
   completeOpenBanking: (token: string, bankAccountId: number, callbackParams: Record<string, unknown> = {}) =>
-    request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/callback`, {
+    request<{ account: BankAccount; candidates: ProviderAccountCandidate[] }>(`/bank-accounts/${bankAccountId}/open-banking/callback`, {
       method: "POST",
       token,
       body: JSON.stringify({ callback_params: callbackParams }),
+    }),
+  selectOpenBankingAccount: (token: string, bankAccountId: number, providerAccountId: string) =>
+    request<BankAccount>(`/bank-accounts/${bankAccountId}/open-banking/select-account`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ provider_account_id: providerAccountId }),
     }),
   syncOpenBanking: (token: string, bankAccountId: number) =>
     request<BankImportBatch>(`/bank-accounts/${bankAccountId}/open-banking/sync`, { method: "POST", token }),
@@ -1422,7 +1617,7 @@ export const api = {
     `${API_BASE}/reports/scenario-comparison?company_id=${companyId}&scenario_ids=${scenarioIds.join(",")}&format=csv`,
 
   // ---- Phase 9: legal forms ----
-  listLegalFormDefinitions: (token: string) => request<JsonReport[]>("/legal-form-definitions", { token }),
+  listLegalFormDefinitions: (token: string) => request<LegalFormDefinition[]>("/legal-form-definitions", { token }),
   setCompanyLegalForm: (token: string, payload: { company_id: number; legal_form_code: string; effective_from: string }) =>
     request<JsonReport>("/company-legal-forms", { method: "POST", token, body: JSON.stringify(payload) }),
   listCompanyLegalForms: (token: string, companyId: number) =>

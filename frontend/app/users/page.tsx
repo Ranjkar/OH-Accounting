@@ -39,7 +39,7 @@ function UsersContent() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>("accountant");
   const [inviteError, setInviteError] = useState<string | null>(null);
-  const [inviteResult, setInviteResult] = useState<{ email: string; token: string } | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ email: string; token: string | null } | null>(null);
   const [inviteBusy, setInviteBusy] = useState(false);
 
   const isOwner = currentUser?.role === "owner";
@@ -193,11 +193,14 @@ function UsersContent() {
           {inviteResult && (
             <div className="rounded-md bg-muted px-3 py-2 text-xs space-y-1">
               <p className="text-text-primary">
-                {t("invitationCreatedFor")} <span className="font-medium" dir="ltr">{inviteResult.email}</span>. {t("noEmailProviderShareLink")}
+                {t("invitationCreatedFor")} <span className="font-medium" dir="ltr">{inviteResult.email}</span>.{" "}
+                {inviteResult.token ? t("noEmailProviderShareLink") : t("invitationEmailed")}
               </p>
-              <p className="font-mono break-all text-text-secondary" dir="ltr">
-                {typeof window !== "undefined" ? window.location.origin : ""}/users/invitations/accept?token={inviteResult.token}
-              </p>
+              {inviteResult.token && (
+                <p className="font-mono break-all text-text-secondary" dir="ltr">
+                  {typeof window !== "undefined" ? window.location.origin : ""}/users/invitations/accept?token={inviteResult.token}
+                </p>
+              )}
             </div>
           )}
         </form>
