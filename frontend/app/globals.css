@@ -668,7 +668,11 @@ body {
    are not). Touch devices get a 44px comfortable target for form controls. */
 button, [role="button"] { min-height: 1.5rem; }
 @media (pointer: coarse) {
-  .input-v2, .btn-primary-v2, .btn-secondary-v2, .btn-outline-v2, .btn-danger-v2, .btn-success-v2 { min-height: 2.75rem; }
+  .input-v2, .btn-primary-v2, .btn-secondary-v2, .btn-outline-v2, .btn-danger-v2, .btn-success-v2,
+  .btn-ghost-v2 { min-height: 2.75rem; }
+  /* Only *interactive* pills: `.pill-v2` also styles non-interactive status
+     badges (tax-centre, tax-optimization), which must stay compact. */
+  [role="radio"].pill-v2, [role="button"].pill-v2, button.pill-v2 { min-height: 2.75rem; }
   /* Prevents iOS Safari's automatic zoom-on-focus (triggered by any control
      below 16px) WITHOUT disabling user zoom. `max()` keeps larger sizes. */
   input, select, textarea { font-size: max(16px, 1em); }

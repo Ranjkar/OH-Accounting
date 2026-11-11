@@ -693,7 +693,8 @@
     "noUsersYet": "Nog geen gebruikers.",
     "nameHeader": "Naam",
     "emailHeader": "E-mailadres",
-    "emailPlaceholder": "naam@voorbeeld.com"
+    "emailPlaceholder": "naam@voorbeeld.com",
+    "invitationEmailed": "De acceptatielink is per e-mail naar hen verzonden."
   },
   "auditLog": {
     "title": "Auditlogboek",
@@ -1542,5 +1543,140 @@
     "colPeriod": "Periode",
     "colValue": "Waarde",
     "negativeSuffix": " (negatief)"
+  },
+  "companySetup": {
+    "title": "Bedrijf aanmaken",
+    "subtitle": "Vier korte stappen. Uw antwoorden worden tijdens het invullen opgeslagen, zodat u kunt stoppen en op een ander apparaat kunt verdergaan.",
+    "saveAndExit": "Opslaan en afsluiten",
+    "progressLabel": "Voortgang bedrijf aanmaken",
+    "stepOf": "Stap {current} van {total}",
+    "loadFailed": "Het opgeslagen concept kon niet worden geladen",
+    "saveFailed": "Het concept kon niet worden opgeslagen",
+    "completeFailed": "Het bedrijf kon niet worden aangemaakt",
+    "draftSaved": "Alle wijzigingen zijn opgeslagen",
+    "unsavedChanges": "Wijzigingen nog niet opgeslagen",
+    "draftId": "Concept {id}",
+    "resumedDraft": "U gaat verder met het concept dat u eerder opsloeg.",
+    "startNewSetup": "Liever opnieuw beginnen",
+    "discardDraft": "Concept verwijderen",
+    "createCompany": "Bedrijf aanmaken",
+    "wizardLink": "Stap-voor-stap aanmaken",
+    "legalForm": "Rechtsvorm",
+    "selectLegalForm": "Kies een rechtsvorm",
+    "rsinHelp": "9 cijfers. Gebruikt voor aangiften namens het bedrijf.",
+    "address": "Adres",
+    "businessActivity": "Bedrijfsactiviteit",
+    "phone": "Telefoon",
+    "vatRegisteredQuestion": "Is het bedrijf btw-plichtig?",
+    "vatRegisteredHelp": "Een btw-plichtige onderneming heeft een btw-nummer en doet btw-aangifte. Dit kan later worden gewijzigd bij de bedrijfsinstellingen.",
+    "korLabel": "Neemt deel aan de kleineondernemersregeling (KOR)",
+    "korHelp": "Alleen voor btw-plichtige ondernemers met minder dan 20.000 euro omzet per jaar.",
+    "firstFinancialYear": "Eerste boekjaar",
+    "selectYear": "Kies een jaar",
+    "financialYearHelp": "Wij openen dit boekjaar en genereren er de btw-periodes voor.",
+    "bankingIntro": "Voeg de bankrekening toe waartegen u wilt afletteren. Meer rekeningen koppelen kan later.",
+    "bankAccountName": "Naam rekeninghouder",
+    "bankingLater": "U kunt ook later een bankrekening toevoegen via Bank.",
+    "skipBanking": "Nu overslaan",
+    "steps": {
+      "details": "Gegevens",
+      "tax": "Belasting & btw",
+      "banking": "Bankrekening",
+      "review": "Controleren"
+    },
+    "kvk": {
+      "lookup": "Opzoeken",
+      "verified": "Geverifieerd in het KVK-handelsregister",
+      "verifiedShort": "geverifieerd",
+      "help": "8 cijfers. Wij vullen naam, adres en rechtsvorm in uit het KVK-handelsregister.",
+      "notFound": "Geen KVK-inschrijving gevonden met dit nummer.",
+      "lookupFailed": "Opzoeken bij de KVK is mislukt. U kunt verdergaan en de gegevens zelf invullen.",
+      "prefilled": "Gegevens van {name} ingevuld uit het KVK-handelsregister.",
+      "prefilledTestData": "{name} komt uit KVK-testgegevens -- controleer dit voordat u verdergaat."
+    },
+    "review": {
+      "missingTitle": "Los dit op voordat u het bedrijf aanmaakt",
+      "recommended": "Aanbevolen",
+      "allGood": "Alles wat nodig is, is ingevuld.",
+      "bankSkipped": "Overgeslagen -- later toevoegen",
+      "confirmHelp": "Controleer de gegevens hieronder. Bij het aanmaken wordt het boekjaar inclusief btw-periodes geopend."
+    },
+    "drafts": {
+      "title": "Onafgemaakte bedrijven",
+      "resume": "Hervatten",
+      "lastEdited": "Laatst bewerkt op {date}",
+      "unnamed": "Naamloos bedrijf"
+    },
+    "fields": {
+      "name": "Bedrijfsnaam",
+      "legal_form_code": "Rechtsvorm",
+      "kvk_number": "KVK-nummer",
+      "rsin": "RSIN",
+      "address": "Adres",
+      "business_activity": "Bedrijfsactiviteit",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "vat_registered": "Btw-plichtig",
+      "vat_number": "Btw-nummer",
+      "vat_frequency": "Btw-aangiftefrequentie",
+      "vat_accounting_basis": "Btw-aangiftegrondslag",
+      "kor_participant": "Kleineondernemersregeling",
+      "financial_year": "Eerste boekjaar",
+      "bank_iban": "IBAN",
+      "bank_account_name": "Naam rekeninghouder"
+    },
+    "issueCodes": {
+      "required": "Verplicht",
+      "invalid": "Ongeldig",
+      "duplicate": "Bestaat al"
+    },
+    "errors": {
+      "incomplete": "De invoer is onvolledig -- zie de controlestap voor wat ontbreekt.",
+      "name": {
+        "required": "Voer de bedrijfsnaam in.",
+        "duplicate": "Er bestaat al een bedrijf met deze naam binnen uw organisatie."
+      },
+      "legal_form_code": {
+        "required": "Kies een rechtsvorm.",
+        "invalid": "Deze rechtsvorm is onbekend."
+      },
+      "kvk_number": {
+        "required": "Deze rechtsvorm is inschrijfplichtig bij de KVK -- voer het KVK-nummer in.",
+        "invalid": "Een KVK-nummer bestaat uit precies 8 cijfers.",
+        "duplicate": "Er bestaat al een bedrijf met dit KVK-nummer binnen uw organisatie."
+      },
+      "rsin": {
+        "invalid": "Een RSIN bestaat uit 9 cijfers en moet voldoen aan de elfproef."
+      },
+      "email": {
+        "invalid": "Voer een geldig e-mailadres in."
+      },
+      "vat_registered": {
+        "required": "Geef aan of het bedrijf btw-plichtig is."
+      },
+      "vat_number": {
+        "required": "Een btw-plichtig bedrijf heeft een btw-nummer nodig.",
+        "invalid": "Een btw-nummer heeft het formaat NL000099998B57 en moet voldoen aan de mod-97-controle."
+      },
+      "vat_frequency": {
+        "required": "Kies de btw-aangiftefrequentie."
+      },
+      "vat_accounting_basis": {
+        "required": "Kies de btw-aangiftegrondslag."
+      },
+      "kor_participant": {
+        "invalid": "De kleineondernemersregeling geldt alleen voor btw-plichtige ondernemers."
+      },
+      "financial_year": {
+        "required": "Kies het eerste boekjaar.",
+        "invalid": "Voer een jaar tussen 2000 en 2100 in."
+      },
+      "bank_iban": {
+        "invalid": "Dit IBAN komt niet door de controle."
+      },
+      "bank_account_name": {
+        "required": "Geef de bankrekening een naam."
+      }
+    }
   }
 }

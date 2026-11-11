@@ -32,6 +32,7 @@ export const ROUTES = [
   "/", "/admin", "/ai-intelligence", "/annual-statements", "/anomalies", "/assistant", "/audit-log",
   "/automation", "/balance-sheet", "/bank-transactions", "/banking", "/batches", "/batches/1", "/billing",
   "/budgets", "/calendar", "/cash-flow", "/categories", "/companies", "/companies/1", "/companies/1/workspace",
+  "/companies/new",
   "/documents", "/documents/9", "/employee-portal", "/employees", "/entrepreneur-hours", "/financial-overview",
   "/forecasts", "/government", "/invitations/accept", "/kpis", "/ledger", "/ledger/1", "/legal-structure",
   "/loonheffingen", "/management-reports", "/payroll", "/profit-and-loss", "/purchases/upload", "/reconciliation",
@@ -304,7 +305,7 @@ test.describe("Authenticated", () => {
     await page.goto("/", { waitUntil: "networkidle" });
     await setAccountLocale(page, "fa");
     try {
-      for (const route of ["/", "/documents", "/ledger", "/vat/5", "/settings"]) {
+      for (const route of ["/", "/documents", "/ledger", "/vat/5", "/settings", "/companies/new"]) {
         await page.goto(route, { waitUntil: "networkidle" });
         await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
         const r = await layoutReport(page);
@@ -337,7 +338,7 @@ test.describe("Authenticated", () => {
     test.setTimeout(3 * 60 * 1000);
     const axeSource = fs.readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
     const violations: string[] = [];
-    for (const route of ["/", "/documents", "/documents/9", "/ledger", "/vat/5", "/settings", "/users", "/purchases/upload"]) {
+    for (const route of ["/", "/documents", "/documents/9", "/ledger", "/vat/5", "/settings", "/users", "/purchases/upload", "/companies/new"]) {
       await page.goto(route, { waitUntil: "networkidle" });
       await page.addScriptTag({ content: axeSource });
       const result = await page.evaluate(async () => {

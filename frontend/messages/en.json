@@ -693,7 +693,8 @@
     "noUsersYet": "No users yet.",
     "nameHeader": "Name",
     "emailHeader": "Email",
-    "emailPlaceholder": "name@example.com"
+    "emailPlaceholder": "name@example.com",
+    "invitationEmailed": "The accept link was sent to them by email."
   },
   "auditLog": {
     "title": "Audit Log",
@@ -1542,5 +1543,140 @@
     "colPeriod": "Period",
     "colValue": "Value",
     "negativeSuffix": " (negative)"
+  },
+  "companySetup": {
+    "title": "Set up a company",
+    "subtitle": "Four short steps. Your answers are saved as you go, so you can stop and resume on another device.",
+    "saveAndExit": "Save & exit",
+    "progressLabel": "Company setup progress",
+    "stepOf": "Step {current} of {total}",
+    "loadFailed": "The saved setup could not be loaded",
+    "saveFailed": "The draft could not be saved",
+    "completeFailed": "The company could not be created",
+    "draftSaved": "All changes saved",
+    "unsavedChanges": "Changes not saved yet",
+    "draftId": "Draft {id}",
+    "resumedDraft": "You are continuing the setup you saved earlier.",
+    "startNewSetup": "Start over instead",
+    "discardDraft": "Discard draft",
+    "createCompany": "Create company",
+    "wizardLink": "Step-by-step setup",
+    "legalForm": "Legal form",
+    "selectLegalForm": "Choose a legal form",
+    "rsinHelp": "9 digits. Used for filings on behalf of the company.",
+    "address": "Address",
+    "businessActivity": "Business activity",
+    "phone": "Phone",
+    "vatRegisteredQuestion": "Is the company registered for VAT?",
+    "vatRegisteredHelp": "A VAT-registered business has a btw-id and files VAT returns. This can be changed later in the company settings.",
+    "korLabel": "Participates in the KOR small-business scheme",
+    "korHelp": "Only for VAT-registered businesses with a turnover below EUR 20,000 a year.",
+    "firstFinancialYear": "First financial year",
+    "selectYear": "Choose a year",
+    "financialYearHelp": "We open this book year and generate its VAT periods.",
+    "bankingIntro": "Add the bank account you want to reconcile against. You can connect more accounts later.",
+    "bankAccountName": "Account holder name",
+    "bankingLater": "You can also add a bank account later from the Banking page.",
+    "skipBanking": "Skip for now",
+    "steps": {
+      "details": "Details",
+      "tax": "Tax & VAT",
+      "banking": "Bank account",
+      "review": "Review"
+    },
+    "kvk": {
+      "lookup": "Look up",
+      "verified": "Verified in the KVK business register",
+      "verifiedShort": "verified",
+      "help": "8 digits. We prefill the name, address and legal form from the KVK business register.",
+      "notFound": "No KVK registration found with that number.",
+      "lookupFailed": "The KVK lookup failed. You can continue and fill in the details yourself.",
+      "prefilled": "Details for {name} were prefilled from the KVK business register.",
+      "prefilledTestData": "{name} comes from KVK test data -- check it before you continue."
+    },
+    "review": {
+      "missingTitle": "Fix these before creating the company",
+      "recommended": "Recommended",
+      "allGood": "Everything needed is filled in.",
+      "bankSkipped": "Skipped -- add later",
+      "confirmHelp": "Check the details below. Creating the company opens the book year with its VAT periods."
+    },
+    "drafts": {
+      "title": "Unfinished company setups",
+      "resume": "Resume",
+      "lastEdited": "Last edited {date}",
+      "unnamed": "Unnamed company"
+    },
+    "fields": {
+      "name": "Company name",
+      "legal_form_code": "Legal form",
+      "kvk_number": "KVK number",
+      "rsin": "RSIN",
+      "address": "Address",
+      "business_activity": "Business activity",
+      "email": "Email",
+      "phone": "Phone",
+      "vat_registered": "VAT registered",
+      "vat_number": "VAT number",
+      "vat_frequency": "VAT filing frequency",
+      "vat_accounting_basis": "VAT accounting basis",
+      "kor_participant": "KOR scheme",
+      "financial_year": "First financial year",
+      "bank_iban": "IBAN",
+      "bank_account_name": "Account holder name"
+    },
+    "issueCodes": {
+      "required": "Required",
+      "invalid": "Invalid",
+      "duplicate": "Already exists"
+    },
+    "errors": {
+      "incomplete": "The setup is incomplete -- see the review step for what is missing.",
+      "name": {
+        "required": "Enter the company name.",
+        "duplicate": "A company with this name already exists in your organisation."
+      },
+      "legal_form_code": {
+        "required": "Choose a legal form.",
+        "invalid": "This legal form is unknown."
+      },
+      "kvk_number": {
+        "required": "This legal form must be registered at the KVK -- enter the KVK number.",
+        "invalid": "A KVK number is exactly 8 digits.",
+        "duplicate": "A company with this KVK number already exists in your organisation."
+      },
+      "rsin": {
+        "invalid": "An RSIN is 9 digits and must pass the 11-check."
+      },
+      "email": {
+        "invalid": "Enter a valid email address."
+      },
+      "vat_registered": {
+        "required": "Indicate whether the company is registered for VAT."
+      },
+      "vat_number": {
+        "required": "A VAT-registered company needs a btw-id.",
+        "invalid": "A btw-id looks like NL000099998B57 and must pass the mod-97 check."
+      },
+      "vat_frequency": {
+        "required": "Choose the VAT filing frequency."
+      },
+      "vat_accounting_basis": {
+        "required": "Choose the VAT accounting basis."
+      },
+      "kor_participant": {
+        "invalid": "The KOR scheme only applies to VAT-registered businesses."
+      },
+      "financial_year": {
+        "required": "Choose the first financial year.",
+        "invalid": "Enter a year between 2000 and 2100."
+      },
+      "bank_iban": {
+        "invalid": "This IBAN failed its checksum."
+      },
+      "bank_account_name": {
+        "required": "Give the bank account a name."
+      }
+    }
   }
 }
