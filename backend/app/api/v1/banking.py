@@ -19,12 +19,14 @@ from app.schemas.banking import (
     BankImportBatchOut,
     BankTransactionDetailOut,
     BankTransactionOut,
+    OpenBankingCallbackOut,
     OpenBankingCallbackRequest,
     OpenBankingConnectRequest,
+    OpenBankingSelectAccountRequest,
     PaymentMatchOut,
     ReverseMatchRequest,
 )
-from app.services.open_banking_provider import get_open_banking_provider
+from app.services.open_banking_provider import DUTCH_BANKS, get_open_banking_provider, provider_status
 
 router = APIRouter(tags=["banking"])
 
@@ -96,7 +98,11 @@ def list_bank_accounts(company_id: int | None = None, db: Session = Depends(get_
     if company_id is not None:
         require_company_access(company_id, user, db)
         query = query.filter(BankAccount.company_id == company_id)
-    return query.all()
+    accounts = query.all()
+    for account in accounts:
+        open_banking_service.refresh_status(db, account)
+    db.commit()
+    return accounts
 
 
 @router.post("/bank-accounts/{bank_account_id}/import", response_model=BankImportBatchOut, status_code=status.HTTP_201_CREATED)
@@ -275,25 +281,70 @@ def bulk_approve_high_confidence(
 # and untouched regardless of connection status. ----
 
 
+@router.get("/open-banking/status")
+def open_banking_status(user: User = Depends(get_current_user)):
+    """Which adapter is active and whether it is a sandbox -- the wizard
+    shows this before anyone is asked to consent to anything."""
+    return provider_status()
+
+
+@router.get("/open-banking/banks")
+def list_supported_banks(q: str | None = None, user: User = Depends(get_current_user)):
+    status_info = provider_status()
+    needle = (q or "").strip().lower()
+    banks = [
+        {**b, "available": True, "sandbox": status_info["is_sandbox"]}
+        for b in DUTCH_BANKS
+        if not needle or needle in b["name"].lower() or needle in b["bic"].lower() or needle in b["id"]
+    ]
+    return {"banks": banks, **status_info}
+
+
 @router.post("/bank-accounts/{bank_account_id}/open-banking/connect")
 def connect_open_banking(bank_account_id: int, payload: OpenBankingConnectRequest, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    """Starts (or restarts, after EXPIRED/REVOKED/ERROR) a consent flow.
+    Only same-origin redirect URIs are accepted: the authorization URL is
+    handed back to the browser, and an attacker-controlled redirect_uri
+    would turn this into an open redirect carrying a consent id."""
     account = _get_bank_account_or_404(db, user, bank_account_id)
+    if payload.bank_id and not any(b["id"] == payload.bank_id for b in DUTCH_BANKS):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown bank")
+    allowed_origin = settings.app_base_url.rstrip("/")
+    if not (payload.redirect_uri.startswith(allowed_origin + "/") or payload.redirect_uri == allowed_origin):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="redirect_uri must be on the application's own origin")
     provider = get_open_banking_provider()
     authorization_url = open_banking_service.initiate_connection(db, account, provider, payload.redirect_uri)
-    _audit(db, user, "open_banking_connect_initiated", "bank_account", account.id, after={"provider": provider.name})
+    _audit(db, user, "open_banking_connect_initiated", "bank_account", account.id, after={"provider": provider.name, "bank_id": payload.bank_id})
     db.commit()
-    return {"authorization_url": authorization_url, "provider": provider.name}
+    return {"authorization_url": authorization_url, "provider": provider.name, "is_sandbox": provider.name == "stub"}
 
 
-@router.post("/bank-accounts/{bank_account_id}/open-banking/callback", response_model=BankAccountOut)
+@router.post("/bank-accounts/{bank_account_id}/open-banking/callback", response_model=OpenBankingCallbackOut)
 def complete_open_banking(bank_account_id: int, payload: OpenBankingCallbackRequest, db: Session = Depends(get_db), user: User = Depends(require_editor)):
     account = _get_bank_account_or_404(db, user, bank_account_id)
     provider = get_open_banking_provider()
     try:
-        open_banking_service.complete_connection(db, account, provider, payload.callback_params)
+        candidates = open_banking_service.complete_connection(db, account, provider, payload.callback_params)
+    except open_banking_service.OpenBankingError as exc:
+        account.consent_status = account.consent_status  # unchanged; recorded below
+        account.last_sync_error = str(exc)[:500]
+        _audit(db, user, "open_banking_connect_failed", "bank_account", account.id, after={"error": str(exc)[:200]})
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    _audit(db, user, "open_banking_connected" if not candidates else "open_banking_awaiting_account_selection", "bank_account", account.id, after={"provider": provider.name, "candidate_count": len(candidates)})
+    db.commit()
+    db.refresh(account)
+    return OpenBankingCallbackOut(account=account, candidates=candidates)
+
+
+@router.post("/bank-accounts/{bank_account_id}/open-banking/select-account", response_model=BankAccountOut)
+def select_open_banking_account(bank_account_id: int, payload: OpenBankingSelectAccountRequest, db: Session = Depends(get_db), user: User = Depends(require_editor)):
+    account = _get_bank_account_or_404(db, user, bank_account_id)
+    try:
+        open_banking_service.select_account(db, account, payload.provider_account_id)
     except open_banking_service.OpenBankingError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    _audit(db, user, "open_banking_connected", "bank_account", account.id, after={"provider": provider.name})
+    _audit(db, user, "open_banking_connected", "bank_account", account.id, after={"provider_account_id": payload.provider_account_id})
     db.commit()
     db.refresh(account)
     return account

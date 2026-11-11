@@ -5,9 +5,10 @@ from app.models.balance_sheet import ManualBalanceSheetItem
 from app.models.banking import BankAccount, BankImportBatch, BankTransaction, PaymentMatch
 from app.models.budget import Budget, BudgetLine
 from app.models.categorization import CategorizationRule
-from app.models.company import Company
+from app.models.company import Company, CompanySetupDraft
 from app.models.company_invitation import CompanyInvitation
 from app.models.customer import Customer
+from app.models.email_outbox import EmailOutbox
 from app.models.document import (
     Document,
     DocumentExtraction,
@@ -32,6 +33,8 @@ from app.models.timesheet import EmployeeTimesheetEntry, EntrepreneurHoursEntry
 from app.models.user import User, user_companies
 
 __all__ = [
+    "CompanySetupDraft",
+    "EmailOutbox",
     "AccountantNote",
     "AccountingTransaction",
     "AnomalyFlag",

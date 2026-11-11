@@ -68,6 +68,24 @@ class User(Base):
     # needing a separate has_custom_locale flag.
     locale: Mapped[str | None] = mapped_column(String(5), nullable=True)
 
+    # ---- Phase 22: personal profile ----
+    # full_name stays the display value every existing screen reads; the
+    # profile endpoint keeps it in sync (display_name, else "first last").
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    address_line: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    postal_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    # Email change is two-step: the new address is held here until the
+    # verification link (hash-only token, same pattern as password reset)
+    # sent TO THAT ADDRESS is clicked. `email` itself never changes before.
+    pending_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email_change_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    email_change_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     tenant: Mapped["Tenant"] = relationship(back_populates="users")
     companies: Mapped[list["Company"]] = relationship(
         secondary=user_companies, back_populates="users"

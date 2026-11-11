@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.audit_redaction import redact
@@ -21,11 +21,15 @@ from app.schemas.user import (
     ASSIGNABLE_ROLES,
     AcceptUserInvitationRequest,
     TenantUserOut,
+    UserCompanyAccessUpdate,
     UserInvitationCreate,
     UserInvitationCreateResult,
     UserInvitationOut,
     UserRoleUpdate,
 )
+from app.schemas.auth import validate_password_policy
+from app.services import email_templates
+from app.services.email_service import link as email_link, queue_email
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -79,8 +83,18 @@ def list_users(db: Session = Depends(get_db), user: User = Depends(require_admin
 # wrong route until the invitation routes were moved up here.
 
 
+def _send_user_invitation_email(db: Session, background: BackgroundTasks, inviter: User, invitation: UserInvitation, raw_token: str) -> bool:
+    locale = inviter.tenant.default_locale or "nl"
+    subject, html, text = email_templates.user_invitation(
+        locale, inviter.full_name, inviter.tenant.name, invitation.intended_role.value,
+        email_link(f"/users/invitations/accept?token={raw_token}"), INVITATION_EXPIRE_DAYS,
+    )
+    _, will_send = queue_email(db, background, to_email=invitation.invited_email, template="user_invitation", subject=subject, html_body=html, text_body=text, locale=locale, tenant_id=inviter.tenant_id)
+    return will_send
+
+
 @router.post("/invitations", response_model=UserInvitationCreateResult, status_code=status.HTTP_201_CREATED)
-def create_user_invitation(payload: UserInvitationCreate, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+def create_user_invitation(payload: UserInvitationCreate, background: BackgroundTasks, db: Session = Depends(get_db), user: User = Depends(require_admin)):
     if payload.intended_role not in ASSIGNABLE_ROLES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role must be one of {[r.value for r in ASSIGNABLE_ROLES]}")
     if payload.intended_role in (UserRole.owner, UserRole.admin) and user.role != UserRole.owner:
@@ -107,9 +121,33 @@ def create_user_invitation(payload: UserInvitationCreate, db: Session = Depends(
         tenant_id=user.tenant_id, user_id=user.id, action="invite_user", entity_type="user_invitation", entity_id=invitation.id,
         after={"invited_email": payload.invited_email, "intended_role": payload.intended_role.value}, request_id=get_request_id(),
     ))
+    email_sent = _send_user_invitation_email(db, background, user, invitation, raw_token)
     db.commit()
     db.refresh(invitation)
-    return UserInvitationCreateResult(invitation=invitation, raw_token=raw_token)
+    return UserInvitationCreateResult(invitation=invitation, raw_token=None if email_sent else raw_token, email_sent=email_sent)
+
+
+@router.post("/invitations/{invitation_id}/resend", response_model=UserInvitationCreateResult)
+def resend_user_invitation(invitation_id: int, background: BackgroundTasks, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    """Issues a NEW token (the old one stops working -- a forwarded or
+    leaked earlier link cannot be used after a resend), resets the expiry
+    and sends the email again. Only pending or expired invitations."""
+    invitation = db.get(UserInvitation, invitation_id)
+    if invitation is None or invitation.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+    if invitation.status not in (CompanyInvitationStatus.pending, CompanyInvitationStatus.expired):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Invitation is {invitation.status.value} and cannot be resent")
+    if invitation.intended_role in (UserRole.owner, UserRole.admin) and user.role != UserRole.owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only an owner can resend an owner/admin invitation")
+    raw_token, token_hash = generate_password_reset_token()
+    invitation.token_hash = token_hash
+    invitation.status = CompanyInvitationStatus.pending
+    invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=INVITATION_EXPIRE_DAYS)
+    email_sent = _send_user_invitation_email(db, background, user, invitation, raw_token)
+    _audit(db, user, "resend_user_invitation", invitation.id, after={"invited_email": invitation.invited_email, "email_sent": email_sent})
+    db.commit()
+    db.refresh(invitation)
+    return UserInvitationCreateResult(invitation=invitation, raw_token=None if email_sent else raw_token, email_sent=email_sent)
 
 
 @router.get("/invitations", response_model=list[UserInvitationOut])
@@ -157,6 +195,10 @@ def accept_user_invitation(payload: AcceptUserInvitationRequest, db: Session = D
     if db.query(User).filter(User.email == invitation.invited_email).first() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A user with this email already exists")
 
+    try:
+        validate_password_policy(payload.password, invitation.invited_email)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     new_user = User(
         tenant_id=invitation.tenant_id, email=invitation.invited_email, hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=invitation.intended_role,
@@ -275,3 +317,22 @@ def revoke_user_sessions(user_id: int, db: Session = Depends(get_db), user: User
     target.token_version += 1
     _audit(db, user, "sessions_revoked", target.id)
     db.commit()
+
+
+@router.put("/{user_id}/companies", response_model=TenantUserOut)
+def set_user_company_access(user_id: int, payload: UserCompanyAccessUpdate, db: Session = Depends(get_db), user: User = Depends(require_admin)):
+    """Replaces the set of companies a (non-admin) user may access. Every id
+    must belong to the caller's tenant -- a foreign id is a 400, never a
+    silent cross-tenant grant. Owners/admins see every company regardless
+    (app.core.deps.require_company_access), so for them this is informational."""
+    target = _get_tenant_user_or_404(db, user, user_id)
+    wanted = sorted(set(payload.company_ids))
+    companies = db.query(Company).filter(Company.id.in_(wanted), Company.tenant_id == user.tenant_id).all() if wanted else []
+    if len(companies) != len(wanted):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more company IDs do not belong to this tenant")
+    before = sorted(c.id for c in target.companies)
+    target.companies = companies
+    _audit(db, user, "company_access_updated", target.id, before={"company_ids": before}, after={"company_ids": wanted})
+    db.commit()
+    db.refresh(target)
+    return target

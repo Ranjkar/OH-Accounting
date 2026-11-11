@@ -12,6 +12,13 @@ class CompanyCreate(BaseModel):
     vat_number: str | None = None
     address: str | None = None
     vat_frequency: VatFrequency = VatFrequency.quarterly
+    # Phase 22 (all optional so the pre-wizard quick form keeps working).
+    rsin: str | None = None
+    vat_registered: bool = True
+    kor_participant: bool = False
+    business_activity: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
 
 class CompanyOut(BaseModel):
@@ -23,6 +30,12 @@ class CompanyOut(BaseModel):
     vat_frequency: VatFrequency
     vat_accounting_basis: VatAccountingBasis
     input_vat_pro_rata_percentage: Decimal | None
+    rsin: str | None = None
+    vat_registered: bool = True
+    kor_participant: bool = False
+    business_activity: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -30,6 +43,72 @@ class CompanyOut(BaseModel):
 class CompanyUpdate(BaseModel):
     vat_accounting_basis: VatAccountingBasis | None = None
     input_vat_pro_rata_percentage: Decimal | None = None
+
+
+# ---- Phase 22: company setup wizard drafts ----
+
+
+class SetupDraftData(BaseModel):
+    """The wizard's answers. Everything optional: a draft may be saved at
+    any step. `complete_setup_draft` is what enforces required/conditional
+    fields, via app.api.v1.company_setup.validate_draft."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str | None = None
+    legal_form_code: str | None = None
+    kvk_number: str | None = None
+    kvk_verified: bool = False
+    vat_number: str | None = None
+    rsin: str | None = None
+    address: str | None = None
+    business_activity: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    vat_registered: bool | None = None
+    vat_frequency: VatFrequency | None = None
+    vat_accounting_basis: VatAccountingBasis | None = None
+    kor_participant: bool | None = None
+    financial_year: int | None = None
+    bank_iban: str | None = None
+    bank_account_name: str | None = None
+    bank_skipped: bool = False
+
+
+class SetupDraftUpdate(BaseModel):
+    data: SetupDraftData
+    current_step: int = 0
+
+
+class SetupDraftOut(BaseModel):
+    id: int
+    data: dict
+    current_step: int
+    created_company_id: int | None
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SetupValidationIssue(BaseModel):
+    field: str
+    code: str  # required | invalid | duplicate
+    message: str
+
+
+class SetupValidationOut(BaseModel):
+    ok: bool
+    issues: list[SetupValidationIssue]
+    warnings: list[SetupValidationIssue]
+
+
+class SetupCompleteOut(BaseModel):
+    company: CompanyOut
+    financial_year_id: int | None
+    bank_account_id: int | None
+    already_completed: bool
 
 
 class VatPeriodOut(BaseModel):
@@ -80,7 +159,8 @@ class CompanyInvitationOut(BaseModel):
 
 class CompanyInvitationCreateResult(BaseModel):
     invitation: CompanyInvitationOut
-    raw_token: str
+    raw_token: str | None
+    email_sent: bool = False
 
 
 class AcceptInvitationRequest(BaseModel):

@@ -107,6 +107,37 @@ class Settings(BaseSettings):
     # the configured billing provider.
     billing_webhook_secret: str = Field(default=INSECURE_DEFAULT_BILLING_WEBHOOK_SECRET, repr=False)
 
+    # ---- Phase 22: outbound email (app/services/email_provider.py) ----
+    # EMAIL_PROVIDER selects the transport: "none" (default -- nothing is sent,
+    # every message is logged to email_outbox as "failed: no provider", and
+    # invitation/reset links are shown in the UI instead), "smtp", or
+    # "resend" (https://resend.com transactional API). Credentials are only
+    # ever read here; no API response ever includes them.
+    email_provider: str = "none"
+    email_from_address: str = "no-reply@localhost"
+    email_from_name: str = "OnHolland Accounting"
+    # Public origin of the frontend, used to build links in emails
+    # (password reset, verification, invitations). Must be https in prod.
+    app_base_url: str = "http://localhost:3000"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = Field(default=None, repr=False)
+    smtp_password: str | None = Field(default=None, repr=False)
+    smtp_use_tls: bool = True  # STARTTLS on 587; set False with smtp_use_ssl for implicit TLS on 465
+    smtp_use_ssl: bool = False
+    resend_api_key: str | None = Field(default=None, repr=False)
+    email_max_attempts: int = 3
+    email_retry_base_delay_seconds: float = 1.0
+    # Abuse guard: max messages per recipient per hour, and per tenant per hour.
+    email_rate_limit_per_recipient_per_hour: int = 10
+    email_rate_limit_per_tenant_per_hour: int = 200
+
+    # ---- Phase 22: Open Banking provider selection ----
+    # "stub" is the only adapter that exists (see docs/open-banking.md). Any
+    # other value refuses to start rather than silently falling back to
+    # synthetic data while an operator believes a real bank is connected.
+    open_banking_provider: str = "stub"
+
     class Config:
         env_file = ".env"
 

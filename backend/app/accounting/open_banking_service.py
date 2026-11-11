@@ -32,7 +32,27 @@ def initiate_connection(db: Session, bank_account: BankAccount, provider: OpenBa
     return consent.authorization_url
 
 
-def complete_connection(db: Session, bank_account: BankAccount, provider: OpenBankingProvider, callback_params: dict) -> None:
+def _mask_iban(iban: str) -> str:
+    return iban if len(iban) <= 8 else f"{iban[:4]}…{iban[-4:]}"
+
+
+def _finalise(bank_account: BankAccount, provider_account_id: str) -> None:
+    bank_account.provider_account_id = provider_account_id
+    bank_account.pending_provider_accounts = None
+    bank_account.consent_status = BankConsentStatus.connected
+    bank_account.consent_granted_at = datetime.now(timezone.utc)
+    bank_account.consent_expires_at = datetime.now(timezone.utc) + timedelta(days=CONSENT_MAX_DAYS)
+    bank_account.last_sync_error = None
+
+
+def complete_connection(db: Session, bank_account: BankAccount, provider: OpenBankingProvider, callback_params: dict) -> list[dict]:
+    """Exchanges the callback for tokens and resolves which provider account
+    this BankAccount is. Returns the candidate list that still needs a
+    choice (empty when the connection was finalised automatically):
+    - exactly one account, or one whose IBAN matches ours -> connected;
+    - several accounts, none matching -> tokens stored, status stays
+      PENDING, candidates (no tokens, masked IBANs) returned for
+      `select_account`."""
     if bank_account.consent_status != BankConsentStatus.pending:
         raise OpenBankingError(f"Bank account consent is {bank_account.consent_status.value}, not PENDING -- call initiate_connection first")
 
@@ -40,15 +60,44 @@ def complete_connection(db: Session, bank_account: BankAccount, provider: OpenBa
     accounts = provider.list_accounts(access_token)
     if not accounts:
         raise OpenBankingError("Provider returned no accounts for this consent")
-    matched = accounts[0]  # single-account connections only in this build; see docs/open-banking.md
 
     bank_account.encrypted_access_token = encrypt_token(access_token)
     bank_account.encrypted_refresh_token = encrypt_token(refresh_token)
-    bank_account.provider_account_id = matched.provider_account_id
-    bank_account.consent_status = BankConsentStatus.connected
-    bank_account.consent_granted_at = datetime.now(timezone.utc)
-    bank_account.consent_expires_at = datetime.now(timezone.utc) + timedelta(days=CONSENT_MAX_DAYS)
+
+    own_iban = (bank_account.iban or "").replace(" ", "").upper()
+    matched = next((a for a in accounts if a.iban.replace(" ", "").upper() == own_iban), None)
+    if matched is None and len(accounts) == 1:
+        matched = accounts[0]
+    if matched is not None:
+        _finalise(bank_account, matched.provider_account_id)
+        db.flush()
+        return []
+
+    candidates = [
+        {"provider_account_id": a.provider_account_id, "iban_masked": _mask_iban(a.iban), "account_name": a.account_name, "currency": a.currency}
+        for a in accounts
+    ]
+    bank_account.pending_provider_accounts = candidates
     db.flush()
+    return candidates
+
+
+def select_account(db: Session, bank_account: BankAccount, provider_account_id: str) -> None:
+    if bank_account.consent_status != BankConsentStatus.pending or not bank_account.pending_provider_accounts:
+        raise OpenBankingError("No account selection is pending for this bank account")
+    if not any(c["provider_account_id"] == provider_account_id for c in bank_account.pending_provider_accounts):
+        raise OpenBankingError("That account is not one of the accounts covered by this consent")
+    _finalise(bank_account, provider_account_id)
+    db.flush()
+
+
+def refresh_status(db: Session, bank_account: BankAccount) -> None:
+    """PSD2 consents lapse after at most 90 days: flips CONNECTED to EXPIRED
+    once consent_expires_at has passed, so the UI asks for a reconnect
+    instead of a sync that would fail at the bank."""
+    if bank_account.consent_status == BankConsentStatus.connected and bank_account.consent_expires_at and bank_account.consent_expires_at < datetime.now(timezone.utc):
+        bank_account.consent_status = BankConsentStatus.expired
+        db.flush()
 
 
 def disconnect(db: Session, bank_account: BankAccount) -> None:
@@ -58,6 +107,7 @@ def disconnect(db: Session, bank_account: BankAccount) -> None:
     bank_account.consent_status = BankConsentStatus.revoked
     bank_account.encrypted_access_token = None
     bank_account.encrypted_refresh_token = None
+    bank_account.pending_provider_accounts = None
     db.flush()
 
 
@@ -77,6 +127,7 @@ def _to_parsed_row(t: ProviderTransaction) -> ParsedBankTransaction:
 
 
 def sync_account(db: Session, bank_account: BankAccount, provider: OpenBankingProvider, synced_by_user_id: int) -> BankImportBatch:
+    refresh_status(db, bank_account)
     if bank_account.consent_status != BankConsentStatus.connected:
         raise OpenBankingError(f"Bank account is {bank_account.consent_status.value}, not CONNECTED")
     if bank_account.encrypted_access_token is None:

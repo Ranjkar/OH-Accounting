@@ -10,8 +10,10 @@ from app.api.v1 import (
     billing,
     budgets,
     companies,
+    company_setup,
     dashboard,
     documents,
+    email_admin,
     employee_self_service,
     employees,
     financial_reports,
@@ -31,7 +33,12 @@ from app.api.v1 import (
 
 router = APIRouter()
 router.include_router(auth.router)
+# company_setup's literal "/companies/setup-drafts" must register BEFORE
+# companies' parameterised "/companies/{company_id}" (same ordering rule
+# users.py documents for its /invitations routes).
+router.include_router(company_setup.router)
 router.include_router(companies.router)
+router.include_router(email_admin.router)
 router.include_router(dashboard.router)
 router.include_router(documents.router)
 router.include_router(batches.router)

@@ -57,7 +57,15 @@ class UserInvitationOut(BaseModel):
 
 class UserInvitationCreateResult(BaseModel):
     invitation: UserInvitationOut
-    raw_token: str
+    # Only populated when no email could be sent (no provider configured or
+    # rate-limited) so the inviter can relay the link themselves; otherwise
+    # None -- the token travels in the email and nowhere else.
+    raw_token: str | None
+    email_sent: bool = False
+
+
+class UserCompanyAccessUpdate(BaseModel):
+    company_ids: list[int]
 
 
 class AcceptUserInvitationRequest(BaseModel):

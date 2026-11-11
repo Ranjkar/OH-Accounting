@@ -25,6 +25,7 @@ class BankAccountOut(BaseModel):
     consent_expires_at: datetime | None
     last_synced_at: datetime | None
     last_sync_error: str | None
+    pending_provider_accounts: list[dict] | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -32,10 +33,20 @@ class BankAccountOut(BaseModel):
 
 class OpenBankingConnectRequest(BaseModel):
     redirect_uri: str
+    bank_id: str | None = None
 
 
 class OpenBankingCallbackRequest(BaseModel):
     callback_params: dict = {}
+
+
+class OpenBankingCallbackOut(BaseModel):
+    account: BankAccountOut
+    candidates: list[dict]
+
+
+class OpenBankingSelectAccountRequest(BaseModel):
+    provider_account_id: str
 
 
 class BankImportBatchOut(BaseModel):

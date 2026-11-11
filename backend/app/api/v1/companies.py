@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.accounting import subscription_service
@@ -25,6 +25,8 @@ from app.schemas.company import (
     FinancialYearCreate,
     FinancialYearOut,
 )
+from app.services import email_templates
+from app.services.email_service import link as email_link, queue_email
 from app.services.vat_period_generator import generate_vat_periods
 
 router = APIRouter(prefix="/companies", tags=["companies"])
@@ -297,7 +299,7 @@ def revoke_company_access(company_id: int, user_id: int, db: Session = Depends(g
 
 
 @router.post("/{company_id}/invitations", response_model=CompanyInvitationCreateResult, status_code=status.HTTP_201_CREATED)
-def create_invitation(company_id: int, payload: CompanyInvitationCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def create_invitation(company_id: int, payload: CompanyInvitationCreate, background: BackgroundTasks, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     _require_company_owner(company_id, user, db)
     company = db.get(Company, company_id)
     if company is None or company.tenant_id != user.tenant_id:
@@ -314,9 +316,14 @@ def create_invitation(company_id: int, payload: CompanyInvitationCreate, db: Ses
         tenant_id=user.tenant_id, user_id=user.id, action="invite", entity_type="company",
         entity_id=company.id, after={"invited_email": payload.invited_email, "intended_role": payload.intended_role.value},
     ))
+    locale = user.locale or user.tenant.default_locale or "nl"
+    subject, html, text = email_templates.company_invitation(
+        locale, user.full_name, company.name, email_link(f"/invitations/accept?token={raw_token}"), INVITATION_EXPIRE_DAYS
+    )
+    _, email_sent = queue_email(db, background, to_email=payload.invited_email, template="company_invitation", subject=subject, html_body=html, text_body=text, locale=locale, tenant_id=user.tenant_id)
     db.commit()
     db.refresh(invitation)
-    return CompanyInvitationCreateResult(invitation=invitation, raw_token=raw_token)
+    return CompanyInvitationCreateResult(invitation=invitation, raw_token=None if email_sent else raw_token, email_sent=email_sent)
 
 
 @router.get("/{company_id}/invitations", response_model=list[CompanyInvitationOut])

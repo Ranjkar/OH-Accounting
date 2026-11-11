@@ -42,7 +42,7 @@ def test_connect_returns_stub_authorization_url(client, db_session):
     headers = _login(client, "admin@acme.nl")
     _, account_id = _setup(db_session, client, headers)
 
-    response = client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "https://app.example/callback"}, headers=headers)
+    response = client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "http://localhost:3000/banking/connect/callback"}, headers=headers)
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["provider"] == "stub"
@@ -54,11 +54,12 @@ def test_full_connect_sync_disconnect_lifecycle(client, db_session):
     headers = _login(client, "admin@acme.nl")
     _, account_id = _setup(db_session, client, headers)
 
-    client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "https://app.example/callback"}, headers=headers)
+    client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "http://localhost:3000/banking/connect/callback"}, headers=headers)
     completed = client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/callback", json={}, headers=headers)
     assert completed.status_code == 200, completed.text
-    assert completed.json()["consent_status"] == "CONNECTED"
-    assert completed.json()["provider_name"] == "stub"
+    assert completed.json()["account"]["consent_status"] == "CONNECTED"
+    assert completed.json()["account"]["provider_name"] == "stub"
+    assert completed.json()["candidates"] == []
 
     sync = client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/sync", headers=headers)
     assert sync.status_code == 200, sync.text
@@ -82,7 +83,7 @@ def test_access_token_is_never_returned_in_plaintext(client, db_session):
     _create_user(db_session)
     headers = _login(client, "admin@acme.nl")
     _, account_id = _setup(db_session, client, headers)
-    client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "https://app.example/callback"}, headers=headers)
+    client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "http://localhost:3000/banking/connect/callback"}, headers=headers)
     completed = client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/callback", json={}, headers=headers)
 
     assert "encrypted_access_token" not in completed.json()
@@ -94,7 +95,7 @@ def test_access_token_is_actually_encrypted_at_rest(client, db_session):
     _create_user(db_session)
     headers = _login(client, "admin@acme.nl")
     _, account_id = _setup(db_session, client, headers)
-    client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "https://app.example/callback"}, headers=headers)
+    client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/connect", json={"redirect_uri": "http://localhost:3000/banking/connect/callback"}, headers=headers)
     client.post(f"/api/v1/bank-accounts/{account_id}/open-banking/callback", json={}, headers=headers)
 
     db_session.commit()

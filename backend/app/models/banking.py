@@ -46,6 +46,10 @@ class BankAccount(Base):
     encrypted_refresh_token: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_sync_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Phase 22: when a consent covers several accounts at the bank, the
+    # candidates (provider id, masked IBAN, name, currency -- never tokens)
+    # wait here until the user picks one; cleared on selection/disconnect.
+    pending_provider_accounts: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

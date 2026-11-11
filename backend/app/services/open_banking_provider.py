@@ -95,6 +95,26 @@ class StubOpenBankingProvider:
         return []  # no fabricated transaction history -- an empty, honest result
 
 
+# Dutch banks a PSD2 AISP typically covers. Static reference data for the
+# connection wizard's bank picker (name, BIC, sandbox-available flag). The
+# flag is honest: with the stub provider every entry is "sandbox"; a real
+# adapter would report what its institution list actually returns.
+DUTCH_BANKS: list[dict] = [
+    {"id": "abnamro", "name": "ABN AMRO", "bic": "ABNANL2A"},
+    {"id": "ing", "name": "ING", "bic": "INGBNL2A"},
+    {"id": "rabobank", "name": "Rabobank", "bic": "RABONL2U"},
+    {"id": "sns", "name": "SNS Bank", "bic": "SNSBNL2A"},
+    {"id": "asn", "name": "ASN Bank", "bic": "ASNBNL21"},
+    {"id": "regiobank", "name": "RegioBank", "bic": "RBRBNL21"},
+    {"id": "triodos", "name": "Triodos Bank", "bic": "TRIONL2U"},
+    {"id": "knab", "name": "Knab", "bic": "KNABNL2H"},
+    {"id": "bunq", "name": "bunq", "bic": "BUNQNL2A"},
+    {"id": "vanlanschot", "name": "Van Lanschot Kempen", "bic": "FVLBNL22"},
+    {"id": "revolut", "name": "Revolut", "bic": "REVOLT21"},
+    {"id": "n26", "name": "N26", "bic": "NTSBDEB1"},
+]
+
+
 _provider: OpenBankingProvider | None = None
 
 
@@ -102,12 +122,26 @@ def get_open_banking_provider() -> OpenBankingProvider:
     global _provider
     if _provider is not None:
         return _provider
-    # No real provider is configured anywhere in this codebase (no API
-    # credentials exist) -- always the stub. This is NOT a try/fallback
-    # like ai_provider.py; there is nothing to try yet.
-    logger.info("No Open Banking provider is configured -- using StubOpenBankingProvider (see docs/open-banking.md)")
+    from app.core.config import settings
+
+    kind = (settings.open_banking_provider or "stub").strip().lower()
+    if kind != "stub":
+        # Fail loudly: silently serving synthetic data while an operator
+        # believes a real provider is configured would be far worse.
+        raise RuntimeError(
+            f"OPEN_BANKING_PROVIDER={kind!r} has no adapter in this build -- only 'stub' exists. "
+            "A real AISP adapter must implement OpenBankingProvider (see docs/open-banking.md)."
+        )
+    logger.info("Open Banking provider: StubOpenBankingProvider (sandbox only, see docs/open-banking.md)")
     _provider = StubOpenBankingProvider()
     return _provider
+
+
+def provider_status() -> dict:
+    """What the wizard shows before anyone connects: which adapter is active
+    and whether it is a sandbox. Never includes credentials."""
+    provider = get_open_banking_provider()
+    return {"provider": provider.name, "is_sandbox": provider.name == "stub", "live_connectivity": provider.name != "stub"}
 
 
 def reset_provider_cache() -> None:
