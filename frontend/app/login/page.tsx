@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth-context";
@@ -84,6 +85,11 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full input-v2 px-3 py-2 text-sm disabled:opacity-60"
           />
+          <div className="flex justify-end">
+            <Link href="/reset-password" className="text-xs text-navy hover:underline">
+              {t("forgotPassword")}
+            </Link>
+          </div>
         </div>
 
         {mfaRequired && (

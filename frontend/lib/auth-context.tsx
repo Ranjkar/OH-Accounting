@@ -11,6 +11,11 @@ interface AuthState {
   login: (email: string, password: string, mfaCode?: string) => Promise<{ mfaRequired: boolean }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  /** Swap in a freshly issued token. Password changes, "sign out everywhere
+   * else" and email confirmation bump the server-side token_version, which
+   * invalidates the token already in hand -- keeping the old one would log
+   * the user out of the very device they just acted on. */
+  rotateToken: (newToken: string) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -80,8 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await api.me(token));
   }
 
+  function rotateToken(newToken: string) {
+    localStorage.setItem("token", newToken);
+    setToken(newToken);
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, refreshUser, rotateToken }}>
       {children}
     </AuthContext.Provider>
   );

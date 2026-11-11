@@ -4,8 +4,9 @@ import { FormEvent, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import AuthGuard from "@/components/AuthGuard";
 import Shell from "@/components/Shell";
+import GlassModal from "@/components/glass/GlassModal";
 import { useAuth } from "@/lib/auth-context";
-import { api, ApiError, ASSIGNABLE_ROLES, TenantUser, UserInvitation, UserRole } from "@/lib/api";
+import { api, ApiError, ASSIGNABLE_ROLES, Company, TenantUser, UserInvitation, UserRole } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 
 const ROLE_PILL: Record<UserRole, string> = {
@@ -42,14 +43,21 @@ function UsersContent() {
   const [inviteResult, setInviteResult] = useState<{ email: string; token: string | null } | null>(null);
   const [inviteBusy, setInviteBusy] = useState(false);
 
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [manageUser, setManageUser] = useState<TenantUser | null>(null);
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>([]);
+  const [manageBusy, setManageBusy] = useState(false);
+  const [manageError, setManageError] = useState<string | null>(null);
+
   const isOwner = currentUser?.role === "owner";
 
   function refresh() {
     if (!token) return;
-    Promise.all([api.listUsers(token), api.listUserInvitations(token)])
-      .then(([u, inv]) => {
+    Promise.all([api.listUsers(token), api.listUserInvitations(token), api.listCompanies(token)])
+      .then(([u, inv, c]) => {
         setUsers(u);
         setInvitations(inv);
+        setCompanies(c);
         setError(null);
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : t("loadFailed")))
@@ -125,6 +133,44 @@ function UsersContent() {
       refresh();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("revokeInvitationFailed"));
+    }
+  }
+
+  async function handleResendInvitation(invitation: UserInvitation) {
+    if (!token) return;
+    setBusyUserId(invitation.id);
+    setError(null);
+    try {
+      const result = await api.resendUserInvitation(token, invitation.id);
+      // Without an email provider the backend hands back the raw token so
+      // the link can be shared by hand, exactly like a fresh invitation.
+      if (result.raw_token) setInviteResult({ email: invitation.invited_email, token: result.raw_token });
+      refresh();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t("resendFailed"));
+    } finally {
+      setBusyUserId(null);
+    }
+  }
+
+  function openManage(targetUser: TenantUser) {
+    setManageUser(targetUser);
+    setSelectedCompanyIds(targetUser.companies.map((c) => c.id));
+    setManageError(null);
+  }
+
+  async function saveCompanies() {
+    if (!token || !manageUser) return;
+    setManageBusy(true);
+    setManageError(null);
+    try {
+      await api.setUserCompanyAccess(token, manageUser.id, selectedCompanyIds);
+      setManageUser(null);
+      refresh();
+    } catch (e) {
+      setManageError(e instanceof ApiError ? e.message : t("companiesSaveFailed"));
+    } finally {
+      setManageBusy(false);
     }
   }
 
@@ -267,6 +313,13 @@ function UsersContent() {
                       ) : (
                         <div className="flex items-center gap-2 justify-end">
                           <button
+                            onClick={() => openManage(u)}
+                            disabled={busyUserId === u.id}
+                            className="text-navy hover:underline disabled:opacity-50"
+                          >
+                            {t("manageCompanies")}
+                          </button>
+                          <button
                             onClick={() => handleRevokeSessions(u)}
                             disabled={busyUserId === u.id}
                             className="text-navy hover:underline disabled:opacity-50"
@@ -325,9 +378,18 @@ function UsersContent() {
                     <td className="text-text-secondary text-xs">{formatDate(inv.expires_at, locale)}</td>
                     <td className="text-xs">
                       {inv.status === "PENDING" && (
-                        <button onClick={() => handleRevokeInvitation(inv)} className="text-error hover:underline">
-                          {t("revoke")}
-                        </button>
+                        <div className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={() => handleResendInvitation(inv)}
+                            disabled={busyUserId === inv.id}
+                            className="text-navy hover:underline disabled:opacity-50"
+                          >
+                            {t("resend")}
+                          </button>
+                          <button onClick={() => handleRevokeInvitation(inv)} className="text-error hover:underline">
+                            {t("revoke")}
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -337,6 +399,41 @@ function UsersContent() {
           </div>
         </div>
       )}
+
+      <GlassModal
+        open={manageUser !== null}
+        onClose={() => setManageUser(null)}
+        title={manageUser ? t("manageCompaniesFor", { name: manageUser.full_name }) : ""}
+        footer={
+          <>
+            <button type="button" onClick={() => setManageUser(null)} disabled={manageBusy} className="btn-outline-v2 px-4 py-2 text-sm disabled:opacity-50">
+              {tCommon("cancel")}
+            </button>
+            <button type="button" onClick={() => void saveCompanies()} disabled={manageBusy} className="btn-primary-v2 px-4 py-2 text-sm disabled:opacity-50">
+              {manageBusy ? tCommon("saving") : tCommon("save")}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          {manageError && <div className="rounded-md bg-red-50 text-error text-sm px-3 py-2" role="alert">{manageError}</div>}
+          <p className="text-xs text-text-secondary">{t("manageCompaniesHelp")}</p>
+          <div className="space-y-2">
+            {companies.map((c) => (
+              <label key={c.id} className="flex items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5"
+                  checked={selectedCompanyIds.includes(c.id)}
+                  onChange={(e) => setSelectedCompanyIds((ids) => (e.target.checked ? [...ids, c.id] : ids.filter((id) => id !== c.id)))}
+                />
+                <span className="text-text-primary">{c.name}</span>
+              </label>
+            ))}
+            {companies.length === 0 && <p className="text-sm text-text-secondary">{t("noCompaniesToAssign")}</p>}
+          </div>
+        </div>
+      </GlassModal>
     </div>
   );
 }

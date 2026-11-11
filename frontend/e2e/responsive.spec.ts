@@ -37,6 +37,7 @@ export const ROUTES = [
   "/forecasts", "/government", "/invitations/accept", "/kpis", "/ledger", "/ledger/1", "/legal-structure",
   "/loonheffingen", "/management-reports", "/payroll", "/profit-and-loss", "/purchases/upload", "/reconciliation",
   "/reports", "/review-centre", "/sales/upload", "/scenarios", "/settings", "/tax-centre", "/tax-optimization",
+  "/reset-password", "/verify-email",
   "/trial-balance", "/users", "/users/invitations/accept", "/vat", "/vat/5", "/working-capital", "/working-hours",
 ];
 
