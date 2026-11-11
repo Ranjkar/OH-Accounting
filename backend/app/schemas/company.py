@@ -17,7 +17,7 @@ class CompanyCreate(BaseModel):
     vat_registered: bool = True
     kor_participant: bool = False
     business_activity: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     phone: str | None = None
 
 

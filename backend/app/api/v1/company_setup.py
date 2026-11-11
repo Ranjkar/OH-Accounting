@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from app.accounting import subscription_service
 from app.core.deps import ADMIN_ROLES, get_current_user
 from app.core.dutch_identifiers import is_valid_btw, is_valid_iban, is_valid_kvk, is_valid_rsin, normalize
+from app.core.email_format import is_valid_email
 from app.core.request_context import get_request_id
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
@@ -94,6 +95,10 @@ def validate_draft(db: Session, tenant_id: int, data: SetupDraftData, *, exclude
         warnings.append(SetupValidationIssue(field="rsin", code="required", message="An RSIN is normally issued to this legal form; add it when known"))
     if rsin and not is_valid_rsin(rsin):
         issue("rsin", "invalid", "RSIN must be 9 digits and pass the 11-check")
+
+    email = (data.email or "").strip()
+    if email and not is_valid_email(email):
+        issue("email", "invalid", "Enter a valid email address")
 
     if data.vat_registered is None:
         issue("vat_registered", "required", "Indicate whether the company is registered for VAT")

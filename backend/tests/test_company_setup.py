@@ -127,3 +127,21 @@ def test_drafts_are_tenant_isolated_and_admin_only(client, db_session):
     assert client.get(f"/api/v1/companies/setup-drafts/{draft_id}", headers=h_b).status_code == 404
     assert client.post(f"/api/v1/companies/setup-drafts/{draft_id}/complete", headers=h_b).status_code == 404
     assert client.post("/api/v1/companies/setup-drafts", headers=_headers(client, "viewer@b.nl")).status_code == 403
+
+
+def test_email_format_is_enforced_server_side(client, db_session):
+    _user(db_session)
+    h = _headers(client)
+    draft_id = client.post("/api/v1/companies/setup-drafts", headers=h).json()["id"]
+
+    v = client.post(f"/api/v1/companies/setup-drafts/{draft_id}/validate", json={"data": {**VALID, "email": "info@"}, "current_step": 3}, headers=h).json()
+    assert {i["field"]: i["code"] for i in v["issues"]}.get("email") == "invalid"
+
+    v = client.post(f"/api/v1/companies/setup-drafts/{draft_id}/validate", json={"data": {**VALID, "email": "info@voorbeeld.nl"}, "current_step": 3}, headers=h).json()
+    assert not any(i["field"] == "email" for i in v["issues"])
+
+    # Direct company creation rejects a malformed address at the schema level.
+    r = client.post("/api/v1/companies", json={"name": "Email Format B.V.", "email": "not-an-email"}, headers=h)
+    assert r.status_code == 422
+    r = client.post("/api/v1/companies", json={"name": "Email Format B.V.", "email": "boekhouder@voorbeeld.nl"}, headers=h)
+    assert r.status_code == 201
