@@ -68,6 +68,10 @@ services:
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?NEXT_PUBLIC_API_URL must be set to the public API URL}
+      # next.config.ts rewrites /api/v1/* to this address at RUNTIME (server
+      # side). Inside the container "localhost:8000" is the frontend itself,
+      # so without this the same-origin proxy has nowhere to go.
+      BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:8000}
     depends_on:
       backend:
         condition: service_healthy
