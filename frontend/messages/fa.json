@@ -284,7 +284,17 @@
     "invoiceMatchLine": "فاکتور #{id} · {level} ({score})",
     "excludeFromReconciliation": "حذف از تطبیق",
     "goToReconciliationHint": "برای تأیید، رد یا بازگردانی تطبیق‌ها به بخش تطبیق بروید.",
-    "noTransactionsMatchFilters": "هیچ تراکنش بانکی با این فیلترها مطابقت ندارد."
+    "noTransactionsMatchFilters": "هیچ تراکنش بانکی با این فیلترها مطابقت ندارد.",
+    "sandboxNotice": "ارائه‌دهندهٔ آزمایشی فعال: اتصال‌ها از دادهٔ مصنوعی استفاده می‌کنند، نه یک بانک واقعی.",
+    "liveNotice": "ارائه‌دهندهٔ زنده: {provider}.",
+    "consentExpires": "رضایت معتبر تا {date}.",
+    "chooseAccount": "رضایت شما چند حساب را پوشش می‌دهد. انتخاب کنید این اتصال برای کدام حساب است.",
+    "connectedOk": "اتصال بانکی برقرار شد.",
+    "connectFailed": "تکمیل اتصال بانکی ممکن نشد.",
+    "selectAccountButton": "استفاده از این حساب",
+    "chooseBank": "بانک خود را انتخاب کنید",
+    "bankSearchPlaceholder": "جست‌وجوی بانک یا BIC",
+    "noBanksFound": "هیچ بانکی با جست‌وجوی شما مطابقت ندارد."
   },
   "reconciliation": {
     "title": "صف تطبیق حساب‌ها",

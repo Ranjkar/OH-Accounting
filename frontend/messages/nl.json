@@ -284,7 +284,17 @@
     "invoiceMatchLine": "Factuur #{id} · {level} ({score})",
     "excludeFromReconciliation": "Uitsluiten van afstemming",
     "goToReconciliationHint": "Ga naar Afstemming om matches goed te keuren, af te wijzen of terug te draaien.",
-    "noTransactionsMatchFilters": "Geen banktransacties komen overeen met deze filters."
+    "noTransactionsMatchFilters": "Geen banktransacties komen overeen met deze filters.",
+    "sandboxNotice": "Sandbox-provider actief: verbindingen gebruiken synthetische testdata, nooit een echte bank.",
+    "liveNotice": "Live provider: {provider}.",
+    "consentExpires": "Toestemming geldig tot {date}.",
+    "chooseAccount": "Uw toestemming dekt meerdere rekeningen. Kies welke rekening bij deze verbinding hoort.",
+    "connectedOk": "Bankverbinding tot stand gebracht.",
+    "connectFailed": "De bankverbinding kon niet worden voltooid.",
+    "selectAccountButton": "Deze rekening gebruiken",
+    "chooseBank": "Kies uw bank",
+    "bankSearchPlaceholder": "Zoek bank of BIC",
+    "noBanksFound": "Geen bank gevonden voor uw zoekopdracht."
   },
   "reconciliation": {
     "title": "Afstemmingswachtrij",

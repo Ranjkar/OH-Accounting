@@ -284,7 +284,17 @@
     "invoiceMatchLine": "الفاتورة رقم {id} · {level} ({score})",
     "excludeFromReconciliation": "استبعاد من التسوية",
     "goToReconciliationHint": "انتقل إلى صفحة التسوية للموافقة على التطابقات أو رفضها أو التراجع عنها.",
-    "noTransactionsMatchFilters": "لا توجد معاملات بنكية مطابقة لهذه الفلاتر."
+    "noTransactionsMatchFilters": "لا توجد معاملات بنكية مطابقة لهذه الفلاتر.",
+    "sandboxNotice": "مزوّد تجريبي نشط: تستخدم الاتصالات بيانات اختبار اصطناعية، وليس بنكًا حقيقيًا.",
+    "liveNotice": "مزوّد فعلي: {provider}.",
+    "consentExpires": "الموافقة سارية حتى {date}.",
+    "chooseAccount": "تغطي موافقتك عدة حسابات. اختر الحساب الذي تخصه هذه الاتصال.",
+    "connectedOk": "تم إنشاء الاتصال البنكي.",
+    "connectFailed": "تعذّر إتمام الاتصال البنكي.",
+    "selectAccountButton": "استخدام هذا الحساب",
+    "chooseBank": "اختر بنكك",
+    "bankSearchPlaceholder": "ابحث عن بنك أو BIC",
+    "noBanksFound": "لا توجد بنوك تطابق بحثك."
   },
   "reconciliation": {
     "title": "قائمة انتظار التسوية",

@@ -284,7 +284,17 @@
     "invoiceMatchLine": "Invoice #{id} · {level} ({score})",
     "excludeFromReconciliation": "Exclude from reconciliation",
     "goToReconciliationHint": "Go to Reconciliation to approve/reject/reverse matches.",
-    "noTransactionsMatchFilters": "No bank transactions match these filters."
+    "noTransactionsMatchFilters": "No bank transactions match these filters.",
+    "sandboxNotice": "Sandbox provider active: connections use synthetic test data, never a real bank.",
+    "liveNotice": "Live provider: {provider}.",
+    "consentExpires": "Consent valid until {date}.",
+    "chooseAccount": "Your consent covers several accounts. Choose which one this connection is for.",
+    "connectedOk": "Bank connection established.",
+    "connectFailed": "The bank connection could not be completed.",
+    "selectAccountButton": "Use this account",
+    "chooseBank": "Choose your bank",
+    "bankSearchPlaceholder": "Search bank or BIC",
+    "noBanksFound": "No banks match your search."
   },
   "reconciliation": {
     "title": "Reconciliation Queue",
