@@ -45,6 +45,11 @@ with psycopg.connect(url) as c:
         " join information_schema.constraint_column_usage ccu on ccu.constraint_name = tc.constraint_name"
         " where tc.constraint_type = 'FOREIGN KEY' and ccu.table_name = 'companies' and ccu.table_name <> tc.table_name"
     ).fetchall()
+    # Phase 26: a new company gets a draft agreement whose child rows reference
+    # contracts, not companies, so the FK sweep below cannot see them.
+    c.execute("delete from audit_logs where entity_type = 'contract' and entity_id in (select id from contracts where company_id in (select id from companies where name like %s))", like)
+    for child in ("contract_reminders", "contract_events", "contract_signatures", "contract_signing_invitations", "contract_versions"):
+        c.execute(f"delete from {child} where contract_id in (select id from contracts where company_id in (select id from companies where name like %s))", like)
     for _ in range(2):
         for table, column in refs:
             c.execute(f"delete from {table} where {column} in (select id from companies where name like %s)", like)

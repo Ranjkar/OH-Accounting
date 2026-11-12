@@ -138,6 +138,25 @@ class Settings(BaseSettings):
     # synthetic data while an operator believes a real bank is connected.
     open_banking_provider: str = "stub"
 
+    # ---- Phase 26: annual client agreements & electronic signatures ----
+    # Master switch. While False: no draft agreement is created when a company
+    # is registered, the renewal scheduler does not start, and every
+    # /contracts endpoint answers 404 -- so the feature can ship dark and be
+    # enabled per environment after acceptance testing.
+    contracts_enabled: bool = False
+    # Scheduler-originated email (renewal reminders, signing reminders,
+    # expiry/signed notifications). Admin-initiated "send for signature" is
+    # NOT gated by this -- it goes through the normal email provider, which
+    # itself defaults to EMAIL_PROVIDER=none (link shown in the UI instead).
+    contracts_email_automation_enabled: bool = False
+    # 0 disables the in-process scheduler thread (run it via
+    # POST /contracts/scheduler/run or an external cron instead).
+    contracts_scheduler_interval_minutes: int = 60
+    # Signing-provider adapter: "internal" (simple electronic signature:
+    # emailed link + typed name + consent) is the only implementation. Any
+    # other value refuses to start, same rule as OPEN_BANKING_PROVIDER.
+    contracts_signing_provider: str = "internal"
+
     class Config:
         env_file = ".env"
 

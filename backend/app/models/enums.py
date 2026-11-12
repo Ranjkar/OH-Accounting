@@ -370,3 +370,38 @@ class LoonheffingenDeclarationStatus(str, enum.Enum):
     submitted = "SUBMITTED"
     accepted = "ACCEPTED"
     rejected = "REJECTED"
+
+
+# ---- Phase 26: annual client agreements & electronic signatures ----
+
+
+class ContractStatus(str, enum.Enum):
+    draft = "DRAFT"
+    pending_approval = "PENDING_APPROVAL"
+    ready_to_send = "READY_TO_SEND"
+    sent = "SENT"
+    viewed = "VIEWED"
+    signed = "SIGNED"
+    active = "ACTIVE"
+    renewal_due = "RENEWAL_DUE"
+    expired = "EXPIRED"
+    cancelled = "CANCELLED"
+    terminated = "TERMINATED"
+
+
+class ContractTemplateVersionStatus(str, enum.Enum):
+    draft = "DRAFT"
+    approved = "APPROVED"
+    retired = "RETIRED"
+
+
+class ContractVersionKind(str, enum.Enum):
+    approved = "APPROVED"  # the document the signer is asked to sign
+    signed = "SIGNED"  # final PDF with the signature evidence page appended
+
+
+class SigningInvitationStatus(str, enum.Enum):
+    pending = "PENDING"
+    used = "USED"
+    revoked = "REVOKED"
+    expired = "EXPIRED"

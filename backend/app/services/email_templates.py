@@ -43,6 +43,26 @@ STRINGS: dict[str, dict[str, str]] = {
         "test.subject": "Testbericht van OnHolland Accounting",
         "test.body": "Dit is een testbericht. Als u dit leest, is de e-mailconfiguratie ({provider}) correct.",
         "test.cta": "Open OnHolland",
+        "contract_invitation.subject": "Overeenkomst ter ondertekening: {company}",
+        "contract_invitation.body": "{sender} heeft de overeenkomst administratieve dienstverlening voor {company} (referentie {reference}) ter elektronische ondertekening aangeboden. Lees de overeenkomst en onderteken via de knop hieronder. De link is persoonlijk; deel deze niet.",
+        "contract_invitation.cta": "Overeenkomst bekijken en ondertekenen",
+        "contract_renewal_signing.subject": "Verlengingsovereenkomst ter ondertekening: {company}",
+        "contract_renewal_signing.body": "De huidige overeenkomst voor {company} loopt af op {end_date}. {sender} heeft een nieuwe overeenkomst van 12 maanden (referentie {reference}) ter ondertekening klaargezet. Zonder uw ondertekening wordt de overeenkomst niet verlengd.",
+        "contract_reminder.subject": "Herinnering: overeenkomst {reference} wacht op ondertekening",
+        "contract_reminder.body": "De overeenkomst administratieve dienstverlening voor {company} (referentie {reference}) is nog niet ondertekend. De ondertekeningslink verloopt op {expires}.",
+        "contract_reminder.cta": "Nu ondertekenen",
+        "contract_signed.subject": "Overeenkomst {reference} is ondertekend",
+        "contract_signed.body": "De overeenkomst voor {company} (referentie {reference}) is op {signed_at} elektronisch ondertekend door {signer}. Het ondertekende document is beschikbaar via de knop hieronder.",
+        "contract_signed.cta": "Ondertekende overeenkomst openen",
+        "contract_renewal_upcoming.subject": "Uw overeenkomst met {company} loopt af op {end_date}",
+        "contract_renewal_upcoming.body": "De overeenkomst administratieve dienstverlening (referentie {reference}) eindigt over {days} dagen, op {end_date}. Uw accountant bereidt een nieuwe overeenkomst van 12 maanden voor. U ontvangt een afzonderlijke uitnodiging om deze te ondertekenen; zonder ondertekening wordt de overeenkomst niet verlengd.",
+        "contract_expired.subject": "Overeenkomst {reference} is verlopen",
+        "contract_expired.body": "De overeenkomst administratieve dienstverlening voor {company} (referentie {reference}) is op {end_date} geëindigd en is niet verlengd. Neem contact op met uw accountant als u de dienstverlening wilt voortzetten.",
+        "contract_closed.subject": "Overeenkomst {reference} is {state}",
+        "contract_closed.body": "De overeenkomst administratieve dienstverlening voor {company} (referentie {reference}) is {state}. Reden: {reason}. Reeds ondertekende documenten blijven bewaard conform de wettelijke bewaartermijn.",
+        "contract_closed.cancelled": "geannuleerd",
+        "contract_closed.terminated": "beëindigd",
+        "contract.no_reason": "niet opgegeven",
     },
     "en": {
         "greeting": "Hello {name},",
@@ -73,6 +93,26 @@ STRINGS: dict[str, dict[str, str]] = {
         "test.subject": "Test message from OnHolland Accounting",
         "test.body": "This is a test message. If you can read it, the email configuration ({provider}) works.",
         "test.cta": "Open OnHolland",
+        "contract_invitation.subject": "Agreement to sign: {company}",
+        "contract_invitation.body": "{sender} has sent the accounting services agreement for {company} (reference {reference}) for electronic signature. Please read the agreement and sign it with the button below. The link is personal; do not forward it.",
+        "contract_invitation.cta": "Review and sign the agreement",
+        "contract_renewal_signing.subject": "Renewal agreement to sign: {company}",
+        "contract_renewal_signing.body": "The current agreement for {company} ends on {end_date}. {sender} has prepared a new 12-month agreement (reference {reference}) for signature. Without your signature the agreement is not renewed.",
+        "contract_reminder.subject": "Reminder: agreement {reference} is awaiting your signature",
+        "contract_reminder.body": "The accounting services agreement for {company} (reference {reference}) has not been signed yet. The signing link expires on {expires}.",
+        "contract_reminder.cta": "Sign now",
+        "contract_signed.subject": "Agreement {reference} has been signed",
+        "contract_signed.body": "The agreement for {company} (reference {reference}) was electronically signed on {signed_at} by {signer}. The signed document is available with the button below.",
+        "contract_signed.cta": "Open signed agreement",
+        "contract_renewal_upcoming.subject": "Your agreement with {company} ends on {end_date}",
+        "contract_renewal_upcoming.body": "The accounting services agreement (reference {reference}) ends in {days} days, on {end_date}. Your accountant is preparing a new 12-month agreement. You will receive a separate invitation to sign it; without a signature the agreement is not renewed.",
+        "contract_expired.subject": "Agreement {reference} has expired",
+        "contract_expired.body": "The accounting services agreement for {company} (reference {reference}) ended on {end_date} and was not renewed. Contact your accountant if you wish to continue the services.",
+        "contract_closed.subject": "Agreement {reference} has been {state}",
+        "contract_closed.body": "The accounting services agreement for {company} (reference {reference}) has been {state}. Reason: {reason}. Documents already signed are retained for the statutory retention period.",
+        "contract_closed.cancelled": "cancelled",
+        "contract_closed.terminated": "terminated",
+        "contract.no_reason": "not given",
     },
     "fa": {
         "greeting": "سلام {name}،",
@@ -229,4 +269,46 @@ def security_notification(locale: str, name: str, event_key: str, **params: obje
 def test_message(locale: str, name: str, provider: str, link: str) -> tuple[str, str, str]:
     subject = t(locale, "test.subject")
     html, text = render(locale, title=subject, greeting_name=name, body=t(locale, "test.body", provider=provider), cta_label=t(locale, "test.cta"), cta_url=link, extra_lines=[])
+    return subject, html, text
+
+
+# ---- Phase 26: contract lifecycle emails (nl + en; fa/ar fall back to en) ----
+
+
+def contract_invitation(locale: str, sender: str, company: str, reference: str, link: str, days: int, *, renewal: bool = False, end_date: str = "") -> tuple[str, str, str]:
+    key = "contract_renewal_signing" if renewal else "contract_invitation"
+    subject = t(locale, f"{key}.subject", company=company)
+    body = t(locale, f"{key}.body", sender=sender, company=company, reference=reference, end_date=end_date)
+    html, text = render(locale, title=subject, greeting_name=None, body=body, cta_label=t(locale, "contract_invitation.cta"), cta_url=link, extra_lines=[t(locale, "expires_days", days=days)])
+    return subject, html, text
+
+
+def contract_reminder(locale: str, company: str, reference: str, link: str, expires: str) -> tuple[str, str, str]:
+    subject = t(locale, "contract_reminder.subject", reference=reference)
+    html, text = render(locale, title=subject, greeting_name=None, body=t(locale, "contract_reminder.body", company=company, reference=reference, expires=expires), cta_label=t(locale, "contract_reminder.cta"), cta_url=link, extra_lines=[])
+    return subject, html, text
+
+
+def contract_signed(locale: str, company: str, reference: str, signer: str, signed_at: str, link: str) -> tuple[str, str, str]:
+    subject = t(locale, "contract_signed.subject", reference=reference)
+    html, text = render(locale, title=subject, greeting_name=None, body=t(locale, "contract_signed.body", company=company, reference=reference, signer=signer, signed_at=signed_at), cta_label=t(locale, "contract_signed.cta"), cta_url=link, extra_lines=[])
+    return subject, html, text
+
+
+def contract_renewal_upcoming(locale: str, company: str, reference: str, end_date: str, days: int) -> tuple[str, str, str]:
+    subject = t(locale, "contract_renewal_upcoming.subject", company=company, end_date=end_date)
+    html, text = render(locale, title=subject, greeting_name=None, body=t(locale, "contract_renewal_upcoming.body", reference=reference, end_date=end_date, days=days), cta_label=None, cta_url=None, extra_lines=[])
+    return subject, html, text
+
+
+def contract_expired(locale: str, company: str, reference: str, end_date: str) -> tuple[str, str, str]:
+    subject = t(locale, "contract_expired.subject", reference=reference)
+    html, text = render(locale, title=subject, greeting_name=None, body=t(locale, "contract_expired.body", company=company, reference=reference, end_date=end_date), cta_label=None, cta_url=None, extra_lines=[])
+    return subject, html, text
+
+
+def contract_closed(locale: str, company: str, reference: str, state: str, reason: str | None) -> tuple[str, str, str]:
+    state_text = t(locale, f"contract_closed.{state}")
+    subject = t(locale, "contract_closed.subject", reference=reference, state=state_text)
+    html, text = render(locale, title=subject, greeting_name=None, body=t(locale, "contract_closed.body", company=company, reference=reference, state=state_text, reason=reason or t(locale, "contract.no_reason")), cta_label=None, cta_url=None, extra_lines=[])
     return subject, html, text

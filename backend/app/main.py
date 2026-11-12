@@ -77,7 +77,16 @@ def _recover_stuck_processing_documents() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _recover_stuck_processing_documents()
+    # Phase 26: renewal/reminder scheduler. Daemon thread, advisory-locked
+    # per tick, only when the feature is on and an interval is configured.
+    scheduler_stop = None
+    if settings.contracts_enabled and settings.contracts_scheduler_interval_minutes > 0:
+        from app.services.contract_scheduler import start_background_thread
+
+        scheduler_stop = start_background_thread()
     yield
+    if scheduler_stop is not None:
+        scheduler_stop.set()
 
 
 app = FastAPI(title="OnHolland Accounting API", lifespan=lifespan)

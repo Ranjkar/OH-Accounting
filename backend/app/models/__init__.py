@@ -7,6 +7,17 @@ from app.models.budget import Budget, BudgetLine
 from app.models.categorization import CategorizationRule
 from app.models.company import Company, CompanySetupDraft
 from app.models.company_invitation import CompanyInvitation
+from app.models.contract import (
+    Contract,
+    ContractEvent,
+    ContractReminder,
+    ContractSettings,
+    ContractSignature,
+    ContractSigningInvitation,
+    ContractTemplate,
+    ContractTemplateVersion,
+    ContractVersion,
+)
 from app.models.customer import Customer
 from app.models.email_outbox import EmailOutbox
 from app.models.document import (
@@ -47,6 +58,15 @@ __all__ = [
     "CategorizationRule",
     "Company",
     "CompanyInvitation",
+    "Contract",
+    "ContractEvent",
+    "ContractReminder",
+    "ContractSettings",
+    "ContractSignature",
+    "ContractSigningInvitation",
+    "ContractTemplate",
+    "ContractTemplateVersion",
+    "ContractVersion",
     "CompanyLegalForm",
     "Customer",
     "Document",

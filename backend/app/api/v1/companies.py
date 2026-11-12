@@ -25,7 +25,7 @@ from app.schemas.company import (
     FinancialYearCreate,
     FinancialYearOut,
 )
-from app.services import email_templates
+from app.services import contract_service, email_templates
 from app.services.email_service import link as email_link, queue_email
 from app.services.vat_period_generator import generate_vat_periods
 
@@ -71,8 +71,7 @@ def create_company(
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=str(exc)) from exc
     company = Company(tenant_id=user.tenant_id, **payload.model_dump())
     db.add(company)
-    db.commit()
-    db.refresh(company)
+    db.flush()
     db.add(
         AuditLog(
             tenant_id=user.tenant_id,
@@ -83,7 +82,11 @@ def create_company(
             after=payload.model_dump(mode="json"),
         )
     )
+    # Phase 26: draft annual agreement, same transaction (no-op unless
+    # CONTRACTS_ENABLED; never raises).
+    contract_service.auto_create_for_new_company(db, company, user)
     db.commit()
+    db.refresh(company)
     return company
 
 

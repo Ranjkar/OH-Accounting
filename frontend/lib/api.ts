@@ -740,6 +740,106 @@ export interface EmailOutboxEntry {
   sent_at: string | null;
 }
 
+// ---- Phase 26: contracts & electronic signatures ----
+export type ContractStatus =
+  | "DRAFT" | "PENDING_APPROVAL" | "READY_TO_SEND" | "SENT" | "VIEWED" | "SIGNED" | "ACTIVE" | "RENEWAL_DUE" | "EXPIRED" | "CANCELLED" | "TERMINATED";
+export const CONTRACT_STATUSES: ContractStatus[] = ["DRAFT", "PENDING_APPROVAL", "READY_TO_SEND", "SENT", "VIEWED", "SIGNED", "ACTIVE", "RENEWAL_DUE", "EXPIRED", "CANCELLED", "TERMINATED"];
+export type ContractSigningStatus = "not_sent" | "awaiting" | "viewed" | "signed" | "expired" | "withdrawn";
+export const CONTRACT_SIGNING_STATUSES: ContractSigningStatus[] = ["not_sent", "awaiting", "viewed", "signed", "expired", "withdrawn"];
+export type ContractLanguage = "nl" | "en";
+
+export interface ContractService { code: string; label: string }
+export interface ContractClause { key?: string | null; heading: string; body: string }
+
+export interface Contract {
+  id: number;
+  tenant_id: number;
+  company_id: number;
+  company_name: string | null;
+  reference: string;
+  status: ContractStatus;
+  language: ContractLanguage;
+  template_version_id: number | null;
+  start_date: string;
+  end_date: string;
+  term_months: number;
+  services: ContractService[];
+  monthly_fee: string | null;
+  fee_description: string | null;
+  currency: string;
+  payment_terms_days: number | null;
+  notice_period_days: number | null;
+  custom_clauses: ContractClause[] | null;
+  signer_name: string | null;
+  signer_email: string | null;
+  signer_title: string | null;
+  renews_contract_id: number | null;
+  renewal_contract_id: number | null;
+  renewal_disabled: boolean;
+  renewal_disabled_reason: string | null;
+  created_source: "manual" | "company_created" | "renewal";
+  created_at: string;
+  updated_at: string;
+  approved_at: string | null;
+  sent_at: string | null;
+  viewed_at: string | null;
+  signed_at: string | null;
+  activated_at: string | null;
+  expired_at: string | null;
+  cancelled_at: string | null;
+  terminated_at: string | null;
+  termination_effective_date: string | null;
+  closure_reason: string | null;
+  signing_status: ContractSigningStatus;
+  days_until_expiry: number | null;
+}
+
+export interface ContractVersion { id: number; version_no: number; kind: "APPROVED" | "SIGNED"; content_hash: string; pdf_sha256: string; created_at: string }
+export interface ContractInvitation {
+  id: number; signer_name: string; signer_email: string; status: "PENDING" | "USED" | "REVOKED" | "EXPIRED"; is_renewal: boolean;
+  created_at: string; expires_at: string; first_viewed_at: string | null; used_at: string | null; email_outbox_id: number | null; email_status: string | null;
+}
+export interface ContractSignature {
+  id: number; signer_name_typed: string; signer_email: string; signed_at: string; signing_method: string; provider_name: string;
+  document_sha256: string; signed_version_id: number | null; consent_text: string;
+}
+export interface ContractEvent { id: number; event_type: string; actor_type: "user" | "signer" | "system"; actor_user_id: number | null; actor_name: string | null; data: Record<string, unknown> | null; created_at: string }
+export interface ContractDetail extends Contract {
+  versions: ContractVersion[];
+  invitations: ContractInvitation[];
+  signature: ContractSignature | null;
+  events: ContractEvent[];
+  approval_missing: string[];
+  renews_reference: string | null;
+  renewal_reference: string | null;
+}
+export interface ContractUpdatePayload {
+  language?: ContractLanguage; start_date?: string; term_months?: number; services?: ContractService[]; monthly_fee?: string | null; fee_description?: string | null;
+  payment_terms_days?: number | null; notice_period_days?: number | null; custom_clauses?: ContractClause[] | null; signer_name?: string | null; signer_email?: string | null; signer_title?: string | null;
+}
+export interface ContractSendResult { contract: Contract; invitation: ContractInvitation; email_sent: boolean; signing_link: string | null }
+export interface ContractListFilters { company_id?: number; status?: ContractStatus | ""; signing_status?: ContractSigningStatus | ""; expires_before?: string; expires_after?: string }
+export interface ContractTemplateVersion {
+  id: number; template_id: number; version_no: number; status: "DRAFT" | "APPROVED" | "RETIRED";
+  content: Record<ContractLanguage, { title: string; clauses: ContractClause[] }>;
+  default_services: { code: string; nl: string; en: string }[];
+  default_monthly_fee: string | null; default_payment_terms_days: number | null; default_notice_period_days: number | null; default_term_months: number;
+  change_note: string | null; created_at: string; approved_at: string | null;
+}
+export interface ContractSettings {
+  reminder_days: number[]; signing_link_expire_days: number; signing_reminder_days: number; auto_create_on_company_create: boolean; default_language: ContractLanguage;
+  notification_email: string | null; reply_to_email: string | null; feature_enabled: boolean; email_automation_enabled: boolean; signing_provider: string;
+}
+export interface SigningPage {
+  reference: string; status: ContractStatus; language: ContractLanguage;
+  content: {
+    title: string; provider: { name: string }; client: { name: string; kvk_number: string | null; vat_number: string | null; address: string | null; representative: string | null };
+    term: { start_date: string; end_date: string; months: number; text: string }; services: ContractService[];
+    fees: { fee_text: string; payment_terms_text: string; notice_period_text: string }; clauses: ContractClause[];
+  };
+  signer_name: string; signer_email_hint: string; consent_text: string; expires_at: string; already_signed: boolean; signed_at: string | null; signed_pdf_sha256: string | null; assurance_notice: string;
+}
+
 export interface KvkLookupResult {
   kvk_number: string;
   name: string;
@@ -1081,6 +1181,45 @@ export const api = {
     request<SetupCompleteResult>(`/companies/setup-drafts/${draftId}/complete`, { method: "POST", token }),
 
   // ---- Phase 22: email administration ----
+  // ---- Phase 26: contracts ----
+  listContracts: (token: string, filters: ContractListFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.company_id) params.set("company_id", String(filters.company_id));
+    if (filters.status) params.set("status", filters.status);
+    if (filters.signing_status) params.set("signing_status", filters.signing_status);
+    if (filters.expires_before) params.set("expires_before", filters.expires_before);
+    if (filters.expires_after) params.set("expires_after", filters.expires_after);
+    const qs = params.toString();
+    return request<Contract[]>(`/contracts${qs ? `?${qs}` : ""}`, { token });
+  },
+  createContract: (token: string, payload: { company_id: number; language?: ContractLanguage; start_date?: string; template_version_id?: number }) =>
+    request<ContractDetail>("/contracts", { method: "POST", token, body: JSON.stringify(payload) }),
+  getContract: (token: string, id: number) => request<ContractDetail>(`/contracts/${id}`, { token }),
+  updateContract: (token: string, id: number, payload: ContractUpdatePayload) =>
+    request<ContractDetail>(`/contracts/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
+  contractAction: (token: string, id: number, action: "submit" | "approve" | "return-to-draft" | "cancel" | "terminate" | "non-renewal", body?: Record<string, unknown>) =>
+    request<ContractDetail>(`/contracts/${id}/${action}`, { method: "POST", token, body: body ? JSON.stringify(body) : undefined }),
+  sendContract: (token: string, id: number, resend = false) =>
+    request<ContractSendResult>(`/contracts/${id}/${resend ? "resend" : "send"}`, { method: "POST", token }),
+  createContractRenewal: (token: string, id: number) => request<{ contract: Contract; created: boolean }>(`/contracts/${id}/renewal`, { method: "POST", token }),
+  verifyContractVersion: (token: string, id: number, versionId: number) =>
+    request<{ version_id: number; pdf_sha256: string; valid: boolean; pdf_hash_valid: boolean; content_hash_valid: boolean }>(`/contracts/${id}/versions/${versionId}/verify`, { token }),
+  contractVersionPdfUrl: (id: number, versionId: number) => `${API_BASE}/contracts/${id}/versions/${versionId}/pdf`,
+  contractPreviewPdfUrl: (id: number) => `${API_BASE}/contracts/${id}/preview.pdf`,
+  listContractTemplates: (token: string) => request<ContractTemplateVersion[]>("/contracts/templates", { token }),
+  createContractTemplateVersion: (token: string, payload: Omit<ContractTemplateVersion, "id" | "template_id" | "version_no" | "status" | "created_at" | "approved_at">) =>
+    request<ContractTemplateVersion>("/contracts/templates", { method: "POST", token, body: JSON.stringify(payload) }),
+  approveContractTemplateVersion: (token: string, versionId: number) =>
+    request<ContractTemplateVersion>(`/contracts/templates/${versionId}/approve`, { method: "POST", token }),
+  getContractSettings: (token: string) => request<ContractSettings>("/contracts/settings", { token }),
+  updateContractSettings: (token: string, payload: Partial<ContractSettings>) =>
+    request<ContractSettings>("/contracts/settings", { method: "PUT", token, body: JSON.stringify(payload) }),
+  runContractScheduler: (token: string) => request<Record<string, number>>("/contracts/scheduler/run", { method: "POST", token }),
+  /** Public signing portal -- no bearer token; the link token is the credential. */
+  getSigningPage: (signToken: string) => request<SigningPage>(`/contracts/sign/${encodeURIComponent(signToken)}`),
+  signContract: (signToken: string, payload: { full_name: string; email: string; consent: boolean }) =>
+    request<SigningPage>(`/contracts/sign/${encodeURIComponent(signToken)}`, { method: "POST", body: JSON.stringify(payload) }),
+  signingPdfUrl: (signToken: string) => `${API_BASE}/contracts/sign/${encodeURIComponent(signToken)}/pdf`,
   emailStatus: (token: string) => request<EmailStatus>("/admin/email/status", { token }),
   emailOutbox: (token: string, statusFilter?: string) =>
     request<EmailOutboxEntry[]>(`/admin/email/outbox${statusFilter ? `?status_filter=${statusFilter}` : ""}`, { token }),
